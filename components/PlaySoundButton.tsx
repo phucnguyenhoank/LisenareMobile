@@ -8,8 +8,13 @@ type Props = {
 export default function PlaySoundButton({ onPress }: Props) {
   return (
     <View style={styles.buttonContainer}>
-      <Pressable style={styles.circle} onPress={onPress}>
-        <AntDesign name="sound" size={20} color="black" />
+      <Pressable
+        style={({ pressed }) => [
+          styles.circle,
+          pressed && { opacity: 0.7 },
+        ]}
+        onPress={onPress}>
+        <AntDesign name="sound" size={28} color="white" />
       </Pressable>
     </View>
   );
@@ -19,12 +24,14 @@ const styles = StyleSheet.create({
   buttonContainer: {
     margin: 8,
   },
+
   circle: {
-    height: 44,
-    width: 44,
-    borderRadius: 22, 
+    height: 56,
+    width: 56,
+    borderRadius: 28,
     backgroundColor: "green",
     justifyContent: "center",
     alignItems: "center",
   },
+
 });

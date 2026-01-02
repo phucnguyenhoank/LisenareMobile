@@ -1,20 +1,24 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Feather from '@expo/vector-icons/Feather';
 
 type Props = {
   onPress: () => void;
 };
 
-export default function Button({ onPress }: Props) {
+export default function NextButton({ onPress }: Props) {
   return (
     <View style={styles.buttonContainer}>
-      <Pressable style={styles.button} onPress={onPress}>
-        <MaterialIcons name="navigate-next" size={24} color="white" />
+      <Pressable
+        style={({ pressed }) => [
+          styles.button,
+          pressed && { opacity: 0.7 },
+        ]}
+        onPress={onPress}>
+        <Feather name="arrow-right" size={28} color="white" />
       </Pressable>
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   buttonContainer: {
@@ -22,13 +26,12 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    backgroundColor: '#4F46E5',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    flexDirection: "row",
-    justifyContent: 'center',
-    alignItems: 'center',
+    height: 56,
+    width: 56,
+    borderRadius: 28,
+    backgroundColor: "black",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
 });

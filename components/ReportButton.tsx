@@ -5,7 +5,7 @@ type Props = {
   onPress: () => void;
 };
 
-export default function Button({ onPress }: Props) {
+export default function ReportButton({ onPress }: Props) {
   return (
     <View style={styles.buttonContainer}>
       <Pressable style={styles.circle} onPress={onPress}>
@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
     width: 44,
     borderRadius: 22, 
     borderWidth: 2,
-    borderColor: "#818181ff", // Light gray border
+    borderColor: "red",
     backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
