@@ -1,9 +1,10 @@
-import { View, StyleSheet, Text, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, Text, Pressable, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { apiCall } from "@/api/client";
 import { useEffect, useState } from 'react';
 import type { Brick } from '@/types/brick';
 import type { StatusResponse } from '@/types/api';
+import type { SentenceCompareResponse } from '@/types/comparison';
 import { brickAudioUrl } from '@/api/endpoints';
 import PlaySoundButton from '@/components/PlaySoundButton';
 import NextButton from '@/components/NextButton';
@@ -12,6 +13,7 @@ import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
 import { TextInput } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import colors from '@/theme/colors';
 
 export default function Index() {
   const { collection_id } = useLocalSearchParams();
@@ -23,8 +25,8 @@ export default function Index() {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [toast, setToast] = useState<string | null>(null);
   const [answer, setAnswer] = useState<string>("");
-  const [similarity, setSimilarity] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [compareResult, setCompareResult] = useState<SentenceCompareResponse | null>(null);
   const router = useRouter();
 
   const fetchRandomBrick = async () => {
@@ -33,7 +35,7 @@ export default function Index() {
       setBrick(br);
       setAudioUri(brickAudioUrl(br.target_audio_url));
       setAnswer("");
-      setSimilarity(null);
+      setCompareResult(null);
     }
     catch (err) {
       console.error("Failed to fetch brick:", err);
@@ -60,15 +62,38 @@ export default function Index() {
   };
 
   const submitAnswer = async () => {
-    if (!answer.trim()) return;
+    setMenuOpen(false);
+
+    if (!answer.trim() || !brick) {
+      showQuickMessage("Type your answer first!");
+      return;
+    }
 
     setSubmitting(true);
 
-    // fake similarity for now
-    await new Promise(r => setTimeout(r, 400));
-    setSimilarity(Math.random().toFixed(2) as unknown as number);
+    try {
+      const result = await apiCall<SentenceCompareResponse>('/text/comparisons', {
+        method: 'POST',
+        data: {
+          sentence1: answer.trim(),
+          sentence2: brick.target_text,
+        },
+      });
 
-    setSubmitting(false);
+      setCompareResult(result);
+      
+      // Optional: Show a quick toast based on correctness
+      if (result.correct) {
+        showQuickMessage("Perfect! ✨");
+      } else {
+        showQuickMessage("Keep trying! 💪");
+      }
+    } catch (err) {
+      console.error("Comparison failed:", err);
+      showQuickMessage("Failed to check answer.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -76,112 +101,129 @@ export default function Index() {
   }, []);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <Pressable style={styles.menuButton} onPress={() => setMenuOpen(!menuOpen)}>
-        <SimpleLineIcons
-          name={menuOpen ? "close" : "menu"}
-          size={24}
-          color="black"
-        />
-      </Pressable>
-
-      {
-        menuOpen &&
-        <View style={styles.menu}>
-          <Pressable
-            style={styles.menuItem}
-            onPress={() => {
-              setMenuOpen(false);
-              router.push({
-                pathname: "/edit-brick",
-                params: { brick_id: brick?.id },
-              });
-            }}
-          >
-            <Text>Edit brick</Text>
-          </Pressable>
-          
-
-          <Pressable
-            style={styles.menuItem}
-            onPress={() => {
-              setMenuOpen(false);
-              reportBrokenFile();
-            }}
-          >
-            <Text>Report issue</Text>
-          </Pressable>
-        </View>
-      }
-
-      <CloseButton />
-      {
-        brick?
-        <>
-          <Pressable onPress={() => setShowTarget(!showTarget)}>
-            <Text style={{ ...styles.text, color: "green"}}>{showTarget ? brick.target_text : "******"}</Text>
-          </Pressable>
-          <Pressable onPress={() => setShowNative(!showNative)}>
-            <Text style={styles.text} >{showNative ? brick.native_text : "******"}</Text>
-          </Pressable>
-          <Text style={{ fontSize: 9, color: "#666" }}>{brick.target_audio_url}</Text>
-        </>:
-        <Text>Loadding...</Text>
-      }
-
-      <View style={styles.actionRow}>
-        <PlaySoundButton onPress={playSound} />
-        <NextButton onPress={fetchRandomBrick} />
-      </View>
-
-      {/* Result */}
-      {similarity !== null && (
-        <Text style={styles.resultText}>
-          Similarity: {similarity}
-        </Text>
-      )}
-
-      <View style={styles.answerRow}>
-        {/* Mic icon */}
-        <Pressable
-          style={styles.micIcon}
-          onPress={() => {
-            showQuickMessage("Voice control coming soon.");
-          }}
-        >
-          <FontAwesome name="microphone" size={28} color="green" />
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <Pressable style={styles.menuButton} onPress={() => setMenuOpen(!menuOpen)}>
+          <SimpleLineIcons
+            name={menuOpen ? "close" : "menu"}
+            size={24}
+            color={colors.primary}
+          />
         </Pressable>
 
-        {/* Text input */}
-        <TextInput
-          value={answer}
-          onChangeText={setAnswer}
-          placeholder="what did you hear?"
-          style={styles.compactInput}
-          editable={!submitting}
-          returnKeyType="send"
-          onSubmitEditing={submitAnswer}
-        />
+        {menuOpen &&
+          <View style={styles.menu}>
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => {
+                setMenuOpen(false);
+                router.push({
+                  pathname: "/edit-brick",
+                  params: { brick_id: brick?.id },
+                });
+              }}
+            >
+              <Text>Edit brick</Text>
+            </Pressable>
 
-        {/* Submit icon */}
-        <Pressable
-          hitSlop={10}
-          onPress={submitAnswer}
-        >
-          <FontAwesome name="paper-plane" size={24} color="green" />
-        </Pressable>
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => {
+                setMenuOpen(false);
+                router.push({
+                  pathname: "/help",
+                });
+              }}
+            >
+              <Text>Help</Text>
+            </Pressable>
 
-      </View>
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => {
+                setMenuOpen(false);
+                reportBrokenFile();
+              }}
+            >
+              <Text>Report issue</Text>
+            </Pressable>
+          </View>
+        }
 
-      {toast && (
-        <View style={styles.toast}>
-          <Text style={styles.toastText}>{toast}</Text>
+        <CloseButton />
+
+        {brick?
+          <>
+            <Pressable onPress={() => setShowTarget(!showTarget)}>
+              <Text style={{ ...styles.text, color: colors.secondary2}}>{showTarget ? brick.target_text : "******"}</Text>
+            </Pressable>
+            <Pressable onPress={() => setShowNative(!showNative)}>
+              <Text style={styles.text} >{showNative ? brick.native_text : "******"}</Text>
+            </Pressable>
+            <Text style={{ fontSize: 9, color: "#666" }}>{brick.target_audio_url}</Text>
+          </>:
+          <Text>Loadding...</Text>
+        }
+
+        <View style={styles.actionRow}>
+          <PlaySoundButton onPress={playSound} />
+          <NextButton onPress={fetchRandomBrick} />
         </View>
-      )}
-    </KeyboardAvoidingView>
+
+        {/* Result Display */}
+        {compareResult && (
+          <View style={styles.resultContainer}>
+            <Text style={[
+              styles.resultScore, 
+              { color: compareResult.correct ? 'green' : '#e74c3c' }
+            ]}>
+              {compareResult.correct ? "Correct!" : "Try again"} ({Math.round(compareResult.score * 100)}%)
+            </Text>
+            <Text style={styles.thresholdInfo}>
+              Threshold: {compareResult.threshold}
+            </Text>
+          </View>
+        )}
+
+        
+        <View style={styles.answerRow}>
+          {/* Mic icon */}
+          <Pressable
+            style={styles.micIcon}
+            onPress={() => {
+              showQuickMessage("Voice control coming soon.");
+            }}
+          >
+            <FontAwesome name="microphone" size={28} color={colors.secondary2} />
+          </Pressable>
+          {/* Text input */}
+          <TextInput
+            value={answer}
+            onChangeText={setAnswer}
+            placeholder="What did you hear?"
+            placeholderTextColor={"#9c9c9cff"}
+            style={styles.compactInput}
+            editable={!submitting}
+            returnKeyType="send"
+            onSubmitEditing={submitAnswer}
+          />
+          {/* Submit icon */}
+          <Pressable
+            hitSlop={10}
+            onPress={submitAnswer}
+          >
+            <FontAwesome name="paper-plane" size={24} color={colors.secondary2} />
+          </Pressable>
+        </View>
+
+        {toast && (
+          <View style={styles.toast}>
+            <Text style={styles.toastText}>{toast}</Text>
+          </View>
+        )}
+      </KeyboardAvoidingView>
   );
 }
 
@@ -190,7 +232,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "column",
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
   },
   text: {
     fontSize: 20,
@@ -261,10 +303,22 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
 
-  resultText: {
-    marginTop: 8,
-    fontSize: 14,
-    color: "gray",
+  resultContainer: {
+    marginTop: 15,
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+    width: '85%',
+  },
+  resultScore: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  thresholdInfo: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
   },
 
 });

@@ -6,4 +6,4 @@ export type Brick = {
   native_text: string;
   target_audio_url: string;
   created_at: string;
-}
+};

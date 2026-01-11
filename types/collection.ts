@@ -3,4 +3,4 @@ export type Collection = {
   name: string;
   creator_id: number;
   created_at: string;
-}
+};

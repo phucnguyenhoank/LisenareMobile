@@ -1,5 +1,6 @@
 import { View, Pressable, StyleSheet } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import colors from '@/theme/colors';
 
 type Props = {
   onPress: () => void;
@@ -29,7 +30,7 @@ const styles = StyleSheet.create({
     height: 56,
     width: 56,
     borderRadius: 28,
-    backgroundColor: "green",
+    backgroundColor: colors.secondary2,
     justifyContent: "center",
     alignItems: "center",
   },

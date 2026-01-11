@@ -1,5 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
+import colors from '@/theme/colors';
 
 type Props = {
   onPress: () => void;
@@ -29,7 +30,7 @@ const styles = StyleSheet.create({
     height: 56,
     width: 56,
     borderRadius: 28,
-    backgroundColor: "black",
+    backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
   },

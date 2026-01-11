@@ -2,6 +2,7 @@ import { View, Text, Button, StyleSheet } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { apiCall } from '@/api/client';
 import type { Token } from '@/types/token';
+import { Link } from 'expo-router';
 
 export default function Profile() {
   const { token, login, logout } = useAuth();

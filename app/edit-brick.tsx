@@ -1,200 +1,221 @@
 import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  Switch,
-  Pressable,
-  StyleSheet,
+  View, Text, TextInput, Switch, Pressable, 
+  StyleSheet, ScrollView, ActivityIndicator, Alert
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { apiCall } from "@/api/client";
 import type { Brick } from "@/types/brick";
+import type { Collection } from "@/types/collection";
+import CloseButton from "@/components/CloseButton";
+import colors from "@/theme/colors";
 
 export default function EditBrick() {
+  const router = useRouter();
   const { brick_id } = useLocalSearchParams();
   const brickId = Number(brick_id);
+
+  const [loading, setLoading] = useState(true);
   const [brick, setBrick] = useState<Brick | null>(null);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  
   const [nativeText, setNativeText] = useState("");
   const [targetText, setTargetText] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [collectionId, setCollectionId] = useState<number>(1);
 
   useEffect(() => {
-    apiCall<Brick>(`/bricks/${brickId}`).then((data) => {
-      setBrick(data);
-      setNativeText(data.native_text);
-      setTargetText(data.target_text);
-      setIsPublic(data.is_public);
-    });
+    async function loadData() {
+      try {
+        const [brickData, collectionsData] = await Promise.all([
+          apiCall<Brick>(`/bricks/${brickId}`),
+          apiCall<Collection[]>("/collections")
+        ]);
+        setBrick(brickData);
+        setNativeText(brickData.native_text);
+        setTargetText(brickData.target_text);
+        setIsPublic(brickData.is_public);
+        setCollections(collectionsData);
+      } catch (error) { console.error(error); }
+      finally { setLoading(false); }
+    }
+    loadData();
   }, [brickId]);
 
   const handleSave = async () => {
-    await apiCall(`/bricks/${brickId}`, {
-      method: "PATCH",
-      data: {
-        native_text: nativeText,
-        target_text: targetText,
-        is_public: isPublic,
-      }
-    });
-    alert("✅ Brick updated");
+    try {
+      await apiCall(`/bricks/${brickId}`, {
+        method: "PATCH",
+        data: { 
+          native_text: nativeText, 
+          target_text: targetText, 
+          is_public: isPublic, 
+          collection_id: collectionId 
+        }
+      });
+      Alert.alert("Error", "Save successfully");
+    } catch (e) { Alert.alert("Error", "Failed to save"); }
   };
 
-  const handlePickAudio = () => {
-    alert("Update audio is coming.");
-  }
-
-  if (!brick) return null;
+  if (loading) return <ActivityIndicator style={{ flex: 1 }} color={colors.secondary2} />;
 
   return (
-    <View style={styles.container}>
-      {/* Collection selector */}
-      <Text style={styles.label}>Collection</Text>
-      <View style={styles.pickerBox}>
-        <Picker
-          selectedValue={collectionId}
-          onValueChange={(value) => setCollectionId(value)}
-        >
-          <Picker.Item label="Essential 3000 Words" value={1} />
-          <Picker.Item label="TOEIC Core" value={2} />
-        </Picker>
+    <>
+      <View style={styles.closeBtn}>
+        <CloseButton />
       </View>
+      <View style={styles.container}>
+        
+        <View style={{ height: 60 }} />
 
-      {/* Metadata */}
-      <View style={styles.metaBox}>
-        <Text style={styles.metaText}>Brick ID: {brick.id}</Text>
-      </View>
+        {/* 1. SMALLER ID BADGE */}
+        <Text style={styles.idLabel}>BRICK #{brick?.id}</Text>
 
-      {/* Audio */}
-      <Text style={styles.label}>Audio</Text>
+        {/* 2. COLLECTION (Picker with minimal border) */}
+        <Text style={styles.sectionLabel}>COLLECTION</Text>
+        <View style={styles.inputUnderline}>
+          <Picker
+            selectedValue={collectionId}
+            onValueChange={(v) => setCollectionId(v)}
+            style={styles.picker}
+          >
+            {collections.map((col) => (
+              <Picker.Item key={col.id} label={col.name} value={col.id} style={{ fontSize: 14 }} />
+            ))}
+          </Picker>
+        </View>
 
-      <View style={styles.audioRow}>
-        <Text style={styles.audioName}>
-          {brick.target_audio_url.split("/").pop()}
-        </Text>
+        {/* 3. AUDIO (Inline style) */}
+        <Text style={styles.sectionLabel}>AUDIO FILE</Text>
+        <View style={styles.audioRow}>
+          <Text style={styles.audioName} numberOfLines={1}>
+            {brick?.target_audio_url?.split("/").pop()}
+          </Text>
+          <Pressable onPress={() => alert("Change coming soon")}>
+            <Text style={styles.greenAction}>Change</Text>
+          </Pressable>
+        </View>
 
-        <Pressable onPress={() => { handlePickAudio() }}>
-          <Text style={styles.audioChange}>Change</Text>
+        {/* 4. TEXT INPUTS (Compact & Modern) */}
+        <Text style={styles.sectionLabel}>NATIVE TEXT</Text>
+        <TextInput
+          style={styles.input}
+          value={nativeText}
+          onChangeText={setNativeText}
+          placeholder="Enter text..."
+        />
+
+        <Text style={styles.sectionLabel}>TARGET TEXT</Text>
+        <TextInput
+          style={styles.input}
+          value={targetText}
+          onChangeText={setTargetText}
+          placeholder="Enter translation..."
+        />
+
+        {/* 5. SWITCH (Tight alignment) */}
+        <View style={styles.switchRow}>
+          <Text style={styles.label}>Public Visibility</Text>
+          <Switch 
+            value={isPublic} 
+            onValueChange={setIsPublic} 
+            trackColor={{ true: colors.secondary2, false: "#E0E0E0" }} 
+          />
+        </View>
+
+        {/* 6. BUTTON (Standard Green/Black/White style) */}
+        <Pressable style={styles.saveBtn} onPress={handleSave}>
+          <Text style={styles.saveBtnText}>SAVE CHANGES</Text>
         </Pressable>
       </View>
-
-      {/* Native text */}
-      <Text style={styles.label}>Native Text</Text>
-      <TextInput
-        style={styles.input}
-        value={nativeText}
-        onChangeText={setNativeText}
-        placeholder="Enter native text"
-      />
-
-      {/* Target text */}
-      <Text style={styles.label}>Target Text</Text>
-      <TextInput
-        style={styles.input}
-        value={targetText}
-        onChangeText={setTargetText}
-        placeholder="Enter target text"
-      />
-
-      {/* Public toggle */}
-      <View style={styles.switchRow}>
-        <Text style={styles.label}>Public</Text>
-        <Switch
-          value={isPublic}
-          onValueChange={setIsPublic}
-          trackColor={{ true: "green" }}
-        />
-      </View>
-
-      {/* Save */}
-      <Pressable style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveText}>Save Changes</Text>
-      </Pressable>
-    </View>
+    </>
+    
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
-    padding: 16,
+    backgroundColor: "#FFF",
+    paddingHorizontal: 24,
   },
-
-  label: {
-    color: "black",
-    fontWeight: "600",
-    marginBottom: 6,
-    marginTop: 12,
+  idLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#AAA",
+    marginTop: 20,
+    letterSpacing: 1,
   },
-
-  pickerBox: {
-    borderWidth: 1,
-    borderColor: "black",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-
-  metaBox: {
-    marginTop: 12,
-    padding: 10,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-  },
-
-  metaText: {
-    color: "black",
-    fontSize: 12,
-  },
-
-  input: {
-    borderWidth: 1,
-    borderColor: "black",
-    borderRadius: 8,
-    padding: 10,
-    color: "black",
-    backgroundColor: "#fff",
-  },
-
-  switchRow: {
-    marginTop: 12,
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    alignItems: "center",
-  },
-
-  saveButton: {
-    marginTop: 24,
-    backgroundColor: "green",
-    padding: 16,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-
-  saveText: {
-    color: "#fff",
-    fontSize: 16,
+  sectionLabel: {
+    fontSize: 11,
     fontWeight: "700",
+    color: "#666",
+    marginTop: 24,
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  inputUnderline: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  input: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+    paddingVertical: 10,
+    fontSize: 14,
+    color: "#000",
+  },
+  picker: {
+    marginLeft: -12, // Align text with labels
+    height: 60,
   },
   audioRow: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 6,
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+    paddingVertical: 12,
   },
-
   audioName: {
+    fontSize: 13,
+    color: "#555",
+    flex: 1,
+  },
+  greenAction: {
+    color: colors.secondary,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  switchRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 32,
+  },
+  label: {
+    fontSize: 14,
     color: "#000",
-    fontSize: 14,
-    flexShrink: 1,
   },
-
-  audioChange: {
-    color: "green",
-    fontWeight: "600",
-    fontSize: 14,
+  saveBtn: {
+    backgroundColor: "#23412a",
+    paddingVertical: 16,
+    borderRadius: 8,
+    marginTop: 48,
+    alignItems: "center",
   },
-
+  saveBtnText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  closeBtn: {
+    position: 'absolute',
+    right: 30,
+    top: 30,
+    zIndex: 4,
+    elevation: 4,
+  },
 });
