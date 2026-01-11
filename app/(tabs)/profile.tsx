@@ -19,7 +19,7 @@ export default function Profile() {
 
     const token = await apiCall<Token>("/auth/login", {
       method: "POST",
-      data: formBody
+      body: formBody
     });
 
     const accessToken = token.access_token;

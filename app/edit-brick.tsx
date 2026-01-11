@@ -47,7 +47,7 @@ export default function EditBrick() {
     try {
       await apiCall(`/bricks/${brickId}`, {
         method: "PATCH",
-        data: { 
+        body: { 
           native_text: nativeText, 
           target_text: targetText, 
           is_public: isPublic, 

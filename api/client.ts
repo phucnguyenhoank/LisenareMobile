@@ -4,7 +4,7 @@ import { getToken } from "@/utils/authStorage";
 
 interface ApiCallOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-  data?: any;
+  body?: any;
   headers?: Record<string, string>;
   requiresAuth?: boolean; // Automate token injection
 }
@@ -24,7 +24,7 @@ export async function apiCall<T>(
   endpoint: string, 
   { 
     method = 'GET', 
-    data = null, 
+    body = null, 
     headers = {}, 
     requiresAuth = true 
   }: ApiCallOptions = {}
@@ -47,18 +47,18 @@ export async function apiCall<T>(
     headers: finalHeaders,
   };
 
-  if (data) {
-    if (data instanceof URLSearchParams) {
-      options.body = data.toString();
+  if (body) {
+    if (body instanceof URLSearchParams) {
+      options.body = body.toString();
       finalHeaders['Content-Type'] = 'application/x-www-form-urlencoded';
     }
     // Fetch automatically sets Content-Type for FormData (has not check yet)
-    else if (data instanceof FormData) {
-      options.body = data;
+    else if (body instanceof FormData) {
+      options.body = body;
       delete finalHeaders['Content-Type'];
     }
     else {
-      options.body = JSON.stringify(data);
+      options.body = JSON.stringify(body);
     }
   }
 

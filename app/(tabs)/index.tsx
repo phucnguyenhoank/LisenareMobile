@@ -1,13 +1,19 @@
 import { useEffect, useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+
+import TextButton from '@/components/TextButton';
 
 import { Link } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -24,6 +30,8 @@ export default function Index() {
 
   const [collections, setCollections] = useState<Collection[]>([]);
   const [isFabOpen, setIsFabOpen] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState('');
 
   const fetchCollections = async () => {
     try {
@@ -31,6 +39,21 @@ export default function Index() {
       setCollections(data);
     } catch (err) {
       console.error('Failed to fetch collections', err);
+    }
+  };
+
+  const handleCreate = async () => {
+    try {
+      const data = await apiCall<Collection>('/collections', {
+        method: "POST",
+        body: {
+          name: newCollectionName
+        }
+      });
+      setIsModalVisible(false);
+      fetchCollections();
+    } catch (err) {
+      console.error('Failed to create collections', err);
     }
   };
 
@@ -107,7 +130,8 @@ export default function Index() {
             <Pressable
               style={styles.miniFab}
               onPress={() => {
-                Alert.alert('Create New Collection');
+                setNewCollectionName(''); // Reset input
+                setIsModalVisible(true);
                 setIsFabOpen(false);
               }}
             >
@@ -131,6 +155,45 @@ export default function Index() {
           />
         </Pressable>
       </View>
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>New Collection</Text>
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Enter collection name"
+              placeholderTextColor="#999"
+              value={newCollectionName}
+              onChangeText={setNewCollectionName}
+              autoFocus={true} // Automatically opens keyboard
+            />
+
+            <View style={styles.buttonContainer}>
+              <TextButton 
+                title="Cancel" 
+                variant="outline" 
+                onPress={() => setIsModalVisible(false)} 
+              />
+
+              <TextButton 
+                title="Create" 
+                variant="primary" 
+                onPress={handleCreate} 
+              />
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
     </View>
   );
 }
@@ -225,4 +288,43 @@ const styles = StyleSheet.create({
 
     elevation: 4,
   },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)', // Dims the background
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 20,
+    elevation: 5, // Android shadow
+    shadowColor: '#000', // iOS shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+
 });

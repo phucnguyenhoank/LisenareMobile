@@ -74,7 +74,7 @@ export default function Index() {
     try {
       const result = await apiCall<SentenceCompareResponse>('/text/comparisons', {
         method: 'POST',
-        data: {
+        body: {
           sentence1: answer.trim(),
           sentence2: brick.target_text,
         },
