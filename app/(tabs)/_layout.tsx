@@ -2,6 +2,7 @@ import { Tabs } from "expo-router";
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import colors from "@/theme/colors";
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 export default function TabLayout() {
   return (
@@ -36,6 +37,13 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />
+        }}
+      />
+      <Tabs.Screen
+        name="test-screen"
+        options={{
+          title: "Test",
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="test-tube" size={24} color={color} />
         }}
       />
     </Tabs>

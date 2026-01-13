@@ -99,7 +99,7 @@ export default function Index() {
             <TouchableOpacity style={styles.listItem} activeOpacity={0.6}>
               <View style={styles.left}>
                 <Text style={styles.listItemText} numberOfLines={1}>
-                  {collection.name}
+                  {collection.brick_count} | {collection.name}
                 </Text>
               </View>
 

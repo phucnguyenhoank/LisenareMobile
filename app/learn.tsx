@@ -1,4 +1,4 @@
-import { View, StyleSheet, Text, Pressable, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import { View, StyleSheet, Text, Pressable, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { apiCall } from "@/api/client";
 import { useEffect, useState } from 'react';
@@ -14,6 +14,14 @@ import { TextInput } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import colors from '@/theme/colors';
+import {
+  useAudioRecorder,
+  AudioModule,
+  RecordingPresets,
+  setAudioModeAsync,
+  useAudioRecorderState,
+} from 'expo-audio';
+import type { AudioTranscription } from '@/types/audio';
 
 export default function Index() {
   const { collection_id } = useLocalSearchParams();
@@ -28,6 +36,8 @@ export default function Index() {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [compareResult, setCompareResult] = useState<SentenceCompareResponse | null>(null);
   const router = useRouter();
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(audioRecorder);
 
   const fetchRandomBrick = async () => {
     try {
@@ -43,6 +53,7 @@ export default function Index() {
   };
 
   const playSound = () => {
+    player.volume = 1.0;
     player.seekTo(0);
     player.play();
   };
@@ -96,8 +107,47 @@ export default function Index() {
     }
   };
 
+  const record = async () => {
+    await audioRecorder.prepareToRecordAsync();
+    audioRecorder.record();
+  };
+
+  const stopRecordingAndTranscribeAudio = async () => {
+    await audioRecorder.stop();
+    const uri = audioRecorder.getStatus().url;
+    console.log(`audioRecorder.uri:${uri}`);
+    const cleanUri = uri?.startsWith('file://') ? uri : `file://${uri}`;
+    console.log(`cleanUri:${cleanUri}`);
+    const formData = new FormData();
+    formData.append('file', {
+      uri: cleanUri,
+      name: `recording_${Date.now()}.m4a`,
+      type: 'audio/m4a',
+    } as any);
+    const result = await apiCall<AudioTranscription>(
+      '/audio/transcribe',
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
+    console.log(`result.transcript:${result.transcript}`);
+    setAnswer(prev => prev ? `${prev} ${result.transcript}` : result.transcript);
+  };
+
   useEffect(() => {
     fetchRandomBrick();
+    (async () => {
+      const status = await AudioModule.requestRecordingPermissionsAsync();
+      if (!status.granted) {
+        Alert.alert('Permission to access microphone was denied');
+      }
+
+      setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: true,
+      });
+    })();
   }, []);
 
   return (
@@ -192,11 +242,13 @@ export default function Index() {
           {/* Mic icon */}
           <Pressable
             style={styles.micIcon}
-            onPress={() => {
-              showQuickMessage("Voice control coming soon.");
-            }}
+            onPress={recorderState.isRecording ? stopRecordingAndTranscribeAudio : record}
           >
-            <FontAwesome name="microphone" size={28} color={colors.secondary2} />
+            {recorderState.isRecording ? (
+              <FontAwesome name="stop-circle" size={28} color="black" />
+            ) : (
+              <FontAwesome name="microphone" size={28} color={colors.secondary2} />
+            )}
           </Pressable>
           {/* Text input */}
           <TextInput

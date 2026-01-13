@@ -51,10 +51,10 @@ export default function EditBrick() {
           native_text: nativeText, 
           target_text: targetText, 
           is_public: isPublic, 
-          collection_id: collectionId 
+          collection_ids: [collectionId]
         }
       });
-      Alert.alert("Error", "Save successfully");
+      Alert.alert("Message", "Save successfully");
     } catch (e) { Alert.alert("Error", "Failed to save"); }
   };
 
