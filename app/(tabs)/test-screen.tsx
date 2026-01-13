@@ -37,15 +37,20 @@ export default function TestScreen() {
       name: 'recording.m4a',
       type: 'audio/m4a',
     } as any);
-    const result = await apiCall<AudioTranscription>(
-      '/audio/transcribe',
-      {
-        method: 'POST',
-        body: formData,
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      try {
+        const { transcript } = await apiCall<AudioTranscription>('/audio/transcribe', {
+          method: 'POST',
+          body: formData,
+        });
+
+        setTranscription(transcript);
+        return;
+      } catch {
+        if (attempt < 5) await new Promise(r => setTimeout(r, 400));
       }
-    );
-    console.log(`result.transcript:${result.transcript}`);
-    setTranscription(result.transcript);
+    }
+    setTranscription('try again');
   }
 
   useEffect(() => {

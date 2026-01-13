@@ -24,6 +24,7 @@ import {
 import type { AudioTranscription } from '@/types/audio';
 
 export default function Index() {
+  const NUM_TRANSCRIPTION_ATTEMPTS = 5;
   const { collection_id } = useLocalSearchParams();
   const [brick, setBrick] = useState<Brick | null>(null);
   const [audioUri, setAudioUri] = useState<string | null>(null);
@@ -114,25 +115,32 @@ export default function Index() {
 
   const stopRecordingAndTranscribeAudio = async () => {
     await audioRecorder.stop();
-    const uri = audioRecorder.getStatus().url;
-    console.log(`audioRecorder.uri:${uri}`);
-    const cleanUri = uri?.startsWith('file://') ? uri : `file://${uri}`;
-    console.log(`cleanUri:${cleanUri}`);
+
+    console.log(`audioRecorder.uri:${audioRecorder.uri}`);
     const formData = new FormData();
     formData.append('file', {
-      uri: cleanUri,
-      name: `recording_${Date.now()}.m4a`,
+      uri: audioRecorder.uri,
+      name: 'recording.m4a',
       type: 'audio/m4a',
     } as any);
-    const result = await apiCall<AudioTranscription>(
-      '/audio/transcribe',
-      {
-        method: 'POST',
-        body: formData,
+    // The recorded file need to be released from the OS for some reason, 
+    // despite the file already exits and size greater than 0, hence we retry sending the 
+    // request until the file is released.
+    for (let attempt = 1; attempt <= NUM_TRANSCRIPTION_ATTEMPTS; attempt++) {
+      try {
+        console.log(`attempt:${attempt}`);
+        const { transcript } = await apiCall<AudioTranscription>('/audio/transcribe', {
+          method: 'POST',
+          body: formData,
+        });
+
+        setAnswer(prev => prev ? `${prev} ${transcript}` : transcript);
+        return;
+      } catch {
+        if (attempt < NUM_TRANSCRIPTION_ATTEMPTS) await new Promise(r => setTimeout(r, 400));
       }
-    );
-    console.log(`result.transcript:${result.transcript}`);
-    setAnswer(prev => prev ? `${prev} ${result.transcript}` : result.transcript);
+    }
+    setAnswer('try again');
   };
 
   useEffect(() => {
