@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -10,15 +9,15 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 import TextButton from '@/components/TextButton';
 
-import { Link } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Entypo from '@expo/vector-icons/Entypo';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Link, useRouter } from 'expo-router';
 
 import { apiCall } from '@/api/client';
 import { useAuth } from '@/context/AuthContext';
@@ -32,6 +31,7 @@ export default function Index() {
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
+  const router = useRouter();
 
   const fetchCollections = async () => {
     try {
@@ -116,8 +116,8 @@ export default function Index() {
             <Pressable
               style={styles.miniFab}
               onPress={() => {
-                Alert.alert('Create New Brick');
                 setIsFabOpen(false);
+                router.push("/add-brick");
               }}
             >
               <MaterialCommunityIcons

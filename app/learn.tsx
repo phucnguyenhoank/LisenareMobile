@@ -1,27 +1,25 @@
-import { View, StyleSheet, Text, Pressable, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import { useAudioPlayer } from 'expo-audio';
 import { apiCall } from "@/api/client";
-import { useEffect, useState } from 'react';
-import type { Brick } from '@/types/brick';
-import type { StatusResponse } from '@/types/api';
-import type { SentenceCompareResponse } from '@/types/comparison';
 import { brickAudioUrl } from '@/api/endpoints';
-import PlaySoundButton from '@/components/PlaySoundButton';
-import NextButton from '@/components/NextButton';
 import CloseButton from '@/components/CloseButton';
-import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
-import { TextInput } from 'react-native';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import NextButton from '@/components/NextButton';
+import PlaySoundButton from '@/components/PlaySoundButton';
 import colors from '@/theme/colors';
+import type { StatusResponse } from '@/types/api';
+import type { AudioTranscription } from '@/types/audio';
+import type { Brick } from '@/types/brick';
+import type { SentenceCompareResponse } from '@/types/comparison';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
 import {
-  useAudioRecorder,
   AudioModule,
   RecordingPresets,
-  setAudioModeAsync,
-  useAudioRecorderState,
+  setAudioModeAsync, useAudioPlayer, useAudioRecorder, useAudioRecorderState
 } from 'expo-audio';
-import type { AudioTranscription } from '@/types/audio';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+
 
 export default function Index() {
   const NUM_TRANSCRIPTION_ATTEMPTS = 5;
@@ -134,7 +132,8 @@ export default function Index() {
           body: formData,
         });
 
-        setAnswer(prev => prev ? `${prev} ${transcript}` : transcript);
+        // setAnswer(prev => prev ? `${prev} ${transcript}` : transcript);
+        setAnswer(transcript);
         return;
       } catch {
         if (attempt < NUM_TRANSCRIPTION_ATTEMPTS) await new Promise(r => setTimeout(r, 400));
@@ -159,9 +158,9 @@ export default function Index() {
   }, []);
 
   return (
-      <KeyboardAvoidingView
+      <KeyboardAwareScrollView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        contentContainerStyle={styles.contentContainer}
       >
         <Pressable style={styles.menuButton} onPress={() => setMenuOpen(!menuOpen)}>
           <SimpleLineIcons
@@ -283,7 +282,8 @@ export default function Index() {
             <Text style={styles.toastText}>{toast}</Text>
           </View>
         )}
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
+      
   );
 }
 
@@ -291,8 +291,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
+  },
+  contentContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexGrow: 1,
   },
   text: {
     fontSize: 20,

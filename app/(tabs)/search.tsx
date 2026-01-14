@@ -1,7 +1,7 @@
-import { Text, StyleSheet } from 'react-native';
+import { Text } from 'react-native';
 
 export default function Search() {
   return (
-    <Text>Search something here</Text>
+    <Text>Search contexts here</Text>
   );
 }

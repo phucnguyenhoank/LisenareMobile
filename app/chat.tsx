@@ -4,14 +4,15 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
-
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Define the Message type
 type Message = { role: 'user' | 'assistant'; content: string };
 
-export default function TestScreen() {
+export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
+  const insets = useSafeAreaInsets();
 
   const sendMessage = async () => {
     if (!inputText.trim()) return;
@@ -37,7 +38,7 @@ export default function TestScreen() {
   };
 
   return (
-    <View style={{flex: 1}}>
+    <View style={{flex: 1, backgroundColor: 'white'}}>
       <KeyboardAwareScrollView 
         contentContainerStyle={styles.container}
       >
@@ -47,27 +48,37 @@ export default function TestScreen() {
           </View>
         ))}
       </KeyboardAwareScrollView>
-      <KeyboardStickyView>
-        <View style={styles.inputBar}>
-          <TextInput 
-            placeholder="Type a message..." 
-            style={styles.textInput} 
-            value={inputText}
-            onChangeText={setInputText}
-            onSubmitEditing={sendMessage}
-          />
-          <Pressable
-            onPress={sendMessage}
-          >
-            <FontAwesome 
-              name="paper-plane" 
-              size={24} 
-              color={colors.secondary2} 
-              style={styles.sendButton} 
+      <SafeAreaView
+        edges={['bottom']} 
+        style={{ backgroundColor: 'white' }}
+      >
+        <KeyboardStickyView
+          offset={{
+            closed: 0,
+            opened: insets.bottom
+          }}
+        >
+          <View style={styles.inputBar}>
+            <TextInput
+              placeholder="Type a message..." 
+              style={styles.textInput} 
+              value={inputText}
+              onChangeText={setInputText}
+              onSubmitEditing={sendMessage}
             />
-          </Pressable>
-        </View>
-      </KeyboardStickyView>
+            <Pressable
+              onPress={sendMessage}
+            >
+              <FontAwesome 
+                name="paper-plane" 
+                size={24} 
+                color={colors.secondary2} 
+                style={styles.sendButton} 
+              />
+            </Pressable>
+          </View>
+        </KeyboardStickyView>
+      </SafeAreaView>
     </View>
   );
 }
@@ -75,7 +86,6 @@ export default function TestScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    paddingBottom: 100, // Space for keyboard
   },
   bubble: {
     padding: 12,
@@ -117,6 +127,6 @@ const styles = StyleSheet.create({
   sendButton: {
     padding: 4,
     marginTop: 2,
-    marginRight: 16,
+    marginRight: 4,
   }
 });

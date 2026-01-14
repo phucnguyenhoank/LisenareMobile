@@ -1,16 +1,15 @@
-import { Tabs } from "expo-router";
+import colors from "@/theme/colors";
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import colors from "@/theme/colors";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Tabs } from "expo-router";
 
 export default function TabLayout() {
   return (
-    <Tabs screenOptions={
-      {
+    <Tabs screenOptions={{
         tabBarActiveTintColor: colors.secondary,
-      }
-    }>
+        tabBarHideOnKeyboard: true,
+      }}>
       <Tabs.Screen
         name="index"
         options={{
@@ -26,7 +25,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="chat"
+        name="chat-topics"
         options={{
           title: "Chat",
           tabBarIcon: ({ color }) => <Ionicons name="chatbubbles-outline" size={24} color={color} />
