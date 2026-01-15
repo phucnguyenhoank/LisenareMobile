@@ -1,17 +1,21 @@
-import { useEffect, useState } from "react";
-import {
-  View, Text, TextInput, Switch, Pressable, 
-  StyleSheet, ScrollView, ActivityIndicator, Alert
-} from "react-native";
-import { Picker } from "@react-native-picker/picker";
-import { useLocalSearchParams, useRouter } from "expo-router";
 import { apiCall } from "@/api/client";
-import type { Brick } from "@/types/brick";
-import type { Collection } from "@/types/collection";
 import CloseButton from "@/components/CloseButton";
 import colors from "@/theme/colors";
+import type { Brick } from "@/types/brick";
+import type { Collection } from "@/types/collection";
+import { Picker } from "@react-native-picker/picker";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator, Alert,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text, TextInput,
+  View
+} from "react-native";
 
-export default function EditBrick() {
+export default function EditBrickScreen() {
   const router = useRouter();
   const { brick_id } = useLocalSearchParams();
   const brickId = Number(brick_id);

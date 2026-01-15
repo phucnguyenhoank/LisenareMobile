@@ -1,10 +1,9 @@
-import { View, Text, Button, StyleSheet } from 'react-native';
-import { useAuth } from '@/context/AuthContext';
 import { apiCall } from '@/api/client';
+import { useAuth } from '@/context/AuthContext';
 import type { Token } from '@/types/token';
-import { Link } from 'expo-router';
+import { Button, Text, View } from 'react-native';
 
-export default function Profile() {
+export default function ProfileScreen() {
   const { token, login, logout } = useAuth();
 
   const handleLogin = async () => {

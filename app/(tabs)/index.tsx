@@ -24,7 +24,7 @@ import { useAuth } from '@/context/AuthContext';
 import colors from '@/theme/colors';
 import type { Collection } from '@/types/collection';
 
-export default function Index() {
+export default function HomeScreen() {
   const { token, isLoading } = useAuth();
 
   const [collections, setCollections] = useState<Collection[]>([]);

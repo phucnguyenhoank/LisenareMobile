@@ -1,8 +1,8 @@
-import { Text, StyleSheet, ScrollView, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CloseButton from '@/components/CloseButton';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function HowToLearn() {
+export default function HelpScreen() {
   // Access precise inset values (top, bottom, left, right)
   const insets = useSafeAreaInsets();
 

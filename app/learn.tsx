@@ -21,14 +21,18 @@ import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 
-export default function Index() {
+export default function LearnScreen() {
+  const DEFAULT_SETTINGS = {
+    firstShowTarget: false,
+    firstShowNative: true,
+  };
   const NUM_TRANSCRIPTION_ATTEMPTS = 5;
   const { collection_id } = useLocalSearchParams();
   const [brick, setBrick] = useState<Brick | null>(null);
   const [audioUri, setAudioUri] = useState<string | null>(null);
   const player = useAudioPlayer(audioUri ? {uri: audioUri} : null);
-  const [showTarget, setShowTarget] = useState<boolean>(true);
-  const [showNative, setShowNative] = useState<boolean>(true);
+  const [showTarget, setShowTarget] = useState<boolean>(DEFAULT_SETTINGS.firstShowTarget);
+  const [showNative, setShowNative] = useState<boolean>(DEFAULT_SETTINGS.firstShowNative);
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [toast, setToast] = useState<string | null>(null);
   const [answer, setAnswer] = useState<string>("");
@@ -40,11 +44,13 @@ export default function Index() {
 
   const fetchRandomBrick = async () => {
     try {
+      setShowTarget(DEFAULT_SETTINGS.firstShowTarget);
+      setShowNative(DEFAULT_SETTINGS.firstShowNative);
+      setAnswer("");
+      setCompareResult(null);
       const br = await apiCall<Brick>(`/bricks/random/${collection_id}`);
       setBrick(br);
       setAudioUri(brickAudioUrl(br.target_audio_url));
-      setAnswer("");
-      setCompareResult(null);
     }
     catch (err) {
       console.error("Failed to fetch brick:", err);
@@ -261,12 +267,13 @@ export default function Index() {
           <TextInput
             value={answer}
             onChangeText={setAnswer}
-            placeholder="What did you hear?"
+            placeholder="Repeat what you understood"
             placeholderTextColor={"#9c9c9cff"}
             style={styles.compactInput}
             editable={!submitting}
             returnKeyType="send"
             onSubmitEditing={submitAnswer}
+            multiline
           />
           {/* Submit icon */}
           <Pressable

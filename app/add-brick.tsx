@@ -1,7 +1,7 @@
 import { StyleSheet, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardToolbar } from 'react-native-keyboard-controller';
 
-export default function AddBrick() {
+export default function AddBrickScreen() {
   return (
     <>
       <KeyboardAwareScrollView bottomOffset={62} contentContainerStyle={styles.container}>

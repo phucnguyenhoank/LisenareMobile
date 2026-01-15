@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons'; // Standard in Expo
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-export default function ChatTopic() {
+export default function ChatTopicScreen() {
   const router = useRouter();
 
   return (
