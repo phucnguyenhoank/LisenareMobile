@@ -1,29 +1,28 @@
-import React from 'react';
-import { 
-  Pressable, 
-  Text, 
-  StyleSheet, 
-  ViewStyle, 
-  StyleProp, 
-  TextStyle 
-} from 'react-native';
 import colors from "@/theme/colors";
+import React from "react";
+import {
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  Text,
+  ViewStyle
+} from "react-native";
 
 // Define the Props interface
 interface TextButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'outline'; // Restricts to these two strings
-  style?: StyleProp<ViewStyle>;    // Allows passing extra container styles
+  variant?: "primary" | "outline"; // Restricts to these two strings
+  style?: StyleProp<ViewStyle>; // Allows passing extra container styles
 }
 
-const TextButton: React.FC<TextButtonProps> = ({ 
-  title, 
-  onPress, 
-  variant = 'primary', 
-  style 
+const TextButton: React.FC<TextButtonProps> = ({
+  title,
+  onPress,
+  variant = "primary",
+  style,
 }) => {
-  const isPrimary = variant === 'primary';
+  const isPrimary = variant === "primary";
 
   return (
     <Pressable
@@ -35,10 +34,12 @@ const TextButton: React.FC<TextButtonProps> = ({
         style,
       ]}
     >
-      <Text style={[
-        styles.baseText,
-        isPrimary ? styles.primaryText : styles.outlineText
-      ]}>
+      <Text
+        style={[
+          styles.baseText,
+          isPrimary ? styles.primaryText : styles.outlineText,
+        ]}
+      >
         {title}
       </Text>
     </Pressable>
@@ -50,27 +51,27 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     minWidth: 100,
   },
   primaryButton: {
     backgroundColor: colors.secondary,
   },
   outlineButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 1.5,
     borderColor: colors.secondary,
   },
   baseText: {
     fontSize: 16,
-    fontWeight: '600' as const, // Ensures TS treats this as a specific value
+    fontWeight: "600" as const, // Ensures TS treats this as a specific value
   },
   primaryText: {
-    color: 'white',
+    color: "white",
   },
   outlineText: {
-    color: '#666',
+    color: "#666",
   },
   pressed: {
     opacity: 0.7,

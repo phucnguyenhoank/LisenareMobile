@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -9,20 +9,20 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
-} from 'react-native';
+  View,
+} from "react-native";
 
-import TextButton from '@/components/TextButton';
+import TextButton from "@/components/TextButton";
 
-import AntDesign from '@expo/vector-icons/AntDesign';
-import Entypo from '@expo/vector-icons/Entypo';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Link, useRouter } from 'expo-router';
+import AntDesign from "@expo/vector-icons/AntDesign";
+import Entypo from "@expo/vector-icons/Entypo";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { Link, useRouter } from "expo-router";
 
-import { apiCall } from '@/api/client';
-import { useAuth } from '@/context/AuthContext';
-import colors from '@/theme/colors';
-import type { Collection } from '@/types/collection';
+import { apiCall } from "@/api/client";
+import { useAuth } from "@/context/AuthContext";
+import colors from "@/theme/colors";
+import type { Collection } from "@/types/collection";
 
 export default function HomeScreen() {
   const { token, isLoading } = useAuth();
@@ -30,30 +30,30 @@ export default function HomeScreen() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [newCollectionName, setNewCollectionName] = useState('');
+  const [newCollectionName, setNewCollectionName] = useState("");
   const router = useRouter();
 
   const fetchCollections = async () => {
     try {
-      const data = await apiCall<Collection[]>('/collections');
+      const data = await apiCall<Collection[]>("/collections");
       setCollections(data);
     } catch (err) {
-      console.error('Failed to fetch collections', err);
+      console.error("Failed to fetch collections", err);
     }
   };
 
   const handleCreate = async () => {
     try {
-      const data = await apiCall<Collection>('/collections', {
+      const data = await apiCall<Collection>("/collections", {
         method: "POST",
         body: {
-          name: newCollectionName
-        }
+          name: newCollectionName,
+        },
       });
       setIsModalVisible(false);
       fetchCollections();
     } catch (err) {
-      console.error('Failed to create collections', err);
+      console.error("Failed to create collections", err);
     }
   };
 
@@ -91,7 +91,7 @@ export default function HomeScreen() {
           <Link
             key={collection.id}
             href={{
-              pathname: '/learn',
+              pathname: "/learn",
               params: { collection_id: collection.id },
             }}
             asChild
@@ -121,7 +121,7 @@ export default function HomeScreen() {
               }}
             >
               <MaterialCommunityIcons
-                name="card-plus-outline"
+                name="toy-brick-plus-outline"
                 size={24}
                 color="white"
               />
@@ -130,7 +130,7 @@ export default function HomeScreen() {
             <Pressable
               style={styles.miniFab}
               onPress={() => {
-                setNewCollectionName(''); // Reset input
+                setNewCollectionName(""); // Reset input
                 setIsModalVisible(true);
                 setIsFabOpen(false);
               }}
@@ -149,7 +149,7 @@ export default function HomeScreen() {
           onPress={() => setIsFabOpen((prev) => !prev)}
         >
           <AntDesign
-            name={isFabOpen ? 'close' : 'plus'}
+            name={isFabOpen ? "close" : "plus"}
             size={24}
             color="white"
           />
@@ -161,13 +161,13 @@ export default function HomeScreen() {
         visible={isModalVisible}
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalOverlay}
         >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>New Collection</Text>
-            
+
             <TextInput
               style={styles.input}
               placeholder="Enter collection name"
@@ -178,22 +178,21 @@ export default function HomeScreen() {
             />
 
             <View style={styles.buttonContainer}>
-              <TextButton 
-                title="Cancel" 
-                variant="outline" 
-                onPress={() => setIsModalVisible(false)} 
+              <TextButton
+                title="Cancel"
+                variant="outline"
+                onPress={() => setIsModalVisible(false)}
               />
 
-              <TextButton 
-                title="Create" 
-                variant="primary" 
-                onPress={handleCreate} 
+              <TextButton
+                title="Create"
+                variant="primary"
+                onPress={handleCreate}
               />
             </View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
-
     </View>
   );
 }
@@ -201,13 +200,13 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
 
   centered: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   list: {
@@ -215,16 +214,16 @@ const styles = StyleSheet.create({
   },
 
   listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
 
     padding: 12,
     marginBottom: 12,
     borderRadius: 12,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
 
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -238,22 +237,22 @@ const styles = StyleSheet.create({
 
   listItemText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#333',
+    fontWeight: "500",
+    color: "#333",
   },
 
   loginLink: {
     marginTop: 8,
     fontSize: 16,
-    fontWeight: 'bold',
-    color: 'blue',
+    fontWeight: "bold",
+    color: "blue",
   },
 
   fabContainer: {
-    position: 'absolute',
+    position: "absolute",
     right: 30,
     bottom: 30,
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   fab: {
@@ -261,11 +260,11 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     backgroundColor: colors.secondary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
 
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
@@ -273,7 +272,7 @@ const styles = StyleSheet.create({
 
   menuItems: {
     marginBottom: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   miniFab: {
@@ -283,8 +282,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
 
     backgroundColor: colors.secondary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
 
     elevation: 4,
   },
@@ -292,39 +291,38 @@ const styles = StyleSheet.create({
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)', // Dims the background
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.5)", // Dims the background
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   modalContent: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 15,
     padding: 20,
     elevation: 5, // Android shadow
-    shadowColor: '#000', // iOS shadow
+    shadowColor: "#000", // iOS shadow
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 15,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
     marginBottom: 20,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
     gap: 12,
   },
-
 });
