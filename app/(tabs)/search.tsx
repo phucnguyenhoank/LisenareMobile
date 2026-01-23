@@ -13,16 +13,44 @@ import {
 } from "react-native";
 import YoutubePlayer from "react-native-youtube-iframe";
 
-interface ContextSearchResult {
+interface VideoContextSearchResult {
   ytb_video_id: string;
   text: string;
   start: number;
   duration: number;
 }
 
+interface BrickContextSearchResult {
+  native_text: string;
+  target_text: string;
+  target_audio_uri: string;
+  cefr_level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+  is_public: boolean;
+}
+
+type SearchMode = "videos" | "bricks";
+
+function EmptyState({ query, label }: { query: string; label: string }) {
+  return (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyText}>
+        {query
+          ? `No ${label} found for this phrase.`
+          : "Enter a phrase to search."}
+      </Text>
+    </View>
+  );
+}
+
 export default function SearchScreen() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<ContextSearchResult[]>([]);
+  const [videoResults, setVideoResults] = useState<VideoContextSearchResult[]>(
+    [],
+  );
+  const [brickResults, setBrickResults] = useState<BrickContextSearchResult[]>(
+    [],
+  );
+  const [mode, setMode] = useState<SearchMode>("videos");
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
@@ -32,25 +60,27 @@ export default function SearchScreen() {
     Keyboard.dismiss();
 
     try {
-      // Using your provided apiCall function
-      // It will automatically set Content-Type: application/json
-      // and inject the Bearer token from authStorage
-      const data = await apiCall<ContextSearchResult[]>("/context-search", {
-        method: "POST",
-        body: { query: query },
-        requiresAuth: true, // Set to false if this endpoint is public
-      });
-
-      setResults(data || []);
+      if (mode === "videos") {
+        const data = await apiCall<VideoContextSearchResult[]>(
+          "/context-search/videos",
+          { method: "POST", body: { query } },
+        );
+        setVideoResults(data || []);
+      } else {
+        const data = await apiCall<BrickContextSearchResult[]>(
+          "/context-search/bricks",
+          { method: "POST", body: { query } },
+        );
+        setBrickResults(data || []);
+      }
     } catch (error) {
       console.error("Search error:", error);
-      // You can implement a toast or alert here
     } finally {
       setLoading(false);
     }
   };
 
-  const renderVideoItem = ({ item }: { item: ContextSearchResult }) => (
+  const renderVideoItem = ({ item }: { item: VideoContextSearchResult }) => (
     <View style={styles.card}>
       <YoutubePlayer
         height={210}
@@ -67,6 +97,18 @@ export default function SearchScreen() {
           <Text style={styles.badgeText}>
             Starts at {Math.floor(item.start)}s
           </Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderBrickItem = ({ item }: { item: BrickContextSearchResult }) => (
+    <View style={styles.card}>
+      <View style={styles.info}>
+        <Text style={styles.quote}>{item.target_text}</Text>
+        <Text style={{ color: "#666", marginTop: 6 }}>{item.native_text}</Text>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{item.cefr_level}</Text>
         </View>
       </View>
     </View>
@@ -97,33 +139,54 @@ export default function SearchScreen() {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={results}
-        keyExtractor={(item, index) => `${item.ytb_video_id}-${index}`}
-        renderItem={renderVideoItem}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          !loading ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>
-                {query
-                  ? "No contexts found for this phrase."
-                  : "Enter a phrase to see how it's used in real videos."}
-              </Text>
-            </View>
-          ) : null
-        }
-      />
+      <View style={styles.tabs}>
+        {(["videos", "bricks"] as SearchMode[]).map((item) => (
+          <TouchableOpacity
+            key={item}
+            onPress={() => {
+              setMode(item);
+              if (query.trim()) handleSearch();
+            }}
+            style={[styles.tab, mode === item && styles.tabActive]}
+          >
+            <Text
+              style={[styles.tabText, mode === item && styles.tabTextActive]}
+            >
+              {item === "videos" ? "Videos" : "Bricks"}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      {mode === "videos" ? (
+        <FlatList<VideoContextSearchResult>
+          data={videoResults}
+          keyExtractor={(item, index) => `${item.ytb_video_id}-${index}`}
+          renderItem={renderVideoItem}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            !loading ? <EmptyState query={query} label="videos" /> : null
+          }
+        />
+      ) : (
+        <FlatList<BrickContextSearchResult>
+          data={brickResults}
+          keyExtractor={(_, index) => `brick-${index}`}
+          renderItem={renderBrickItem}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            !loading ? <EmptyState query={query} label="bricks" /> : null
+          }
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FAFAFA", paddingTop: 20 },
+  container: { flex: 1, backgroundColor: "#FAFAFA" },
   searchContainer: {
     flexDirection: "row",
-    padding: 16,
-    gap: 10,
+    padding: 8,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#EEE",
@@ -143,7 +206,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  buttonDisabled: { backgroundColor: "#A2CFFE" },
+  buttonDisabled: { backgroundColor: "#888" },
   buttonText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   listContent: { paddingVertical: 10 },
   card: {
@@ -177,5 +240,29 @@ const styles = StyleSheet.create({
     color: "#888",
     fontSize: 15,
     lineHeight: 22,
+  },
+  tabs: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: "#fff",
+  },
+  tab: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: "#F0F0F0",
+    marginRight: 8,
+  },
+  tabActive: {
+    backgroundColor: colors.secondary,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#555",
+  },
+  tabTextActive: {
+    color: "#fff",
   },
 });
