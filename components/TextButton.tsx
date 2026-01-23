@@ -5,7 +5,7 @@ import {
   StyleProp,
   StyleSheet,
   Text,
-  ViewStyle
+  ViewStyle,
 } from "react-native";
 
 // Define the Props interface
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     color: "white",
   },
   outlineText: {
-    color: "#666",
+    color: colors.secondary,
   },
   pressed: {
     opacity: 0.7,

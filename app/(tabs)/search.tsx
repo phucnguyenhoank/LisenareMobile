@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginTop: 8,
   },
-  badgeText: { color: "#007AFF", fontSize: 12, fontWeight: "600" },
+  badgeText: { color: colors.secondary, fontSize: 12, fontWeight: "600" },
   emptyContainer: { padding: 40, alignItems: "center" },
   emptyText: {
     textAlign: "center",

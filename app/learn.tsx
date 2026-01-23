@@ -88,21 +88,26 @@ export default function LearnScreen() {
 
   const submitAnswer = async () => {
     setMenuOpen(false);
+    let finalAnswer = answer;
+    if (recorderState.isRecording) {
+      const transcribed = await stopRecordingAndTranscribeAudio();
+      if (transcribed) finalAnswer = transcribed;
+    }
 
-    if (!answer.trim() || !brick) {
+    if (!finalAnswer.trim() || !brick) {
       showQuickMessage("Type your answer first!");
       return;
     }
 
     setSubmitting(true);
-
+    setAnswer("scoring . . .");
     try {
       const result = await apiCall<SentenceCompareResponse>(
         "/text/comparisons",
         {
           method: "POST",
           body: {
-            sentence1: answer.trim(),
+            sentence1: finalAnswer,
             sentence2: brick.target_text,
           },
         },
@@ -121,6 +126,7 @@ export default function LearnScreen() {
       showQuickMessage("Failed to check answer.");
     } finally {
       setSubmitting(false);
+      setAnswer(finalAnswer);
     }
   };
 
@@ -129,9 +135,13 @@ export default function LearnScreen() {
     audioRecorder.record();
   };
 
-  const stopRecordingAndTranscribeAudio = async () => {
+  const stopRecordingAudio = async () => {
     await audioRecorder.stop();
-    setAnswer(". . .");
+  };
+
+  const stopRecordingAndTranscribeAudio = async (): Promise<string | null> => {
+    await audioRecorder.stop();
+    setAnswer("transcribing . . .");
     console.log(`audioRecorder.uri:${audioRecorder.uri}`);
     const formData = new FormData();
     formData.append("file", {
@@ -154,14 +164,16 @@ export default function LearnScreen() {
         );
 
         // setAnswer(prev => prev ? `${prev} ${transcript}` : transcript);
-        setAnswer(transcript.trim());
-        return;
+        const text = transcript.trim();
+        setAnswer(text);
+        return text;
       } catch {
         if (attempt < NUM_TRANSCRIPTION_ATTEMPTS)
           await new Promise((r) => setTimeout(r, 400));
       }
     }
     setAnswer("try again");
+    return null;
   };
 
   useEffect(() => {
@@ -202,7 +214,7 @@ export default function LearnScreen() {
           setShowNative={setShowNative}
         />
       ) : (
-        <Text>Loadding brick...</Text>
+        <Text>Loading brick...</Text>
       )}
 
       <ActionRow playSound={playSound} next={fetchRandomBrick} />
@@ -214,9 +226,7 @@ export default function LearnScreen() {
         setAnswer={setAnswer}
         submitting={submitting}
         isRecording={recorderState.isRecording}
-        onMicPress={
-          recorderState.isRecording ? stopRecordingAndTranscribeAudio : record
-        }
+        onMicPress={recorderState.isRecording ? stopRecordingAudio : record}
         onSubmit={submitAnswer}
       />
 

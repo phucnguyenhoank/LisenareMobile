@@ -24,7 +24,7 @@ export function AnswerInputRow({
     <View style={styles.answerRow}>
       <Pressable style={styles.micIcon} onPress={onMicPress}>
         {isRecording ? (
-          <FontAwesome name="stop-circle" size={28} color="black" />
+          <FontAwesome name="trash-o" size={24} color="red" />
         ) : (
           <FontAwesome name="microphone" size={32} color={colors.secondary2} />
         )}

@@ -1,10 +1,10 @@
 import { apiCall } from "@/api/client";
-import CloseButton from "@/components/CloseButton";
+import TextButton from "@/components/TextButton";
 import colors from "@/theme/colors";
 import type { Brick } from "@/types/brick";
 import type { Collection } from "@/types/collection";
 import { Picker } from "@react-native-picker/picker";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -17,6 +17,22 @@ import {
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      {children}
+    </View>
+  );
+}
 
 export default function EditBrickScreen() {
   const { brick_id } = useLocalSearchParams();
@@ -70,57 +86,70 @@ export default function EditBrickScreen() {
     return <ActivityIndicator style={{ flex: 1 }} color={colors.secondary2} />;
 
   return (
-    <KeyboardAwareScrollView
-      bottomOffset={62}
-      contentContainerStyle={styles.container}
-    >
-      <Text style={styles.muted}>Brick #{brick?.id}</Text>
-      <CloseButton />
-      <Picker
-        selectedValue={collectionId}
-        onValueChange={setCollectionId}
-        style={styles.input}
+    <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
+      <KeyboardAwareScrollView
+        bottomOffset={62}
+        contentContainerStyle={styles.container}
       >
-        {collections.map((c) => (
-          <Picker.Item key={c.id} label={c.name} value={c.id} />
-        ))}
-      </Picker>
+        <Text style={styles.muted}>Brick #{brick?.id}</Text>
 
-      <Pressable onPress={() => alert("Change coming soon")}>
-        <Text style={styles.muted}>
-          Audio: {brick?.target_audio_uri?.split("/").pop()}
-        </Text>
-      </Pressable>
+        <Field label="Collection">
+          <Picker
+            selectedValue={collectionId}
+            onValueChange={setCollectionId}
+            style={styles.picker}
+          >
+            {collections.map((c) => (
+              <Picker.Item key={c.id} label={c.name} value={c.id} />
+            ))}
+          </Picker>
+        </Field>
 
-      <TextInput
-        style={styles.input}
-        value={nativeText}
-        onChangeText={setNativeText}
-        placeholder="Native text"
-        multiline
-      />
+        <Pressable onPress={() => alert("Change coming soon")}>
+          <Text style={styles.muted}>
+            Audio: {brick?.target_audio_uri?.split("/").pop()}
+          </Text>
+        </Pressable>
 
-      <TextInput
-        style={styles.input}
-        value={targetText}
-        onChangeText={setTargetText}
-        placeholder="Target text"
-        multiline
-      />
+        <Field label="Native text">
+          <TextInput
+            style={styles.input}
+            value={nativeText}
+            onChangeText={setNativeText}
+            multiline
+          />
+        </Field>
 
-      <View style={styles.row}>
-        <Text>Public</Text>
-        <Switch
-          value={isPublic}
-          onValueChange={setIsPublic}
-          trackColor={{ true: colors.secondary2 }}
-        />
-      </View>
+        <Field label="Target text">
+          <TextInput
+            style={styles.input}
+            value={targetText}
+            onChangeText={setTargetText}
+            multiline
+          />
+        </Field>
 
-      <Pressable style={styles.save} onPress={handleSave}>
-        <Text style={styles.saveText}>Save</Text>
-      </Pressable>
-    </KeyboardAwareScrollView>
+        <View style={styles.row}>
+          <Text>Public</Text>
+          <Switch
+            value={isPublic}
+            onValueChange={setIsPublic}
+            trackColor={{ true: colors.secondary2 }}
+          />
+        </View>
+
+        <View style={styles.actionRow}>
+          <TextButton
+            title="Cancel"
+            variant="outline"
+            onPress={() => router.back()}
+            style={{ flex: 1 }}
+          />
+
+          <TextButton title="Save" onPress={handleSave} style={{ flex: 1 }} />
+        </View>
+      </KeyboardAwareScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -129,12 +158,22 @@ const styles = StyleSheet.create({
     gap: 16,
     padding: 16,
   },
+  field: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#555",
+  },
   input: {
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: colors.secondary2,
     paddingVertical: 10,
-    marginTop: 20,
     fontSize: 14,
+  },
+  picker: {
+    marginLeft: -8,
   },
   row: {
     flexDirection: "row",
@@ -145,24 +184,10 @@ const styles = StyleSheet.create({
   muted: {
     fontSize: 12,
     color: "#888",
-    marginTop: 20,
   },
-  save: {
+  actionRow: {
+    flexDirection: "row",
+    gap: 12,
     marginTop: 40,
-    backgroundColor: "#23412a",
-    paddingVertical: 14,
-    borderRadius: 6,
-    alignItems: "center",
-  },
-  saveText: {
-    color: "#fff",
-    fontWeight: "700",
-    letterSpacing: 1,
-  },
-  close: {
-    position: "absolute",
-    top: 30,
-    right: 30,
-    zIndex: 10,
   },
 });
