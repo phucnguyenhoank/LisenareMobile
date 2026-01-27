@@ -1,70 +1,58 @@
 import colors from "@/theme/colors";
-import AntDesign from "@expo/vector-icons/AntDesign";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { Tabs } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Tabs, useRouter } from "expo-router";
+import { Pressable } from "react-native";
 
 export default function TabLayout() {
+  const router = useRouter();
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-      <Tabs
-        screenOptions={{
-          tabBarActiveTintColor: colors.secondary,
-          tabBarHideOnKeyboard: true,
-          headerShown: false,
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: colors.secondary,
+        tabBarHideOnKeyboard: true,
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Ngữ pháp",
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons
+              name="alphabetical"
+              size={24}
+              color={color}
+            />
+          ),
         }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: "Home",
-            tabBarIcon: ({ color }) => (
-              <AntDesign name="home" size={24} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="search"
-          options={{
-            title: "Search",
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="search-sharp" size={24} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="chat-topics"
-          options={{
-            title: "Chat",
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="chatbubbles-outline" size={24} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: "Profile",
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="person" size={24} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="test-screen"
-          options={{
-            title: "Test",
-            tabBarIcon: ({ color }) => (
-              <MaterialCommunityIcons
-                name="test-tube"
-                size={24}
-                color={color}
-              />
-            ),
-          }}
-        />
-      </Tabs>
-    </SafeAreaView>
+      />
+      <Tabs.Screen
+        name="practice"
+        options={{
+          title: "Thực hành",
+          tabBarIcon: ({ color }) => (
+            <FontAwesome5 name="running" size={24} color={color} />
+          ),
+          headerRight: () => (
+            <Pressable
+              onPress={() => router.push("/profile")}
+              style={{ marginRight: 15 }}
+            >
+              <Ionicons name="person" size={24} color="black" />
+            </Pressable>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="test-screen"
+        options={{
+          title: "Test",
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="test-tube" size={24} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }

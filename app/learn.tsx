@@ -83,7 +83,7 @@ export default function LearnScreen() {
         method: "POST",
       },
     );
-    showQuickMessage(`${response.message}. Thank you!`);
+    showQuickMessage(`${response.message}. Cảm ơn bạn!`);
   };
 
   const submitAnswer = async () => {
@@ -95,7 +95,7 @@ export default function LearnScreen() {
     }
 
     if (!finalAnswer.trim() || !brick) {
-      showQuickMessage("Type your answer first!");
+      showQuickMessage("Nhập câu trả lời của bạn trước nha!");
       return;
     }
 
@@ -117,9 +117,9 @@ export default function LearnScreen() {
 
       // Optional: Show a quick toast based on correctness
       if (result.correct) {
-        showQuickMessage("Perfect! ✨");
+        showQuickMessage("Tuyệt vời! ✨");
       } else {
-        showQuickMessage("Keep trying! 💪");
+        showQuickMessage("Cố lên nhé! 💪");
       }
     } catch (err) {
       console.error("Comparison failed:", err);
@@ -172,7 +172,7 @@ export default function LearnScreen() {
           await new Promise((r) => setTimeout(r, 400));
       }
     }
-    setAnswer("try again");
+    setAnswer("Thử lại");
     return null;
   };
 

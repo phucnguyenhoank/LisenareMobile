@@ -33,7 +33,7 @@ export function AnswerInputRow({
       <TextInput
         value={answer}
         onChangeText={setAnswer}
-        placeholder="Repeat what you understood"
+        placeholder="Nhập những gì bạn hiểu"
         placeholderTextColor={"#9c9c9cff"}
         style={styles.compactInput}
         editable={!submitting}

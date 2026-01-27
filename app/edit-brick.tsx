@@ -76,7 +76,7 @@ export default function EditBrickScreen() {
           collection_ids: [collectionId],
         },
       });
-      Alert.alert("Saved");
+      Alert.alert("Đã lưu");
     } catch {
       Alert.alert("Error", "Failed to save");
     }
@@ -93,7 +93,7 @@ export default function EditBrickScreen() {
       >
         <Text style={styles.muted}>Brick #{brick?.id}</Text>
 
-        <Field label="Collection">
+        <Field label="Bộ sưu tập">
           <Picker
             selectedValue={collectionId}
             onValueChange={setCollectionId}
@@ -111,7 +111,7 @@ export default function EditBrickScreen() {
           </Text>
         </Pressable>
 
-        <Field label="Native text">
+        <Field label="Tiếng việt">
           <TextInput
             style={styles.input}
             value={nativeText}
@@ -120,7 +120,7 @@ export default function EditBrickScreen() {
           />
         </Field>
 
-        <Field label="Target text">
+        <Field label="Tiếng anh">
           <TextInput
             style={styles.input}
             value={targetText}
@@ -130,7 +130,7 @@ export default function EditBrickScreen() {
         </Field>
 
         <View style={styles.row}>
-          <Text>Public</Text>
+          <Text>Công khai</Text>
           <Switch
             value={isPublic}
             onValueChange={setIsPublic}
@@ -140,13 +140,13 @@ export default function EditBrickScreen() {
 
         <View style={styles.actionRow}>
           <TextButton
-            title="Cancel"
+            title="Thoát"
             variant="outline"
             onPress={() => router.back()}
             style={{ flex: 1 }}
           />
 
-          <TextButton title="Save" onPress={handleSave} style={{ flex: 1 }} />
+          <TextButton title="Lưu" onPress={handleSave} style={{ flex: 1 }} />
         </View>
       </KeyboardAwareScrollView>
     </SafeAreaView>

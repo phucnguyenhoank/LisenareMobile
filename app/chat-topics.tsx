@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons'; // Standard in Expo
-import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Ionicons } from "@expo/vector-icons"; // Standard in Expo
+import { useRouter } from "expo-router";
+import { Pressable, StyleSheet, Text } from "react-native";
 
 export default function ChatTopicScreen() {
   const router = useRouter();
@@ -9,7 +9,7 @@ export default function ChatTopicScreen() {
     <Pressable
       style={({ pressed }) => [
         styles.listItem,
-        pressed && styles.pressed // Visual feedback when tapped
+        pressed && styles.pressed, // Visual feedback when tapped
       ]}
       onPress={() => router.push("/chat")}
     >
@@ -21,21 +21,21 @@ export default function ChatTopicScreen() {
 
 const styles = StyleSheet.create({
   listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0', // Light separator line
+    borderBottomColor: "#f0f0f0", // Light separator line
   },
   topicText: {
     fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+    color: "#333",
+    fontWeight: "500",
   },
   pressed: {
-    backgroundColor: '#f9f9f9', // Slight gray tint on tap
+    backgroundColor: "#f9f9f9", // Slight gray tint on tap
   },
 });

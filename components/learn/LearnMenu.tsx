@@ -44,7 +44,7 @@ export function LearnMenu({
               });
             }}
           >
-            <Text>Edit brick</Text>
+            <Text>Chỉnh sửa brick</Text>
           </Pressable>
 
           <Pressable
@@ -54,7 +54,7 @@ export function LearnMenu({
               router.push({ pathname: "/help" });
             }}
           >
-            <Text>Help</Text>
+            <Text>Trợ giúp</Text>
           </Pressable>
 
           <Pressable
@@ -64,7 +64,7 @@ export function LearnMenu({
               reportBrokenFile();
             }}
           >
-            <Text>Report issue</Text>
+            <Text>Báo cáo lỗi</Text>
           </Pressable>
         </View>
       )}
