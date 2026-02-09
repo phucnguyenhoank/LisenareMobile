@@ -30,7 +30,14 @@ export default function PracticeScreen() {
     firstShowNative: true,
   };
   const NUM_TRANSCRIPTION_ATTEMPTS = 5;
-  const { collection_id } = useLocalSearchParams();
+  const { collection_ids } = useLocalSearchParams<{
+    collection_ids?: string | string[];
+  }>();
+  const ids: number[] | undefined = collection_ids
+    ? Array.isArray(collection_ids)
+      ? collection_ids.map(Number)
+      : [Number(collection_ids)]
+    : undefined; // undefined = ALL collections
   const [brick, setBrick] = useState<Brick | null>(null);
   const [audioUri, setAudioUri] = useState<string | null>(null);
   const player = useAudioPlayer(audioUri ? { uri: audioUri } : null);
@@ -55,7 +62,13 @@ export default function PracticeScreen() {
       setShowNative(DEFAULT_SETTINGS.firstShowNative);
       setAnswer("");
       setCompareResult(null);
-      const br = await apiCall<Brick>(`/bricks/random/${collection_id}`);
+      let url = "/bricks/random";
+      if (ids && ids.length > 0) {
+        const params = new URLSearchParams();
+        ids.forEach((id) => params.append("collection_ids", id.toString()));
+        url += `?${params.toString()}`;
+      }
+      const br = await apiCall<Brick>(url);
       setBrick(br);
       setAudioUri(brickAudioUrl(br.target_audio_uri));
     } catch (err) {

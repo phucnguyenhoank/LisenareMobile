@@ -26,7 +26,7 @@ export function LearnMenu({
         onPress={() => setMenuOpen(!menuOpen)}
       >
         <AntDesign
-          name={menuOpen ? "close" : "menu"}
+          name={menuOpen ? "close" : "question-circle"}
           size={24}
           color={colors.primary}
         />

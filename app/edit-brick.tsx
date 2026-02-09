@@ -51,7 +51,7 @@ export default function EditBrickScreen() {
     (async () => {
       try {
         const [b, c] = await Promise.all([
-          apiCall<Brick>(`/bricks/${brickId}`),
+          apiCall<Brick>(`/bricks/by-id/${brickId}`),
           apiCall<Collection[]>("/collections"),
         ]);
         setBrick(b);
@@ -67,7 +67,7 @@ export default function EditBrickScreen() {
 
   const handleSave = async () => {
     try {
-      await apiCall(`/bricks/${brickId}`, {
+      await apiCall(`/bricks/by-id/${brickId}`, {
         method: "PATCH",
         body: {
           native_text: nativeText,

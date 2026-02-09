@@ -1,3 +1,14 @@
+import { apiCall } from "@/api/client";
+import { CollectionRow } from "@/components/practice-bricks/CollectionRow";
+import TextButton from "@/components/TextButton";
+import { useAuth } from "@/context/AuthContext";
+import colors from "@/theme/colors";
+import type { Collection } from "@/types/collection";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { Picker } from "@react-native-picker/picker";
+import { Link, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -12,20 +23,6 @@ import {
   View,
 } from "react-native";
 
-import TextButton from "@/components/TextButton";
-
-import AntDesign from "@expo/vector-icons/AntDesign";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { Link, useRouter } from "expo-router";
-
-import { apiCall } from "@/api/client";
-import { CollectionRow } from "@/components/practice-bricks/collectionRow";
-import { useAuth } from "@/context/AuthContext";
-import colors from "@/theme/colors";
-import type { Collection } from "@/types/collection";
-import { Picker } from "@react-native-picker/picker";
-
 export default function PracticeScreen() {
   const { token, isLoading } = useAuth();
   const router = useRouter();
@@ -34,7 +31,6 @@ export default function PracticeScreen() {
   const [newCollectionName, setNewCollectionName] = useState("");
   const [newCollectionGroupName, setNewCollectionGroupName] =
     useState("my group");
-
   const [selectedGroupName, setSelectedGroupName] = useState("my group");
   const groups = ["A1", "A2", "B1", "B2", "C1", "C2", "my group"];
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,9 +52,6 @@ export default function PracticeScreen() {
       const data = await apiCall<Collection[]>(
         `/collections?page=${currentPage}&limit=20&group_name=${encodeURIComponent(selectedGroupName)}`,
       );
-
-      console.log(`data.length=${data.length}`);
-
       setCollections(data);
     } finally {
       setIsLoadingPage(false);
@@ -150,7 +143,7 @@ export default function PracticeScreen() {
         {isFabOpen && (
           <View style={styles.menuItems}>
             <Pressable
-              style={styles.miniFab}
+              style={styles.miniFabWithLabel}
               onPress={() => {
                 setIsFabOpen(false);
                 router.push("/add-brick");
@@ -161,10 +154,11 @@ export default function PracticeScreen() {
                 size={24}
                 color="white"
               />
+              <Text style={styles.miniFabText}>Thêm câu</Text>
             </Pressable>
 
             <Pressable
-              style={styles.miniFab}
+              style={styles.miniFabWithLabel}
               onPress={() => {
                 setNewCollectionName(""); // Reset input
                 setIsModalVisible(true);
@@ -176,26 +170,40 @@ export default function PracticeScreen() {
                 size={24}
                 color="white"
               />
+              <Text style={styles.miniFabText}>Thêm bộ sưu tập</Text>
             </Pressable>
 
             <Pressable
-              style={styles.miniFab}
+              style={styles.miniFabWithLabel}
               onPress={() => {
                 setIsFabOpen(false);
                 router.push("/search");
               }}
             >
               <Ionicons name="search-sharp" size={24} color="white" />
+              <Text style={styles.miniFabText}>Tìm kiếm</Text>
             </Pressable>
 
             <Pressable
-              style={styles.miniFab}
+              style={styles.miniFabWithLabel}
               onPress={() => {
                 setIsFabOpen(false);
                 router.push("/chat-topics");
               }}
             >
               <Ionicons name="chatbubbles-outline" size={24} color="white" />
+              <Text style={styles.miniFabText}>AI Chat</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.miniFabWithLabel}
+              onPress={() => {
+                setIsFabOpen(false);
+                router.push("/practice");
+              }}
+            >
+              <Ionicons name="school-outline" size={20} color="white" />
+              <Text style={styles.miniFabText}>Luyện nói</Text>
             </Pressable>
           </View>
         )}
@@ -302,7 +310,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 30,
     bottom: 30,
-    alignItems: "center",
+    alignItems: "flex-end",
   },
   fab: {
     width: 60,
@@ -320,19 +328,23 @@ const styles = StyleSheet.create({
   },
   menuItems: {
     marginBottom: 10,
-    alignItems: "center",
+    alignItems: "flex-end",
   },
-  miniFab: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginBottom: 10,
-
-    backgroundColor: colors.secondary,
+  miniFabWithLabel: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "#333",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 24,
+    marginBottom: 12,
+    gap: 8,
+  },
 
-    elevation: 4,
+  miniFabText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "500",
   },
   // Modal
   modalOverlay: {
