@@ -1,11 +1,11 @@
 import { apiCall } from "@/api/client";
 import { brickAudioUrl } from "@/api/endpoints";
 import CloseButton from "@/components/CloseButton";
-import { ActionRow } from "@/components/learn/ActionRow";
-import { AnswerInputRow } from "@/components/learn/AnswerInputRow";
-import { BrickDisplay } from "@/components/learn/BrickDisplay";
-import { LearnMenu } from "@/components/learn/LearnMenu";
-import { ResultDisplay } from "@/components/learn/ResultDisplay";
+import { ActionRow } from "@/components/practice/ActionRow";
+import { AnswerInputRow } from "@/components/practice/AnswerInputRow";
+import { BrickDisplay } from "@/components/practice/BrickDisplay";
+import { LearnMenu } from "@/components/practice/LearnMenu";
+import { ResultDisplay } from "@/components/practice/ResultDisplay";
 import { Toast } from "@/components/Toast";
 import type { StatusResponse } from "@/types/api";
 import type { AudioTranscription } from "@/types/audio";
@@ -24,7 +24,7 @@ import { useEffect, useState } from "react";
 import { Alert, StyleSheet, Text } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
-export default function LearnScreen() {
+export default function PracticeScreen() {
   const DEFAULT_SETTINGS = {
     firstShowTarget: false,
     firstShowNative: true,
@@ -141,7 +141,7 @@ export default function LearnScreen() {
 
   const stopRecordingAndTranscribeAudio = async (): Promise<string | null> => {
     await audioRecorder.stop();
-    setAnswer("transcribing . . .");
+    setAnswer("transcribing. . .");
     console.log(`audioRecorder.uri:${audioRecorder.uri}`);
     const formData = new FormData();
     formData.append("file", {
@@ -226,8 +226,9 @@ export default function LearnScreen() {
         setAnswer={setAnswer}
         submitting={submitting}
         isRecording={recorderState.isRecording}
-        onMicPress={recorderState.isRecording ? stopRecordingAudio : record}
+        onMicPress={recorderState.isRecording ? submitAnswer : record}
         onSubmit={submitAnswer}
+        onQuitRecording={stopRecordingAudio}
       />
 
       {toast && <Toast message={toast} />}

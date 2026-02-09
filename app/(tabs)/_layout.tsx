@@ -1,6 +1,7 @@
 import colors from "@/theme/colors";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import Feather from "@expo/vector-icons/Feather";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs, useRouter } from "expo-router";
 import { Pressable } from "react-native";
@@ -25,10 +26,18 @@ export default function TabLayout() {
               color={color}
             />
           ),
+          headerRight: () => (
+            <Pressable
+              onPress={() => router.push("/profile")}
+              style={{ marginRight: 15 }}
+            >
+              <Feather name="settings" size={24} color="black" />
+            </Pressable>
+          ),
         }}
       />
       <Tabs.Screen
-        name="practice"
+        name="practice-bricks"
         options={{
           title: "Thực hành",
           tabBarIcon: ({ color }) => (
@@ -39,7 +48,24 @@ export default function TabLayout() {
               onPress={() => router.push("/profile")}
               style={{ marginRight: 15 }}
             >
-              <Ionicons name="person" size={24} color="black" />
+              <Feather name="settings" size={24} color="black" />
+            </Pressable>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="learner-statistic"
+        options={{
+          title: "Trạng thái",
+          tabBarIcon: ({ color }) => (
+            <AntDesign name="line-chart" size={24} color={color} />
+          ),
+          headerRight: () => (
+            <Pressable
+              onPress={() => router.push("/profile")}
+              style={{ marginRight: 15 }}
+            >
+              <Feather name="settings" size={24} color="black" />
             </Pressable>
           ),
         }}

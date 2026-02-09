@@ -11,6 +11,7 @@ type Props = {
   isRecording: boolean;
   onMicPress: () => void;
   onSubmit: () => void;
+  onQuitRecording: () => void;
 };
 
 export function AnswerInputRow({
@@ -20,6 +21,7 @@ export function AnswerInputRow({
   isRecording,
   onMicPress,
   onSubmit,
+  onQuitRecording,
 }: Props) {
   return (
     <View style={styles.container}>
@@ -52,7 +54,7 @@ export function AnswerInputRow({
 
       {/* Separate Delete Button at the bottom */}
       {isRecording && (
-        <Pressable style={styles.deleteButton} onPress={onMicPress}>
+        <Pressable style={styles.deleteButton} onPress={onQuitRecording}>
           <MaterialIcons name="cancel" size={36} color="red" />
         </Pressable>
       )}

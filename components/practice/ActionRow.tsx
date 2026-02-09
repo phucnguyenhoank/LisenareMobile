@@ -1,5 +1,5 @@
-import NextButton from "@/components/learn/NextButton";
 import PlaySoundButton from "@/components/PlaySoundButton";
+import NextButton from "@/components/practice/NextButton";
 import { StyleSheet, View } from "react-native";
 
 type Props = {
