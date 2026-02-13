@@ -1,11 +1,11 @@
 import { apiCall } from "@/api/client";
 import { brickAudioUrl } from "@/api/endpoints";
 import CloseButton from "@/components/CloseButton";
-import { ActionRow } from "@/components/practice/ActionRow";
+import PlaySoundButton from "@/components/PlaySoundButton";
 import { AnswerInputRow } from "@/components/practice/AnswerInputRow";
 import { BrickDisplay } from "@/components/practice/BrickDisplay";
 import { LearnMenu } from "@/components/practice/LearnMenu";
-import { ResultDisplay } from "@/components/practice/ResultDisplay";
+import ResultDisplay from "@/components/practice/ResultDisplay";
 import { Toast } from "@/components/Toast";
 import type { StatusResponse } from "@/types/api";
 import type { AudioTranscription } from "@/types/audio";
@@ -20,9 +20,32 @@ import {
   useAudioRecorderState,
 } from "expo-audio";
 import { useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import { Alert, StyleSheet, Text } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import {
+  Alert,
+  Animated,
+  Dimensions,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+function normalizeCollectionIds(input?: string | string[]): number[] | null {
+  if (!input) return null;
+  const arr = Array.isArray(input) ? input : [input];
+  const ids = arr.map(Number).filter(Number.isFinite);
+  return ids.length > 0 ? ids : null;
+}
+
+function buildRandomBrickUrl(collectionIds: number[] | null) {
+  if (!collectionIds) return "/bricks/random";
+  const params = new URLSearchParams();
+  collectionIds.forEach((id) => params.append("collection_ids", id.toString()));
+  return `/bricks/random?${params.toString()}`;
+}
 
 export default function PracticeScreen() {
   const DEFAULT_SETTINGS = {
@@ -33,11 +56,7 @@ export default function PracticeScreen() {
   const { collection_ids } = useLocalSearchParams<{
     collection_ids?: string | string[];
   }>();
-  const ids: number[] | undefined = collection_ids
-    ? Array.isArray(collection_ids)
-      ? collection_ids.map(Number)
-      : [Number(collection_ids)]
-    : undefined; // undefined = ALL collections
+  const collectionIds = normalizeCollectionIds(collection_ids);
   const [brick, setBrick] = useState<Brick | null>(null);
   const [audioUri, setAudioUri] = useState<string | null>(null);
   const player = useAudioPlayer(audioUri ? { uri: audioUri } : null);
@@ -55,6 +74,11 @@ export default function PracticeScreen() {
     useState<SentenceCompareResponse | null>(null);
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(audioRecorder);
+  const [microStatusMessage, setMicroStatusMessage] =
+    useState<string>("nhấn mic để nói");
+  const screenHeight = Dimensions.get("window").height;
+  const slideAnim = useRef(new Animated.Value(screenHeight)).current;
+  const insets = useSafeAreaInsets();
 
   const fetchRandomBrick = async () => {
     try {
@@ -62,12 +86,7 @@ export default function PracticeScreen() {
       setShowNative(DEFAULT_SETTINGS.firstShowNative);
       setAnswer("");
       setCompareResult(null);
-      let url = "/bricks/random";
-      if (ids && ids.length > 0) {
-        const params = new URLSearchParams();
-        ids.forEach((id) => params.append("collection_ids", id.toString()));
-        url += `?${params.toString()}`;
-      }
+      const url = buildRandomBrickUrl(collectionIds);
       const br = await apiCall<Brick>(url);
       setBrick(br);
       setAudioUri(brickAudioUrl(br.target_audio_uri));
@@ -113,7 +132,7 @@ export default function PracticeScreen() {
     }
 
     setSubmitting(true);
-    setAnswer("scoring . . .");
+    setMicroStatusMessage("đang chấm điểm");
     try {
       const result = await apiCall<SentenceCompareResponse>(
         "/text/comparisons",
@@ -127,34 +146,30 @@ export default function PracticeScreen() {
       );
 
       setCompareResult(result);
-
-      // Optional: Show a quick toast based on correctness
-      if (result.correct) {
-        showQuickMessage("Tuyệt vời! ✨");
-      } else {
-        showQuickMessage("Cố lên nhé! 💪");
-      }
     } catch (err) {
       console.error("Comparison failed:", err);
       showQuickMessage("Failed to check answer.");
     } finally {
       setSubmitting(false);
       setAnswer(finalAnswer);
+      setMicroStatusMessage("nhấn mic để nói");
     }
   };
 
   const record = async () => {
+    setMicroStatusMessage("đang nghe");
     await audioRecorder.prepareToRecordAsync();
     audioRecorder.record();
   };
 
   const stopRecordingAudio = async () => {
     await audioRecorder.stop();
+    setMicroStatusMessage("nhấn mic để nói");
   };
 
   const stopRecordingAndTranscribeAudio = async (): Promise<string | null> => {
     await audioRecorder.stop();
-    setAnswer("transcribing. . .");
+    setMicroStatusMessage("đang hiểu");
     console.log(`audioRecorder.uri:${audioRecorder.uri}`);
     const formData = new FormData();
     formData.append("file", {
@@ -185,78 +200,197 @@ export default function PracticeScreen() {
           await new Promise((r) => setTimeout(r, 400));
       }
     }
-    setAnswer("Thử lại");
+    setMicroStatusMessage("ui, bạn thử lại nha :(");
     return null;
   };
 
+  const closeBottomSheet = () => {
+    Animated.timing(slideAnim, {
+      toValue: 300, // hidden position
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      setCompareResult(null); // hide content AFTER animation
+    });
+  };
+
   useEffect(() => {
-    fetchRandomBrick();
-    (async () => {
+    const init = async () => {
+      fetchRandomBrick();
+
       const status = await AudioModule.requestRecordingPermissionsAsync();
+
       if (!status.granted) {
         Alert.alert("Permission to access microphone was denied");
+        return;
       }
 
-      setAudioModeAsync({
+      await setAudioModeAsync({
         playsInSilentMode: true,
         allowsRecording: true,
       });
-    })();
+    };
+
+    init();
   }, []);
 
+  useEffect(() => {
+    if (!compareResult) return;
+
+    if (compareResult.correct) {
+      playSound();
+      // Open bottom sheet
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      showQuickMessage(
+        `Làm lại nhé 💪, bạn được ${Math.round(compareResult.score * 100)}%`,
+      );
+    }
+  }, [compareResult]);
+
   return (
-    <KeyboardAwareScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-    >
-      <LearnMenu
-        menuOpen={menuOpen}
-        setMenuOpen={setMenuOpen}
-        brick={brick}
-        reportBrokenFile={reportBrokenFile}
-      />
-
-      <CloseButton />
-
-      {brick ? (
-        <BrickDisplay
+    <View style={styles.container}>
+      <KeyboardAwareScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+      >
+        <LearnMenu
+          menuOpen={menuOpen}
+          setMenuOpen={setMenuOpen}
           brick={brick}
-          showTarget={showTarget}
-          setShowTarget={setShowTarget}
-          showNative={showNative}
-          setShowNative={setShowNative}
+          reportBrokenFile={reportBrokenFile}
         />
-      ) : (
-        <Text>Loading brick...</Text>
+
+        <CloseButton />
+
+        {brick ? (
+          <BrickDisplay
+            target_text={brick.target_text}
+            native_text={brick.native_text}
+            showTarget={showTarget}
+            setShowTarget={setShowTarget}
+            showNative={showNative}
+            setShowNative={setShowNative}
+          />
+        ) : (
+          <Text>Loading brick...</Text>
+        )}
+
+        <PlaySoundButton onPress={playSound} />
+
+        <AnswerInputRow
+          answer={answer}
+          setAnswer={setAnswer}
+          submitting={submitting}
+          isRecording={recorderState.isRecording}
+          onMicPress={recorderState.isRecording ? submitAnswer : record}
+          onSubmit={submitAnswer}
+          onQuitRecording={stopRecordingAudio}
+        />
+
+        <Text style={styles.microStatusLabel}>{microStatusMessage}</Text>
+      </KeyboardAwareScrollView>
+
+      {toast && (
+        <View style={styles.toastWrapper}>
+          <Toast message={toast} />
+        </View>
       )}
 
-      <ActionRow playSound={playSound} next={fetchRandomBrick} />
+      {compareResult?.correct && (
+        <Pressable style={styles.backdrop} onPress={closeBottomSheet} />
+      )}
 
-      {compareResult && <ResultDisplay result={compareResult} />}
+      {compareResult?.correct && (
+        <Animated.View
+          style={[
+            styles.bottomSheet,
+            {
+              paddingBottom: insets.bottom + 20,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          <View style={styles.dragIndicator} />
 
-      <AnswerInputRow
-        answer={answer}
-        setAnswer={setAnswer}
-        submitting={submitting}
-        isRecording={recorderState.isRecording}
-        onMicPress={recorderState.isRecording ? submitAnswer : record}
-        onSubmit={submitAnswer}
-        onQuitRecording={stopRecordingAudio}
-      />
+          <ResultDisplay
+            result={compareResult}
+            targetText={brick?.target_text}
+            onNext={() => {
+              closeBottomSheet();
+              fetchRandomBrick();
+            }}
+            onPlaySound={playSound}
+          />
 
-      {toast && <Toast message={toast} />}
-    </KeyboardAwareScrollView>
+          <View style={styles.sheetFooter}></View>
+        </Animated.View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  dragIndicator: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#ddd",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 8,
+  },
   container: {
     flex: 1,
-    flexDirection: "column",
+    backgroundColor: "white",
   },
   contentContainer: {
     alignItems: "center",
     justifyContent: "center",
     flexGrow: 1,
+    padding: 20,
+  },
+  microStatusLabel: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 12,
+    fontStyle: "italic",
+  },
+
+  backdrop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.3)",
+  },
+
+  bottomSheet: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "white",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 12,
+    paddingHorizontal: 20,
+    elevation: 12,
+  },
+
+  sheetFooter: {
+    alignItems: "flex-end",
+    padding: 20,
+  },
+
+  toastWrapper: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 60,
+    alignItems: "center",
   },
 });

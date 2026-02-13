@@ -1,10 +1,10 @@
 import colors from "@/theme/colors";
-import type { Brick } from "@/types/brick";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Pressable, StyleSheet, Text } from "react-native";
 
 type Props = {
-  brick: Brick;
+  target_text: string;
+  native_text: string;
   showTarget: boolean;
   setShowTarget: (v: boolean) => void;
   showNative: boolean;
@@ -12,28 +12,40 @@ type Props = {
 };
 
 export function BrickDisplay({
-  brick,
+  target_text,
+  native_text,
   showTarget,
   setShowTarget,
   showNative,
   setShowNative,
 }: Props) {
+  const isTargetVisible = showTarget;
+
   return (
     <>
+      {/* TARGET TEXT */}
       <Pressable onPress={() => setShowTarget(!showTarget)}>
-        <Text style={{ ...styles.text, color: colors.secondary2 }}>
+        <Text style={[styles.target_text, { color: colors.secondary2 }]}>
           {showTarget ? (
-            brick.target_text
+            target_text
           ) : (
             <FontAwesome name="eye" size={24} color={colors.secondary2} />
           )}
         </Text>
       </Pressable>
 
+      {/* NATIVE TEXT */}
       <Pressable onPress={() => setShowNative(!showNative)}>
-        <Text style={styles.text}>
+        <Text
+          style={[
+            styles.native_text,
+            isTargetVisible
+              ? styles.native_secondary // when target is visible
+              : styles.native_primary, // when target is hidden
+          ]}
+        >
           {showNative ? (
-            brick.native_text
+            native_text
           ) : (
             <FontAwesome name="eye" size={24} color="black" />
           )}
@@ -44,9 +56,26 @@ export function BrickDisplay({
 }
 
 const styles = StyleSheet.create({
-  text: {
-    fontSize: 20,
+  target_text: {
+    fontSize: 24,
     textAlign: "center",
-    fontFamily: "Inter-SemiBold",
+    fontWeight: "bold",
+  },
+
+  native_text: {
+    textAlign: "center",
+  },
+
+  // When target is shown → native is secondary
+  native_secondary: {
+    fontSize: 16,
+    fontWeight: "normal",
+    opacity: 0.7,
+  },
+
+  // When target is hidden → native becomes primary
+  native_primary: {
+    fontSize: 22,
+    fontWeight: "bold",
   },
 });

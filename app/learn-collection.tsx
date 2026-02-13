@@ -5,14 +5,20 @@ import StepUnderstandSpeak from "@/components/learn/StepUnderstandSpeak";
 import { Brick } from "@/types/brick";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-export type LearnBrickResponse = {
+export type BrickLearnResponse = {
   brick: Brick | null;
   total_bricks: number;
 };
 
-export default function TestScreen() {
+export default function LearnScreen() {
   const { collection_id } = useLocalSearchParams();
   const router = useRouter();
 
@@ -26,9 +32,8 @@ export default function TestScreen() {
     const fetchBrickData = async () => {
       setLoading(true);
       try {
-        const cid = collection_id || 234;
-        const endpoint = `/bricks/learn/${cid}?brick_order=${currentIndex}`;
-        const data = await apiCall<LearnBrickResponse>(endpoint);
+        const endpoint = `/bricks/learn/${collection_id}?brick_order=${currentIndex}`;
+        const data = await apiCall<BrickLearnResponse>(endpoint);
 
         setCurrentBrick(data.brick);
         setTotalBricks(data.total_bricks);
@@ -42,7 +47,7 @@ export default function TestScreen() {
     fetchBrickData();
   }, [currentIndex, collection_id]);
 
-  const next = () => {
+  const goNext = () => {
     if (step < 3) {
       setStep(step + 1);
     } else if (currentIndex < totalBricks) {
@@ -50,6 +55,18 @@ export default function TestScreen() {
       setStep(1);
     } else {
       console.log("Đã hoàn thành bộ sưu tập!");
+      router.back();
+    }
+  };
+
+  // Logic lùi lại (Ngược lại hoàn toàn với goNext)
+  const goBack = () => {
+    if (step > 1) {
+      setStep(step - 1);
+    } else if (currentIndex > 1) {
+      setCurrentIndex(currentIndex - 1);
+      setStep(3);
+    } else {
       router.back();
     }
   };
@@ -83,7 +100,7 @@ export default function TestScreen() {
       {step === 1 && currentBrick && (
         <StepListenSpeak
           audioUri={currentBrick.target_audio_uri}
-          changeStep={next}
+          changeStep={goNext}
         />
       )}
 
@@ -92,7 +109,7 @@ export default function TestScreen() {
           audioUri={currentBrick.target_audio_uri}
           target_text={currentBrick.target_text}
           native_text={currentBrick.native_text}
-          changeStep={next}
+          changeStep={goNext}
         />
       )}
 
@@ -101,9 +118,13 @@ export default function TestScreen() {
           audioUri={currentBrick.target_audio_uri}
           target_text={currentBrick.target_text}
           native_text={currentBrick.native_text}
-          changeStep={next}
+          changeStep={goNext}
         />
       )}
+
+      <Pressable onPress={goBack} style={styles.backButton}>
+        <Text style={styles.backButtonText}>Quay lại</Text>
+      </Pressable>
     </View>
   );
 }
@@ -120,5 +141,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#888",
+  },
+  backButton: {
+    alignSelf: "center",
+    marginTop: 100,
+    padding: 10,
+  },
+  backButtonText: {
+    color: "#999", // Màu xám (grey)
+    fontSize: 14,
+    textDecorationLine: "underline", // Gạch chân để trông giống link (tùy chọn)
   },
 });

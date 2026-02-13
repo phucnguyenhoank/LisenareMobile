@@ -1,7 +1,7 @@
 import colors from "@/theme/colors";
+import { Entypo } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs, useRouter } from "expo-router";
 import { Pressable } from "react-native";
@@ -41,7 +41,7 @@ export default function TabLayout() {
         options={{
           title: "Thực hành",
           tabBarIcon: ({ color }) => (
-            <FontAwesome5 name="running" size={24} color={color} />
+            <Entypo name="pencil" size={24} color={color} />
           ),
           headerRight: () => (
             <Pressable

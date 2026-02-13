@@ -4,6 +4,7 @@ import TextButton from "@/components/TextButton";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
 import type { Collection } from "@/types/collection";
+import { MaterialIcons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -177,6 +178,17 @@ export default function PracticeScreen() {
               style={styles.miniFabWithLabel}
               onPress={() => {
                 setIsFabOpen(false);
+                router.push("/chat-topics");
+              }}
+            >
+              <Ionicons name="chatbubbles-outline" size={24} color="white" />
+              <Text style={styles.miniFabText}>Chat</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.miniFabWithLabel}
+              onPress={() => {
+                setIsFabOpen(false);
                 router.push("/search");
               }}
             >
@@ -188,21 +200,10 @@ export default function PracticeScreen() {
               style={styles.miniFabWithLabel}
               onPress={() => {
                 setIsFabOpen(false);
-                router.push("/chat-topics");
-              }}
-            >
-              <Ionicons name="chatbubbles-outline" size={24} color="white" />
-              <Text style={styles.miniFabText}>AI Chat</Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.miniFabWithLabel}
-              onPress={() => {
-                setIsFabOpen(false);
                 router.push("/practice");
               }}
             >
-              <Ionicons name="school-outline" size={20} color="white" />
+              <MaterialIcons name="fitness-center" size={24} color="white" />
               <Text style={styles.miniFabText}>Luyện nói</Text>
             </Pressable>
           </View>

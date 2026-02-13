@@ -1,8 +1,7 @@
 import colors from "@/theme/colors";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { MicButton } from "./MicButton";
 
 type Props = {
   answer: string;
@@ -29,7 +28,7 @@ export function AnswerInputRow({
         <TextInput
           value={answer}
           onChangeText={setAnswer}
-          placeholder="Nhập những gì bạn hiểu"
+          placeholder="Nói bằng tiếng Anh câu bạn hiểu"
           placeholderTextColor={"#9c9c9cff"}
           style={styles.compactInput}
           editable={!submitting}
@@ -40,24 +39,11 @@ export function AnswerInputRow({
         </Pressable>
       </View>
 
-      {/* Main Recording/Send Button */}
-      <Pressable
-        style={[styles.micButton, isRecording && styles.recordingActive]}
+      <MicButton
+        isRecording={isRecording}
         onPress={onMicPress}
-      >
-        <FontAwesome
-          name={isRecording ? "arrow-up" : "microphone"}
-          size={28}
-          color="white"
-        />
-      </Pressable>
-
-      {/* Separate Delete Button at the bottom */}
-      {isRecording && (
-        <Pressable style={styles.deleteButton} onPress={onQuitRecording}>
-          <MaterialIcons name="cancel" size={36} color="red" />
-        </Pressable>
-      )}
+        onCancel={onQuitRecording}
+      />
     </View>
   );
 }
@@ -81,7 +67,8 @@ const styles = StyleSheet.create({
   },
   compactInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 12,
+    // fontStyle: "italic",
     minHeight: 45,
   },
   micButton: {

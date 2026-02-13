@@ -1,19 +1,24 @@
 import colors from "@/theme/colors";
 import Feather from "@expo/vector-icons/Feather";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
 
 type Props = {
   onPress: () => void;
+  style?: ViewStyle;
 };
 
-export default function NextButton({ onPress }: Props) {
+export default function NextButton({ onPress, style }: Props) {
   return (
     <View style={styles.buttonContainer}>
       <Pressable
-        style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}
+        style={({ pressed }) => [
+          styles.button,
+          style,
+          pressed && { opacity: 0.7 },
+        ]}
         onPress={onPress}
       >
-        <Feather name="arrow-right" size={28} color="white" />
+        <Feather name="check" size={28} color="white" />
       </Pressable>
     </View>
   );

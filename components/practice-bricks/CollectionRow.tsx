@@ -10,7 +10,10 @@ type Props = {
 export function CollectionRow({ item }: Props) {
   return (
     <Link
-      href={{ pathname: "/practice", params: { collection_id: item.id } }}
+      href={{
+        pathname: "/learn-collection",
+        params: { collection_id: item.id },
+      }}
       asChild
     >
       <TouchableOpacity style={styles.listItem} activeOpacity={0.6}>
