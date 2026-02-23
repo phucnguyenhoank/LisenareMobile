@@ -1,15 +1,15 @@
-import { apiCall } from "@/api/client"; // Adjust path to your file structure
+import { request } from "@/api/client"; // Adjust path to your file structure
 import colors from "@/theme/colors";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  Keyboard,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Keyboard,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import YoutubePlayer from "react-native-youtube-iframe";
 
@@ -61,13 +61,13 @@ export default function SearchScreen() {
 
     try {
       if (mode === "videos") {
-        const data = await apiCall<VideoContextSearchResult[]>(
+        const data = await request<VideoContextSearchResult[]>(
           "/context-search/videos",
           { method: "POST", body: { query } },
         );
         setVideoResults(data || []);
       } else {
-        const data = await apiCall<BrickContextSearchResult[]>(
+        const data = await request<BrickContextSearchResult[]>(
           "/context-search/bricks",
           { method: "POST", body: { query } },
         );

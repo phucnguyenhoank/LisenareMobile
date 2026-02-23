@@ -5,3 +5,8 @@ export type Collection = {
   created_at: string;
   brick_count: number;
 };
+
+export type GroupStats = {
+  group_name: string;
+  collection_count: number;
+};

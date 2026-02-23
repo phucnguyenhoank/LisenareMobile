@@ -2,8 +2,8 @@
 import { API_BASE_URL } from "@/config/env";
 import { getToken } from "@/utils/authStorage";
 
-interface ApiCallOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+interface RequestOptions {
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: any;
   headers?: Record<string, string>;
   requiresAuth?: boolean; // Automate token injection
@@ -20,17 +20,21 @@ async function handleResponse<T>(res: Response): Promise<T> {
   }
 }
 
-export async function apiCall<T>(
-  endpoint: string, 
-  { method = 'GET', body = null, headers = {}, requiresAuth = true }: ApiCallOptions = {}
+export async function request<T>(
+  endpoint: string,
+  {
+    method = "GET",
+    body = null,
+    headers = {},
+    requiresAuth = true,
+  }: RequestOptions = {},
 ): Promise<T> {
-
   // Initialize headers without a default Content-Type
   const finalHeaders: Record<string, string> = { ...headers };
 
   if (requiresAuth) {
     const token = await getToken();
-    if (token) finalHeaders['Authorization'] = `Bearer ${token}`;
+    if (token) finalHeaders["Authorization"] = `Bearer ${token}`;
   }
 
   let finalBody: any = body;
@@ -40,11 +44,11 @@ export async function apiCall<T>(
       // DO NOT set any Content-Type here; fetch handles it
       finalBody = body;
     } else if (body instanceof URLSearchParams) {
-      finalHeaders['Content-Type'] = 'application/x-www-form-urlencoded';
+      finalHeaders["Content-Type"] = "application/x-www-form-urlencoded";
       finalBody = body.toString();
     } else {
       // Only set application/json for standard objects
-      finalHeaders['Content-Type'] = 'application/json';
+      finalHeaders["Content-Type"] = "application/json";
       finalBody = JSON.stringify(body);
     }
   }

@@ -1,4 +1,4 @@
-import { apiCall } from "@/api/client";
+import { request } from "@/api/client";
 import TextButton from "@/components/TextButton";
 import colors from "@/theme/colors";
 import type { Brick } from "@/types/brick";
@@ -7,14 +7,14 @@ import { Picker } from "@react-native-picker/picker";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    Pressable,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -51,8 +51,8 @@ export default function EditBrickScreen() {
     (async () => {
       try {
         const [b, c] = await Promise.all([
-          apiCall<Brick>(`/bricks/by-id/${brickId}`),
-          apiCall<Collection[]>("/collections"),
+          request<Brick>(`/bricks/by-id/${brickId}`),
+          request<Collection[]>("/collections"),
         ]);
         setBrick(b);
         setNativeText(b.native_text);
@@ -67,7 +67,7 @@ export default function EditBrickScreen() {
 
   const handleSave = async () => {
     try {
-      await apiCall(`/bricks/by-id/${brickId}`, {
+      await request(`/bricks/${brickId}`, {
         method: "PATCH",
         body: {
           native_text: nativeText,

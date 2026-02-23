@@ -1,124 +1,39 @@
-import { apiCall } from "@/api/client";
-import StepListenSpeak from "@/components/learn/StepListenSpeak";
-import StepReadSpeak from "@/components/learn/StepReadSpeak";
-import StepUnderstandSpeak from "@/components/learn/StepUnderstandSpeak";
-import { Brick } from "@/types/brick";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { request } from "@/api/client";
+import type { Collection } from "@/types/collection";
+import { useQuery } from "@tanstack/react-query";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 
-export type LearnBrickResponse = {
-  brick: Brick | null;
-  total_bricks: number;
-};
+type ItemProps = { title: string };
+
+const Item = ({ title }: ItemProps) => (
+  <View style={styles.item}>
+    <Text>{title}</Text>
+  </View>
+);
 
 export default function TestScreen() {
-  const { collection_id } = useLocalSearchParams();
-  const router = useRouter();
+  const { data, isPending, error } = useQuery<Collection[]>({
+    queryKey: ["collections"],
+    queryFn: () => request<Collection[]>("/collections"),
+  });
 
-  const [currentIndex, setCurrentIndex] = useState(1);
-  const [totalBricks, setTotalBricks] = useState(0);
-  const [currentBrick, setCurrentBrick] = useState<Brick | null>(null);
-  const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchBrickData = async () => {
-      setLoading(true);
-      try {
-        const cid = collection_id || 234;
-        const endpoint = `/bricks/learn/${cid}?brick_order=${currentIndex}`;
-        const data = await apiCall<LearnBrickResponse>(endpoint);
-
-        setCurrentBrick(data.brick);
-        setTotalBricks(data.total_bricks);
-      } catch (error) {
-        console.error("Error fetching brick:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBrickData();
-  }, [currentIndex, collection_id]);
-
-  const next = () => {
-    if (step < 3) {
-      setStep(step + 1);
-    } else if (currentIndex < totalBricks) {
-      setCurrentIndex((prev) => prev + 1);
-      setStep(1);
-    } else {
-      console.log("Đã hoàn thành bộ sưu tập!");
-      router.back();
-    }
-  };
-
-  if (loading && !currentBrick) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text style={{ marginTop: 10, textAlign: "center" }}>
-          Đang tải dữ liệu...
-        </Text>
-      </View>
-    );
-  }
-
-  if (!currentBrick && !loading) {
-    return (
-      <View style={styles.container}>
-        <Text style={{ textAlign: "center" }}>Không tìm thấy dữ liệu.</Text>
-      </View>
-    );
-  }
+  if (isPending) return <Text>Loading...</Text>;
+  if (error) return <Text>{"An error has occurred: " + error.message}</Text>;
 
   return (
-    <View style={styles.container}>
-      {/* Progress Indicator */}
-      <Text style={styles.progressText}>
-        {currentIndex} / {totalBricks}
-      </Text>
-
-      {step === 1 && currentBrick && (
-        <StepListenSpeak
-          audioUri={currentBrick.target_audio_uri}
-          changeStep={next}
-        />
-      )}
-
-      {step === 2 && currentBrick && (
-        <StepReadSpeak
-          audioUri={currentBrick.target_audio_uri}
-          target_text={currentBrick.target_text}
-          native_text={currentBrick.native_text}
-          changeStep={next}
-        />
-      )}
-
-      {step === 3 && currentBrick && (
-        <StepUnderstandSpeak
-          audioUri={currentBrick.target_audio_uri}
-          target_text={currentBrick.target_text}
-          native_text={currentBrick.native_text}
-          changeStep={next}
-        />
-      )}
-    </View>
+    <FlatList
+      data={data}
+      renderItem={({ item }) => <Item title={item.name} />}
+      keyExtractor={(item) => item.id.toString()}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-  },
-  progressText: {
-    textAlign: "center",
-    marginBottom: 20,
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#888",
+  item: {
+    backgroundColor: "#f9c2ff",
+    padding: 20,
+    marginVertical: 8,
+    marginHorizontal: 16,
   },
 });

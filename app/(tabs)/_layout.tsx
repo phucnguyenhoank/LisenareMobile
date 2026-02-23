@@ -18,6 +18,23 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
+          title: "Thực hành",
+          tabBarIcon: ({ color }) => (
+            <Entypo name="pencil" size={24} color={color} />
+          ),
+          headerRight: () => (
+            <Pressable
+              onPress={() => router.push("/setting")}
+              style={{ marginRight: 15 }}
+            >
+              <Feather name="settings" size={24} color="black" />
+            </Pressable>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="grammar-studying"
+        options={{
           title: "Ngữ pháp",
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons
@@ -28,24 +45,7 @@ export default function TabLayout() {
           ),
           headerRight: () => (
             <Pressable
-              onPress={() => router.push("/profile")}
-              style={{ marginRight: 15 }}
-            >
-              <Feather name="settings" size={24} color="black" />
-            </Pressable>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="practice-bricks"
-        options={{
-          title: "Thực hành",
-          tabBarIcon: ({ color }) => (
-            <Entypo name="pencil" size={24} color={color} />
-          ),
-          headerRight: () => (
-            <Pressable
-              onPress={() => router.push("/profile")}
+              onPress={() => router.push("/setting")}
               style={{ marginRight: 15 }}
             >
               <Feather name="settings" size={24} color="black" />
@@ -56,13 +56,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="learner-statistic"
         options={{
-          title: "Trạng thái",
+          title: "Tiến độ",
           tabBarIcon: ({ color }) => (
             <AntDesign name="line-chart" size={24} color={color} />
           ),
           headerRight: () => (
             <Pressable
-              onPress={() => router.push("/profile")}
+              onPress={() => router.push("/setting")}
               style={{ marginRight: 15 }}
             >
               <Feather name="settings" size={24} color="black" />

@@ -1,55 +1,143 @@
-import { StyleSheet, TextInput, View } from "react-native";
+import { request } from "@/api/client";
+import colors from "@/theme/colors";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  KeyboardAwareScrollView,
-  KeyboardToolbar,
-} from "react-native-keyboard-controller";
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from "react-native";
+
+interface LearnerStats {
+  learner_id: number;
+  total_learning: number;
+  due_count: number;
+  timestamp: string;
+}
 
 export default function LearnerState() {
+  const [stats, setStats] = useState<LearnerStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchStats = async () => {
+    try {
+      const data = await request<LearnerStats>("/learning-cards/stats");
+      setStats(data);
+    } catch (error) {
+      console.error("Failed to fetch learner stats:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Triggered on Pull-to-Refresh
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchStats();
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
+
   return (
-    <>
-      <KeyboardAwareScrollView
-        bottomOffset={62}
-        contentContainerStyle={styles.container}
-      >
-        <View>
-          <TextInput placeholder="Type a message..." style={styles.textInput} />
-          <TextInput placeholder="Type a message..." style={styles.textInput} />
+    <ScrollView
+      contentContainerStyle={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      <View style={styles.header}>
+        <Text style={styles.title}>Tiến độ học tập</Text>
+      </View>
+
+      <View style={styles.card}>
+        <View style={styles.statRow}>
+          <Text style={styles.label}>Đã học:</Text>
+          <Text style={styles.value}>
+            {stats?.total_learning ?? 0} câu & từ
+          </Text>
         </View>
-        <TextInput placeholder="Type a message..." style={styles.textInput} />
-        <View>
-          <TextInput placeholder="Type a message..." style={styles.textInput} />
-          <TextInput placeholder="Type a message..." style={styles.textInput} />
-          <TextInput placeholder="Type a message..." style={styles.textInput} />
+
+        <View style={styles.statRow}>
+          <Text style={styles.label}>Cần luyện lại:</Text>
+          <Text style={[styles.value, { color: "#FF3B30" }]}>
+            {stats?.due_count ?? 0}
+          </Text>
         </View>
-        <TextInput placeholder="Type a message..." style={styles.textInput} />
-        <TextInput placeholder="Type a message..." style={styles.textInput} />
-        <TextInput placeholder="Type a message..." style={styles.textInput} />
-        <TextInput placeholder="Type a message..." style={styles.textInput} />
-        <TextInput placeholder="Type a message..." style={styles.textInput} />
-        <TextInput placeholder="Type a message..." style={styles.textInput} />
-        <TextInput placeholder="Type a message..." style={styles.textInput} />
-        <TextInput placeholder="Type a message..." style={styles.textInput} />
-      </KeyboardAwareScrollView>
-      <KeyboardToolbar />
-    </>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    gap: 16,
-    padding: 16,
-  },
-  textInput: {
-    width: "auto",
+    padding: 20,
     flexGrow: 1,
-    flexShrink: 1,
-    height: 45,
-    borderWidth: 1,
-    borderRadius: 8,
-    borderColor: "#d8d8d8",
-    backgroundColor: "#fff",
-    padding: 8,
-    marginBottom: 8,
+    backgroundColor: "#F2F2F7",
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#1C1C1E",
+  },
+  refreshBtn: {
+    color: "#007AFF",
+    fontWeight: "600",
+  },
+  card: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  statRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E5EA",
+  },
+  label: {
+    fontSize: 17,
+    color: "#3A3A3C",
+  },
+  value: {
+    fontSize: 17,
+    fontWeight: "bold",
+    color: colors.secondary2,
+  },
+  footer: {
+    textAlign: "center",
+    color: "#8E8E93",
+    marginTop: 20,
+    fontSize: 13,
   },
 });

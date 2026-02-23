@@ -1,10 +1,10 @@
-import { apiCall } from "@/api/client";
+import { request } from "@/api/client";
 import { brickAudioUrl } from "@/api/endpoints";
 import {
-  RecordingPresets,
-  useAudioPlayer,
-  useAudioRecorder,
-  useAudioRecorderState,
+    RecordingPresets,
+    useAudioPlayer,
+    useAudioRecorder,
+    useAudioRecorderState,
 } from "expo-audio";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -67,7 +67,7 @@ export default function StepUnderstandSpeak({
 
     for (let attempt = 1; attempt <= NUM_TRANSCRIPTION_ATTEMPTS; attempt++) {
       try {
-        const { transcript } = await apiCall<{ transcript: string }>(
+        const { transcript } = await request<{ transcript: string }>(
           "/audio/transcribe",
           { method: "POST", body: formData },
         );

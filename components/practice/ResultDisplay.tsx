@@ -7,6 +7,7 @@ import { IconButton } from "../IconButton";
 type Props = {
   result: SentenceCompareResponse;
   targetText?: string;
+  userAnswerText?: string;
   onNext: () => void;
   onPlaySound: () => void;
 };
@@ -14,41 +15,72 @@ type Props = {
 export default function ResultDisplay({
   result,
   targetText,
+  userAnswerText,
   onNext,
   onPlaySound,
 }: Props) {
+  // Normalize function (lowercase + remove punctuation)
+  const normalize = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/[.,!?;:]/g, "")
+      .trim();
+
+  // Create a Set of target words for fast lookup
+  const targetWords = new Set(
+    targetText ? normalize(targetText).split(/\s+/) : [],
+  );
+
+  // Split user answer words (keep original for rendering)
+  const userWords = userAnswerText ? userAnswerText.split(/\s+/) : [];
+
   return (
     <View style={styles.sheetContent}>
-      {/* Result Box */}
-      <View style={styles.resultContainer}>
-        <Text
-          style={[
-            styles.resultScore,
-            { color: result.correct ? "green" : "#e74c3c" },
-          ]}
-        >
-          {result.correct ? "Correct!" : "Try again"} (
-          {Math.round(result.score * 100)}%)
-        </Text>
-
-        <Text style={styles.thresholdInfo}>Threshold: {result.threshold}</Text>
-      </View>
-
       {/* Target Text */}
       {targetText && <Text style={styles.targetText}>{targetText}</Text>}
 
+      {/* User Answer with Highlight */}
+      {userAnswerText && (
+        <Text style={styles.userAnswer}>
+          {userWords.map((word, index) => {
+            const normalizedWord = normalize(word);
+
+            const isExtra = !targetWords.has(normalizedWord);
+
+            return (
+              <Text key={index} style={isExtra ? styles.highlight : undefined}>
+                {word + " "}
+              </Text>
+            );
+          })}
+        </Text>
+      )}
+
       {/* Buttons */}
+      <IconButton
+        onPress={onPlaySound}
+        icon={<AntDesign name="sound" size={24} color="white" />}
+        style={styles.nextButton}
+      />
+
       <IconButton
         onPress={onNext}
         icon={<FontAwesome name="check" size={24} color="white" />}
         style={styles.nextButton}
       />
 
-      <IconButton
-        onPress={onPlaySound}
-        icon={<AntDesign name="sound" size={24} color="white" />}
-        style={styles.nextButton}
-      />
+      {/* Result */}
+      <Text
+        style={[
+          styles.resultScore,
+          { color: result.correct ? "green" : "#e74c3c" },
+        ]}
+      >
+        {result.correct ? "Correct!" : "Try again"} (
+        {Math.round(result.score * 100)}%)
+      </Text>
+
+      <Text style={styles.thresholdInfo}>Threshold: {result.threshold}</Text>
     </View>
   );
 }
@@ -59,14 +91,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 16,
     marginTop: 8,
-  },
-
-  resultContainer: {
-    alignItems: "center",
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: "#f9f9f9",
-    width: "85%",
   },
 
   resultScore: {
@@ -85,6 +109,16 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "bold",
     color: colors.secondary2,
+  },
+
+  userAnswer: {
+    fontSize: 16,
+    textAlign: "center",
+  },
+
+  highlight: {
+    backgroundColor: "#fff3b0", // light yellow
+    borderRadius: 4,
   },
 
   nextButton: {

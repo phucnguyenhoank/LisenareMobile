@@ -19,7 +19,7 @@ export function CollectionRow({ item }: Props) {
       <TouchableOpacity style={styles.listItem} activeOpacity={0.6}>
         <View style={styles.left}>
           <Text style={styles.listItemText} numberOfLines={1}>
-            {item.brick_count} | {item.name}
+            {item.name} ({item.brick_count})
           </Text>
         </View>
         <Entypo name="chevron-right" size={24} color="#999" />

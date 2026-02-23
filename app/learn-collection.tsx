@@ -1,4 +1,4 @@
-import { apiCall } from "@/api/client";
+import { request } from "@/api/client";
 import StepListenSpeak from "@/components/learn/StepListenSpeak";
 import StepReadSpeak from "@/components/learn/StepReadSpeak";
 import StepUnderstandSpeak from "@/components/learn/StepUnderstandSpeak";
@@ -6,11 +6,11 @@ import { Brick } from "@/types/brick";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 export type BrickLearnResponse = {
@@ -33,7 +33,7 @@ export default function LearnScreen() {
       setLoading(true);
       try {
         const endpoint = `/bricks/learn/${collection_id}?brick_order=${currentIndex}`;
-        const data = await apiCall<BrickLearnResponse>(endpoint);
+        const data = await request<BrickLearnResponse>(endpoint);
 
         setCurrentBrick(data.brick);
         setTotalBricks(data.total_bricks);

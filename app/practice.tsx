@@ -1,4 +1,4 @@
-import { apiCall } from "@/api/client";
+import { request } from "@/api/client";
 import { brickAudioUrl } from "@/api/endpoints";
 import CloseButton from "@/components/CloseButton";
 import PlaySoundButton from "@/components/PlaySoundButton";
@@ -40,26 +40,28 @@ function normalizeCollectionIds(input?: string | string[]): number[] | null {
   return ids.length > 0 ? ids : null;
 }
 
-function buildRandomBrickUrl(collectionIds: number[] | null) {
-  if (!collectionIds) return "/bricks/random";
+function buildFetchBrickUrl(collectionIds: number[] | null) {
+  if (!collectionIds) return "/bricks/fsrs";
   const params = new URLSearchParams();
   collectionIds.forEach((id) => params.append("collection_ids", id.toString()));
-  return `/bricks/random?${params.toString()}`;
+  return `/bricks/fsrs?${params.toString()}`;
 }
 
+const DEFAULT_SETTINGS = {
+  firstShowTarget: false,
+  firstShowNative: true,
+};
+
+const NUM_TRANSCRIPTION_ATTEMPTS = 5;
+
 export default function PracticeScreen() {
-  const DEFAULT_SETTINGS = {
-    firstShowTarget: false,
-    firstShowNative: true,
-  };
-  const NUM_TRANSCRIPTION_ATTEMPTS = 5;
   const { collection_ids } = useLocalSearchParams<{
     collection_ids?: string | string[];
   }>();
   const collectionIds = normalizeCollectionIds(collection_ids);
   const [brick, setBrick] = useState<Brick | null>(null);
-  const [audioUri, setAudioUri] = useState<string | null>(null);
-  const player = useAudioPlayer(audioUri ? { uri: audioUri } : null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const player = useAudioPlayer(audioUrl ? { uri: audioUrl } : null);
   const [showTarget, setShowTarget] = useState<boolean>(
     DEFAULT_SETTINGS.firstShowTarget,
   );
@@ -79,17 +81,21 @@ export default function PracticeScreen() {
   const screenHeight = Dimensions.get("window").height;
   const slideAnim = useRef(new Animated.Value(screenHeight)).current;
   const insets = useSafeAreaInsets();
+  const [isAnswerRevealed, setIsAnswerRevealed] = useState<boolean>(false);
+  const [hasSentReview, setHasSentReview] = useState<boolean>(false);
 
-  const fetchRandomBrick = async () => {
+  const fetchBrickFSRS = async () => {
     try {
       setShowTarget(DEFAULT_SETTINGS.firstShowTarget);
       setShowNative(DEFAULT_SETTINGS.firstShowNative);
       setAnswer("");
       setCompareResult(null);
-      const url = buildRandomBrickUrl(collectionIds);
-      const br = await apiCall<Brick>(url);
+      const url = buildFetchBrickUrl(collectionIds);
+      const br = await request<Brick>(url);
       setBrick(br);
-      setAudioUri(brickAudioUrl(br.target_audio_uri));
+      setAudioUrl(brickAudioUrl(br.target_audio_uri));
+      setIsAnswerRevealed(false);
+      setHasSentReview(false);
     } catch (err) {
       console.error("Failed to fetch brick:", err);
     }
@@ -99,6 +105,7 @@ export default function PracticeScreen() {
     player.volume = 1.0;
     player.seekTo(0);
     player.play();
+    setIsAnswerRevealed(true);
   };
 
   const showQuickMessage = (message: string) => {
@@ -109,13 +116,14 @@ export default function PracticeScreen() {
   };
 
   const reportBrokenFile = async () => {
-    const response = await apiCall<StatusResponse>(
+    const response = await request<StatusResponse>(
       `/bricks/report/${brick?.target_audio_uri}`,
       {
         method: "POST",
       },
     );
     showQuickMessage(`${response.message}. Cảm ơn bạn!`);
+    fetchBrickFSRS();
   };
 
   const submitAnswer = async () => {
@@ -134,14 +142,24 @@ export default function PracticeScreen() {
     setSubmitting(true);
     setMicroStatusMessage("đang chấm điểm");
     try {
-      const result = await apiCall<SentenceCompareResponse>(
+      let request_body: any = {
+        sentence1: finalAnswer,
+        sentence2: brick.target_text,
+      };
+
+      if (!hasSentReview) {
+        request_body.review_base = {
+          brick_id: brick.id,
+          reviewed_at: new Date().toISOString(),
+          is_answer_revealed: isAnswerRevealed,
+        };
+        setHasSentReview(true);
+      }
+      const result = await request<SentenceCompareResponse>(
         "/text/comparisons",
         {
           method: "POST",
-          body: {
-            sentence1: finalAnswer,
-            sentence2: brick.target_text,
-          },
+          body: request_body,
         },
       );
 
@@ -183,7 +201,7 @@ export default function PracticeScreen() {
     for (let attempt = 1; attempt <= NUM_TRANSCRIPTION_ATTEMPTS; attempt++) {
       try {
         console.log(`attempt:${attempt}`);
-        const { transcript } = await apiCall<AudioTranscription>(
+        const { transcript } = await request<AudioTranscription>(
           "/audio/transcribe",
           {
             method: "POST",
@@ -216,15 +234,12 @@ export default function PracticeScreen() {
 
   useEffect(() => {
     const init = async () => {
-      fetchRandomBrick();
-
+      fetchBrickFSRS();
       const status = await AudioModule.requestRecordingPermissionsAsync();
-
       if (!status.granted) {
         Alert.alert("Permission to access microphone was denied");
         return;
       }
-
       await setAudioModeAsync({
         playsInSilentMode: true,
         allowsRecording: true,
@@ -265,6 +280,9 @@ export default function PracticeScreen() {
         />
 
         <CloseButton />
+        <Text style={styles.debugText}>
+          {isAnswerRevealed ? "REVEALED" : "Fresh"}
+        </Text>
 
         {brick ? (
           <BrickDisplay
@@ -319,9 +337,10 @@ export default function PracticeScreen() {
           <ResultDisplay
             result={compareResult}
             targetText={brick?.target_text}
+            userAnswerText={answer}
             onNext={() => {
               closeBottomSheet();
-              fetchRandomBrick();
+              fetchBrickFSRS();
             }}
             onPlaySound={playSound}
           />
@@ -392,5 +411,9 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 60,
     alignItems: "center",
+  },
+
+  debugText: {
+    fontSize: 10,
   },
 });
