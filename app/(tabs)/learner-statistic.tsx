@@ -1,13 +1,14 @@
 import { request } from "@/api/client";
+import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 interface LearnerStats {
@@ -18,6 +19,7 @@ interface LearnerStats {
 }
 
 export default function LearnerState() {
+  const { isTokenLoading } = useAuth();
   const [stats, setStats] = useState<LearnerStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -44,10 +46,10 @@ export default function LearnerState() {
     fetchStats();
   }, []);
 
-  if (loading) {
+  if (loading || isTokenLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color={colors.secondary} />
       </View>
     );
   }

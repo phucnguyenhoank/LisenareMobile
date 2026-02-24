@@ -83,7 +83,7 @@ export default function PracticeScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={colors.secondary} />
-        <Text>Loading your groups...</Text>
+        <Text>Đang tải bộ sưu tập của bạn...</Text>
       </View>
     );
   }
@@ -92,10 +92,10 @@ export default function PracticeScreen() {
   if (!token) {
     return (
       <View style={styles.centered}>
-        <Text>Please login to view collections</Text>
-        <Link href="/setting" style={styles.loginLink}>
-          Go to Login Screen
+        <Link href="/setting" style={styles.signinLink}>
+          Đăng nhập
         </Link>
+        <Text>để xem bộ sưu tập</Text>
       </View>
     );
   }
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  loginLink: {
+  signinLink: {
     marginTop: 8,
     fontSize: 16,
     fontWeight: "bold",

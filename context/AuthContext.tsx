@@ -10,8 +10,8 @@ import {
 interface AuthContextType {
   token: string | null;
   isTokenLoading: boolean;
-  login: (newToken: string) => Promise<void>;
-  logout: () => Promise<void>;
+  signin: (newToken: string) => Promise<void>;
+  signout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,18 +30,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initializeAuth();
   }, []);
 
-  const login = async (newToken: string) => {
+  const signin = async (newToken: string) => {
     setToken(newToken);
     await authStorage.saveToken(newToken);
   };
 
-  const logout = async () => {
+  const signout = async () => {
     setToken(null);
     await authStorage.removeToken();
   };
 
   return (
-    <AuthContext.Provider value={{ token, isTokenLoading, login, logout }}>
+    <AuthContext.Provider value={{ token, isTokenLoading, signin, signout }}>
       {children}
     </AuthContext.Provider>
   );
