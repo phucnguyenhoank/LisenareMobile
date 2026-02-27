@@ -34,15 +34,12 @@ export default function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
 
       await request("/accounts", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+        body: {
           full_name: fullName,
           username,
           password,
           email: email || undefined,
-        }),
+        },
       });
 
       Alert.alert("Success 🎉", "Account created successfully. Please signin.");

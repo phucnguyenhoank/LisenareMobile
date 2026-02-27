@@ -1,4 +1,5 @@
 import { request } from "@/api/client";
+import EmptyCollectionOnboarding from "@/components/collections/EmptyCollectionOnboarding";
 import CreateCollectionModal from "@/components/CreateCollectionModal";
 import FloatingActionMenu from "@/components/FloatingActionMenu";
 import { GroupPicker } from "@/components/GroupPicker";
@@ -20,10 +21,14 @@ import {
 
 const LIMIT = 20;
 
-export default function PracticeScreen() {
+export default function CollectionScreen() {
   const { token, isTokenLoading } = useAuth();
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const { data: stats = [] } = useQuery<GroupStats[]>({
+  const {
+    data: stats = [],
+    isLoading: isStatsLoading,
+    refetch: refetchStats,
+  } = useQuery<GroupStats[]>({
     queryKey: ["groupStats"],
     queryFn: () => request<GroupStats[]>("/collections/stats"),
     enabled: !!token,
@@ -79,7 +84,7 @@ export default function PracticeScreen() {
   };
 
   // If stats are still loading or we haven't picked a group yet
-  if (isTokenLoading || !stats.length) {
+  if (isTokenLoading || isStatsLoading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={colors.secondary} />
@@ -98,6 +103,10 @@ export default function PracticeScreen() {
         <Text>để xem bộ sưu tập</Text>
       </View>
     );
+  }
+
+  if (token && stats.length === 0) {
+    return <EmptyCollectionOnboarding onSuccess={refetchStats} />;
   }
 
   return (
@@ -154,6 +163,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 16,
     fontWeight: "bold",
-    color: "blue",
+    color: colors.secondary,
   },
 });

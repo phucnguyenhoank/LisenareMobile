@@ -156,7 +156,7 @@ export default function PracticeScreen() {
         setHasSentReview(true);
       }
       const result = await request<SentenceCompareResponse>(
-        "/text/comparisons",
+        "/text/semantic-comparison",
         {
           method: "POST",
           body: request_body,
@@ -202,7 +202,7 @@ export default function PracticeScreen() {
       try {
         console.log(`attempt:${attempt}`);
         const { transcript } = await request<AudioTranscription>(
-          "/audio/transcribe",
+          "/audio/transcripts",
           {
             method: "POST",
             body: formData,

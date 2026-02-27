@@ -1,29 +1,32 @@
 import { request } from "@/api/client";
 import { brickAudioUrl } from "@/api/endpoints";
+import type { PronunciationAnalysisResponse } from "@/types/audio";
 import {
-    RecordingPresets,
-    useAudioPlayer,
-    useAudioRecorder,
-    useAudioRecorderState,
+  RecordingPresets,
+  useAudioPlayer,
+  useAudioRecorder,
+  useAudioRecorderState,
 } from "expo-audio";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import PlaySoundButton from "../PlaySoundButton";
 import { BrickDisplay } from "../practice/BrickDisplay";
 import { MicButton } from "../practice/MicButton";
 
 interface Props {
+  brick_id: number;
   audioUri: string;
   target_text: string;
   native_text: string;
-  changeStep: () => void;
+  setResult: Dispatch<SetStateAction<PronunciationAnalysisResponse | null>>;
 }
 
 export default function StepUnderstandSpeak({
+  brick_id,
   audioUri,
   target_text,
   native_text,
-  changeStep,
+  setResult,
 }: Props) {
   const player = useAudioPlayer({ uri: brickAudioUrl(audioUri) });
   const DEFAULT_SETTINGS = {
@@ -48,46 +51,50 @@ export default function StepUnderstandSpeak({
     player.play();
   };
 
+  // TODO: Ask for permission (currently only ask if first in the practice.tsx screen.)
   const record = async () => {
     setStatusMessage("Đang ghi âm...");
     await audioRecorder.prepareToRecordAsync();
     audioRecorder.record();
   };
 
-  const stopRecordingAndTranscribeAudio = async (): Promise<string | null> => {
+  const stopRecordingAndEvaluateAudio = async (): Promise<any | null> => {
     await audioRecorder.stop();
-    setStatusMessage("Đang chuyển đổi giọng nói..."); // Label update
+    setStatusMessage("Đang đánh giá phát âm...");
 
     const formData = new FormData();
-    formData.append("file", {
+    formData.append("learner_file", {
       uri: audioRecorder.uri,
-      name: "recording.m4a",
+      name: "learner_recording.m4a",
       type: "audio/m4a",
     } as any);
 
+    const endpoint = `/audio/ipa-evaluation?target_brick_id=${encodeURIComponent(brick_id)}`;
+
     for (let attempt = 1; attempt <= NUM_TRANSCRIPTION_ATTEMPTS; attempt++) {
       try {
-        const { transcript } = await request<{ transcript: string }>(
-          "/audio/transcribe",
-          { method: "POST", body: formData },
-        );
+        const result = await request<PronunciationAnalysisResponse>(endpoint, {
+          method: "POST",
+          body: formData,
+        });
 
-        const text = transcript.trim();
-        setStatusMessage("Hoàn tất!"); // Displayed in the status label
-        return text;
-      } catch {
-        if (attempt < NUM_TRANSCRIPTION_ATTEMPTS)
+        setStatusMessage("Hoàn tất!");
+        setResult(result);
+        console.log(JSON.stringify(result, null, 2));
+        return result;
+      } catch (error) {
+        if (attempt < NUM_TRANSCRIPTION_ATTEMPTS) {
           await new Promise((r) => setTimeout(r, 400));
+        }
       }
     }
-
-    setStatusMessage("Không thể nhận diện. Thử lại!");
+    setStatusMessage("Lỗi đánh giá. Thử lại!");
     return null;
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Nói bằng tiếng Anh câu bạn hiểu</Text>
+      <Text style={styles.title}>Hiểu và Nói lại bằng tiếng Anh</Text>
 
       <BrickDisplay
         target_text={target_text}
@@ -98,13 +105,12 @@ export default function StepUnderstandSpeak({
         setShowNative={setShowNative}
       />
 
-      {/* <ActionRow playSound={playSound} next={changeStep} /> */}
       <PlaySoundButton onPress={playSound} />
       <View style={{ margin: 20 }}></View>
       <MicButton
         isRecording={recorderState.isRecording}
         onPress={
-          recorderState.isRecording ? stopRecordingAndTranscribeAudio : record
+          recorderState.isRecording ? stopRecordingAndEvaluateAudio : record
         }
         onCancel={async () => {
           await audioRecorder.stop();

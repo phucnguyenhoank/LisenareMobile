@@ -4,7 +4,7 @@ const colors = {
   secondary2: "#416522",
   secondary3: "#5A8D2E",
   secondary4: "#72B43A",
-  secondary5: "#448429ff",
+  secondary5: "#4CAF50",
   background: "#ffffff",
   text: "#111827",
   border: "#e5e7eb",

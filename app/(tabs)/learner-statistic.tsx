@@ -1,6 +1,7 @@
 import { request } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
+import { Link } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,12 +20,13 @@ interface LearnerStats {
 }
 
 export default function LearnerState() {
-  const { isTokenLoading } = useAuth();
+  const { token, isTokenLoading } = useAuth();
   const [stats, setStats] = useState<LearnerStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchStats = async () => {
+    if (!token) return;
     try {
       const data = await request<LearnerStats>("/learning-cards/stats");
       setStats(data);
@@ -50,6 +52,17 @@ export default function LearnerState() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.secondary} />
+      </View>
+    );
+  }
+
+  if (!token) {
+    return (
+      <View style={styles.centered}>
+        <Link href="/setting" style={styles.signinLink}>
+          Đăng nhập
+        </Link>
+        <Text>để theo dõi tiến độ học tập</Text>
       </View>
     );
   }
@@ -106,10 +119,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#1C1C1E",
   },
-  refreshBtn: {
-    color: "#007AFF",
-    fontWeight: "600",
-  },
   card: {
     backgroundColor: "white",
     padding: 20,
@@ -136,10 +145,15 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: colors.secondary2,
   },
-  footer: {
-    textAlign: "center",
-    color: "#8E8E93",
-    marginTop: 20,
-    fontSize: 13,
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  signinLink: {
+    marginTop: 8,
+    fontSize: 16,
+    fontWeight: "bold",
+    color: colors.secondary,
   },
 });

@@ -71,7 +71,9 @@ export default function SettingScreen() {
   if (token) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Hello, {user?.full_name}</Text>
+        <Text style={styles.title}>
+          Hello, {user ? user.full_name : "expired_token"}
+        </Text>
         <Text style={styles.subtitle}>Mã người học: {user?.id}</Text>
         <View style={styles.spacing} />
         <Button title="Đổi mật khẩu" onPress={handleChangePassword} />
