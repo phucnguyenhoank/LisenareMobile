@@ -1,4 +1,5 @@
 import { request } from "@/api/client";
+import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 import SignInForm from "@/components/auth/SignInForm";
 import SignUpForm from "@/components/auth/SignUpForm";
 import { useAuth } from "@/context/AuthContext";
@@ -17,7 +18,7 @@ interface User {
   full_name: string;
 }
 
-type AuthMode = "signin" | "signup";
+type AuthMode = "signin" | "signup" | "forgot";
 
 export default function SettingScreen() {
   const { token, signout, isTokenLoading } = useAuth();
@@ -85,10 +86,19 @@ export default function SettingScreen() {
 
   return (
     <View style={styles.container}>
-      {mode === "signin" ? (
-        <SignInForm onSwitch={() => setMode("signup")} />
-      ) : (
-        <SignUpForm onSwitch={() => setMode("signin")} />
+      {mode === "signin" && (
+        <SignInForm
+          onSwitchToSignup={() => setMode("signup")}
+          onForgotPassword={() => setMode("forgot")}
+        />
+      )}
+
+      {mode === "signup" && (
+        <SignUpForm onSwitchToSignin={() => setMode("signin")} />
+      )}
+
+      {mode === "forgot" && (
+        <ForgotPasswordForm onBackToSignin={() => setMode("signin")} />
       )}
     </View>
   );

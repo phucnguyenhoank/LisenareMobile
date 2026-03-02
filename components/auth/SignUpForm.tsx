@@ -4,15 +4,18 @@ import {
   ActivityIndicator,
   Alert,
   Button,
-  KeyboardAvoidingView,
-  Platform,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
-export default function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
+type Props = {
+  onSwitchToSignin: () => void;
+};
+
+export default function SignUpForm({ onSwitchToSignin }: Props) {
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -57,9 +60,9 @@ export default function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <KeyboardAwareScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
     >
       <Text style={styles.title}>Tạo tài khoản</Text>
 
@@ -112,18 +115,21 @@ export default function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
           <View style={styles.spacing} />
           <Text style={styles.smallText}>Hoặc</Text>
           <View style={styles.spacing} />
-          <Button title="Đã có tài khoản? Đăng nhập" onPress={onSwitch} />
+          <Button
+            title="Đã có tài khoản? Đăng nhập"
+            onPress={onSwitchToSignin}
+          />
         </>
       )}
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingHorizontal: 24,
+    flexGrow: 1,
     justifyContent: "center",
+    paddingHorizontal: 24,
   },
   title: {
     fontSize: 24,

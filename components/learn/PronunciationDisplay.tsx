@@ -1,3 +1,4 @@
+import colors from "@/theme/colors";
 import type { PronunciationAnalysisResponse } from "@/types/audio";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
@@ -52,7 +53,11 @@ const PronunciationDisplay = ({
 
       {onNext && (
         <TouchableOpacity style={styles.nextButton} onPress={onNext}>
-          <Ionicons name="arrow-forward-circle" size={40} color="#4CAF50" />
+          <Ionicons
+            name="arrow-forward-circle"
+            size={40}
+            color={colors.secondary}
+          />
         </TouchableOpacity>
       )}
     </View>
@@ -61,7 +66,7 @@ const PronunciationDisplay = ({
 
 // Helper to color the total score
 const getScoreColor = (score: number) => {
-  if (score > 0.8) return "#4CAF50"; // Green
+  if (score > 0.8) return colors.secondary5; // Green
   if (score > 0.5) return "#FF9800"; // Orange
   return "#F44336"; // Red
 };
@@ -132,7 +137,7 @@ const styles = StyleSheet.create({
   },
   // Status Styles
   correct: {
-    color: "#4CAF50",
+    color: colors.secondary5,
   },
   mispronounced: {
     color: "#FF9800",

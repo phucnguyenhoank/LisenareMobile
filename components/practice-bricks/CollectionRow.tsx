@@ -8,6 +8,19 @@ type Props = {
 };
 
 export function CollectionRow({ item }: Props) {
+  const getStatusColor = () => {
+    // TODO: Get real score for each collection
+    if (Math.random() < 0.2) return "transparent";
+
+    const randomScore = Math.random();
+
+    if (randomScore < 0.4) return "#FF5252";
+    if (randomScore < 0.8) return "#FFB100";
+    return "#4CAF50";
+  };
+
+  const statusColor = getStatusColor();
+
   return (
     <Link
       href={{
@@ -16,13 +29,21 @@ export function CollectionRow({ item }: Props) {
       }}
       asChild
     >
-      <TouchableOpacity style={styles.listItem} activeOpacity={0.6}>
-        <View style={styles.left}>
-          <Text style={styles.listItemText} numberOfLines={1}>
-            {item.name} ({item.brick_count})
-          </Text>
+      <TouchableOpacity style={styles.listItem} activeOpacity={0.7}>
+        {/* Visual indicator bar */}
+        <View style={[styles.indicator, { backgroundColor: statusColor }]} />
+
+        <View style={styles.content}>
+          <View style={styles.textGroup}>
+            <Text style={styles.title} numberOfLines={1}>
+              {item.name}
+            </Text>
+            <Text style={styles.subtitle}>
+              {item.brick_count} {item.brick_count === 1 ? "brick" : "bricks"}
+            </Text>
+          </View>
+          <Entypo name="chevron-right" size={20} color="#CCC" />
         </View>
-        <Entypo name="chevron-right" size={24} color="#999" />
       </TouchableOpacity>
     </Link>
   );
@@ -31,23 +52,40 @@ export function CollectionRow({ item }: Props) {
 const styles = StyleSheet.create({
   listItem: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     backgroundColor: "#fff",
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    marginBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0", // Light separator line
+    marginBottom: 10,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    overflow: "hidden",
+    // Subtle shadow for depth
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-
-  left: {
+  indicator: {
+    width: 6,
+    height: "100%",
+  },
+  content: {
     flex: 1,
-    paddingRight: 8, // space before chevron
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
-  listItemText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#333",
+  textGroup: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1A1A1A",
+    marginBottom: 2,
+  },
+  subtitle: {
+    fontSize: 13,
+    color: "#8E8E93",
   },
 });

@@ -6,17 +6,27 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 
 import { request } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import type { Token } from "@/types/token";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
-export default function SignInForm({ onSwitch }: { onSwitch: () => void }) {
+type Props = {
+  onSwitchToSignup: () => void;
+  onForgotPassword: () => void;
+};
+
+export default function SignInForm({
+  onSwitchToSignup,
+  onForgotPassword,
+}: Props) {
   const { signin } = useAuth();
   const [username, setUsername] = useState("qwer");
-  const [password, setPassword] = useState("1234");
+  const [password, setPassword] = useState("123456789");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogin = async () => {
@@ -51,15 +61,18 @@ export default function SignInForm({ onSwitch }: { onSwitch: () => void }) {
   };
 
   const handleSignUp = () => {
-    onSwitch();
+    onSwitchToSignup();
   };
 
   const handleGoogleSignIn = () => {
-    Alert.alert("Google Sign In", "Coming soon!");
+    Alert.alert("Google Sign In", "Chức năng đang phát triển");
   };
 
   return (
-    <>
+    <KeyboardAwareScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.title}>Hello 👋</Text>
 
       <TextInput
@@ -70,35 +83,43 @@ export default function SignInForm({ onSwitch }: { onSwitch: () => void }) {
         autoCapitalize="none"
       />
 
-      <TextInput
-        placeholder="Password"
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+      <View style={styles.passwordContainer}>
+        <TextInput
+          placeholder="Password"
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+        <TouchableOpacity
+          onPress={onForgotPassword}
+          style={styles.forgotButton}
+        >
+          <Text style={styles.forgotText}>Quên mật khẩu?</Text>
+        </TouchableOpacity>
+      </View>
 
       {isSubmitting ? (
         <ActivityIndicator />
       ) : (
-        <Button title="Sign In" onPress={handleLogin} />
+        <Button title="Đăng nhập" onPress={handleLogin} />
       )}
 
       <View style={styles.spacing} />
-      <Text style={styles.smallText}>Or</Text>
+      <Text style={styles.smallText}>Hoặc</Text>
       <View style={styles.spacing} />
-      <Button title="Sign Up" onPress={handleSignUp} />
+      <Button title="Đăng ký" onPress={handleSignUp} />
       <View style={styles.spacingSmall} />
-      <Button title="Sign in with Google" onPress={handleGoogleSignIn} />
-    </>
+      <Button title="Đăng ký với Google" onPress={handleGoogleSignIn} />
+    </KeyboardAwareScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingHorizontal: 24,
+    flexGrow: 1,
     justifyContent: "center",
+    paddingHorizontal: 24,
   },
 
   title: {
@@ -123,5 +144,18 @@ const styles = StyleSheet.create({
   },
   smallText: {
     textAlign: "center",
+  },
+  passwordContainer: {
+    marginBottom: 24,
+  },
+  forgotButton: {
+    alignSelf: "flex-end",
+    marginTop: -12,
+    paddingVertical: 4,
+  },
+  forgotText: {
+    color: "#007AFF",
+    fontSize: 13,
+    fontWeight: "500",
   },
 });

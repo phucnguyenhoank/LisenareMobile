@@ -81,8 +81,15 @@ export default function LearnerState() {
       <View style={styles.card}>
         <View style={styles.statRow}>
           <Text style={styles.label}>Đã học:</Text>
-          <Text style={styles.value}>
+          <Text style={[styles.value, { color: colors.primary }]}>
             {stats?.total_learning ?? 0} câu & từ
+          </Text>
+        </View>
+
+        <View style={styles.statRow}>
+          <Text style={styles.label}>Thành thạo:</Text>
+          <Text style={styles.value}>
+            {(stats?.total_learning ?? 0) - (stats?.due_count ?? 0)}
           </Text>
         </View>
 
