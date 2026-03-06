@@ -1,6 +1,6 @@
-import { brickAudioUrl } from "@/api/endpoints";
+import { useAudioCache } from "@/hooks/useAudioCache";
 import { useAudioPlayer } from "expo-audio";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import PlaySoundButton from "../PlaySoundButton";
 import NextButton from "../practice/NextButton";
 
@@ -10,7 +10,8 @@ interface Props {
 }
 
 export default function StepListenSpeak({ audioUri, changeStep }: Props) {
-  const player = useAudioPlayer({ uri: brickAudioUrl(audioUri) });
+  const { audioPath, audioLoading } = useAudioCache(audioUri);
+  const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
 
   const playSound = () => {
     player.volume = 1.0;
@@ -21,7 +22,11 @@ export default function StepListenSpeak({ audioUri, changeStep }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Nghe và Nói theo</Text>
-      <PlaySoundButton onPress={playSound} style={styles.playSoundButton} />
+      {audioLoading ? (
+        <ActivityIndicator />
+      ) : (
+        <PlaySoundButton onPress={playSound} style={styles.playSoundButton} />
+      )}
       <NextButton onPress={changeStep} />
     </View>
   );

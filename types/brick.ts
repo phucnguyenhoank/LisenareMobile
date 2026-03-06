@@ -4,6 +4,6 @@ export type Brick = {
   target_text: string;
   is_public: boolean;
   native_text: string;
-  target_audio_uri: string;
+  target_audio_uri: string; // E.g.: GUksrGBeln0_sentence_254.wav
   created_at: string;
 };

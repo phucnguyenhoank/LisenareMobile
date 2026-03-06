@@ -1,5 +1,4 @@
 import { request } from "@/api/client";
-import { brickAudioUrl } from "@/api/endpoints";
 import CloseButton from "@/components/CloseButton";
 import PlaySoundButton from "@/components/PlaySoundButton";
 import { AnswerInputRow } from "@/components/practice/AnswerInputRow";
@@ -7,6 +6,7 @@ import { BrickDisplay } from "@/components/practice/BrickDisplay";
 import { LearnMenu } from "@/components/practice/LearnMenu";
 import ResultDisplay from "@/components/practice/ResultDisplay";
 import { Toast } from "@/components/Toast";
+import { useAudioCache } from "@/hooks/useAudioCache";
 import type { StatusResponse } from "@/types/api";
 import type { AudioTranscription } from "@/types/audio";
 import type { Brick } from "@/types/brick";
@@ -22,6 +22,7 @@ import {
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   Dimensions,
@@ -61,7 +62,8 @@ export default function PracticeScreen() {
   const collectionIds = normalizeCollectionIds(collection_ids);
   const [brick, setBrick] = useState<Brick | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const player = useAudioPlayer(audioUrl ? { uri: audioUrl } : null);
+  const { audioPath, audioLoading } = useAudioCache(audioUrl);
+  const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
   const [showTarget, setShowTarget] = useState<boolean>(
     DEFAULT_SETTINGS.firstShowTarget,
   );
@@ -93,7 +95,7 @@ export default function PracticeScreen() {
       const url = buildFetchBrickUrl(collectionIds);
       const br = await request<Brick>(url);
       setBrick(br);
-      setAudioUrl(brickAudioUrl(br.target_audio_uri));
+      setAudioUrl(br.target_audio_uri);
       setIsAnswerRevealed(false);
       setHasSentReview(false);
     } catch (err) {
@@ -297,7 +299,11 @@ export default function PracticeScreen() {
           <Text>Loading brick...</Text>
         )}
 
-        <PlaySoundButton onPress={playSound} />
+        {audioLoading ? (
+          <ActivityIndicator />
+        ) : (
+          <PlaySoundButton onPress={playSound} />
+        )}
 
         <AnswerInputRow
           answer={answer}

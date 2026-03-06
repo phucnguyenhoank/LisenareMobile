@@ -1,7 +1,7 @@
-import { brickAudioUrl } from "@/api/endpoints";
+import { useAudioCache } from "@/hooks/useAudioCache";
 import { useAudioPlayer } from "expo-audio";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import PlaySoundButton from "../PlaySoundButton";
 import { BrickDisplay } from "../practice/BrickDisplay";
 import NextButton from "../practice/NextButton";
@@ -19,7 +19,8 @@ export default function StepReadSpeak({
   native_text,
   changeStep,
 }: Props) {
-  const player = useAudioPlayer({ uri: brickAudioUrl(audioUri) });
+  const { audioPath, audioLoading } = useAudioCache(audioUri);
+  const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
   const DEFAULT_SETTINGS = {
     firstShowTarget: true,
     firstShowNative: false,
@@ -47,7 +48,11 @@ export default function StepReadSpeak({
         setShowTarget={setShowTarget}
         setShowNative={setShowNative}
       />
-      <PlaySoundButton onPress={playSound} style={styles.playSoundButton} />
+      {audioLoading ? (
+        <ActivityIndicator />
+      ) : (
+        <PlaySoundButton onPress={playSound} style={styles.playSoundButton} />
+      )}
       <NextButton onPress={changeStep} />
     </View>
   );

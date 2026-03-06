@@ -1,5 +1,5 @@
 import { request } from "@/api/client";
-import { brickAudioUrl } from "@/api/endpoints";
+import { useAudioCache } from "@/hooks/useAudioCache";
 import type { PronunciationAnalysisResponse } from "@/types/audio";
 import {
   RecordingPresets,
@@ -8,7 +8,7 @@ import {
   useAudioRecorderState,
 } from "expo-audio";
 import { Dispatch, SetStateAction, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import PlaySoundButton from "../PlaySoundButton";
 import { BrickDisplay } from "../practice/BrickDisplay";
 import { MicButton } from "../practice/MicButton";
@@ -28,7 +28,8 @@ export default function StepUnderstandSpeak({
   native_text,
   setResult,
 }: Props) {
-  const player = useAudioPlayer({ uri: brickAudioUrl(audioUri) });
+  const { audioPath, audioLoading } = useAudioCache(audioUri);
+  const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
   const DEFAULT_SETTINGS = {
     firstShowTarget: false,
     firstShowNative: true,
@@ -105,7 +106,11 @@ export default function StepUnderstandSpeak({
         setShowNative={setShowNative}
       />
 
-      <PlaySoundButton onPress={playSound} />
+      {audioLoading ? (
+        <ActivityIndicator />
+      ) : (
+        <PlaySoundButton onPress={playSound} />
+      )}
       <View style={{ margin: 20 }}></View>
       <MicButton
         isRecording={recorderState.isRecording}
