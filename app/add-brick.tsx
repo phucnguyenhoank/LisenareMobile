@@ -1,10 +1,16 @@
-import { StyleSheet, TextInput, View } from 'react-native';
-import { KeyboardAwareScrollView, KeyboardToolbar } from 'react-native-keyboard-controller';
+import { StyleSheet, TextInput, View } from "react-native";
+import {
+  KeyboardAwareScrollView,
+  KeyboardToolbar,
+} from "react-native-keyboard-controller";
 
 export default function AddBrickScreen() {
   return (
     <>
-      <KeyboardAwareScrollView bottomOffset={62} contentContainerStyle={styles.container}>
+      <KeyboardAwareScrollView
+        bottomOffset={62}
+        contentContainerStyle={styles.container}
+      >
         <View>
           <TextInput placeholder="Type a message..." style={styles.textInput} />
           <TextInput placeholder="Type a message..." style={styles.textInput} />
@@ -35,14 +41,14 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   textInput: {
-    width: 'auto',
+    width: "auto",
     flexGrow: 1,
     flexShrink: 1,
     height: 45,
     borderWidth: 1,
     borderRadius: 8,
-    borderColor: '#d8d8d8',
-    backgroundColor: '#fff',
+    borderColor: "#d8d8d8",
+    backgroundColor: "#fff",
     padding: 8,
     marginBottom: 8,
   },

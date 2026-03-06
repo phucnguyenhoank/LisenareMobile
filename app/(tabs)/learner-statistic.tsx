@@ -16,37 +16,50 @@ interface LearnerStats {
   learner_id: number;
   total_learning: number;
   due_count: number;
-  timestamp: string;
+}
+
+interface LearnerMe {
+  id: number;
+  full_name: string;
 }
 
 export default function LearnerState() {
   const { token, isTokenLoading } = useAuth();
+
   const [stats, setStats] = useState<LearnerStats | null>(null);
+  const [user, setUser] = useState<LearnerMe | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchStats = async () => {
+  const fetchData = async () => {
     if (!token) return;
+
     try {
-      const data = await request<LearnerStats>("/learning-cards/stats");
-      setStats(data);
-    } catch (error) {
-      console.error("Failed to fetch learner stats:", error);
+      const [statsData, userData] = await Promise.all([
+        request<LearnerStats>("/learning-cards/stats"),
+        request<LearnerMe>("/learners/me"),
+      ]);
+
+      setStats(statsData);
+      setUser(userData);
+    } catch (err) {
+      console.error("Failed to fetch learner data:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  // Triggered on Pull-to-Refresh
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchStats();
+    fetchData();
   }, []);
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    if (!token) return;
+    fetchData();
+  }, [token]);
 
   if (loading || isTokenLoading) {
     return (
@@ -58,7 +71,7 @@ export default function LearnerState() {
 
   if (!token) {
     return (
-      <View style={styles.centered}>
+      <View style={styles.center}>
         <Link href="/setting" style={styles.signinLink}>
           Đăng nhập
         </Link>
@@ -67,6 +80,10 @@ export default function LearnerState() {
     );
   }
 
+  const total = stats?.total_learning ?? 0;
+  const due = stats?.due_count ?? 0;
+  const mastered = total - due;
+
   return (
     <ScrollView
       contentContainerStyle={styles.container}
@@ -74,91 +91,81 @@ export default function LearnerState() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>Tiến độ học tập</Text>
-      </View>
+      {/* User Info */}
+      <Text style={styles.name}>{user?.full_name}</Text>
+      <Text style={styles.id}>Mã người học: {user?.id}</Text>
 
+      {/* Stats */}
       <View style={styles.card}>
-        <View style={styles.statRow}>
-          <Text style={styles.label}>Đã học:</Text>
-          <Text style={[styles.value, { color: colors.primary }]}>
-            {stats?.total_learning ?? 0} câu & từ
-          </Text>
-        </View>
-
-        <View style={styles.statRow}>
-          <Text style={styles.label}>Thành thạo:</Text>
-          <Text style={styles.value}>
-            {(stats?.total_learning ?? 0) - (stats?.due_count ?? 0)}
-          </Text>
-        </View>
-
-        <View style={styles.statRow}>
-          <Text style={styles.label}>Cần luyện lại:</Text>
-          <Text style={[styles.value, { color: "#FF3B30" }]}>
-            {stats?.due_count ?? 0}
-          </Text>
-        </View>
+        <Stat
+          label="Đã học"
+          value={`${total} câu & từ`}
+          color={colors.primary}
+        />
+        <Stat label="Thành thạo" value={mastered} />
+        <Stat label="Cần luyện lại" value={due} color="#FF3B30" />
       </View>
     </ScrollView>
+  );
+}
+
+function Stat({ label, value, color }: any) {
+  return (
+    <View style={styles.row}>
+      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.value, color && { color }]}>{value}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    flexGrow: 1,
     backgroundColor: "#F2F2F7",
+    flexGrow: 1,
   },
+
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+
+  name: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 2,
+  },
+
+  id: {
+    color: "#666",
     marginBottom: 20,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#1C1C1E",
-  },
+
   card: {
     backgroundColor: "white",
-    padding: 20,
+    padding: 18,
     borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
   },
-  statRow: {
+
+  row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5EA",
+    paddingVertical: 12,
   },
+
   label: {
-    fontSize: 17,
-    color: "#3A3A3C",
+    fontSize: 16,
+    color: "#444",
   },
+
   value: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "bold",
     color: colors.secondary2,
   },
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+
   signinLink: {
-    marginTop: 8,
     fontSize: 16,
     fontWeight: "bold",
     color: colors.secondary,

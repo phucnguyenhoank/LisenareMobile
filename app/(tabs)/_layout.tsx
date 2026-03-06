@@ -1,5 +1,5 @@
 import colors from "@/theme/colors";
-import { Entypo } from "@expo/vector-icons";
+import { Entypo, Ionicons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -18,9 +18,36 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
+          title: "Khám phá",
+          tabBarIcon: ({ color }) => (
+            <AntDesign name="compass" size={24} color={color} />
+          ),
+          headerRight: () => (
+            <Pressable
+              onPress={() => router.push("/search")}
+              style={{ marginRight: 15 }}
+            >
+              <Ionicons name="search-sharp" size={24} color="black" />
+            </Pressable>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="pending-collections"
+        options={{
           title: "Thực hành",
           tabBarIcon: ({ color }) => (
             <Entypo name="pencil" size={24} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="learner-statistic"
+        options={{
+          title: "Tiến độ",
+          tabBarIcon: ({ color }) => (
+            <AntDesign name="line-chart" size={24} color={color} />
           ),
           headerRight: () => (
             <Pressable
@@ -42,40 +69,6 @@ export default function TabLayout() {
               size={24}
               color={color}
             />
-          ),
-          headerRight: () => (
-            <Pressable
-              onPress={() => router.push("/setting")}
-              style={{ marginRight: 15 }}
-            >
-              <Feather name="settings" size={24} color="black" />
-            </Pressable>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="learner-statistic"
-        options={{
-          title: "Tiến độ",
-          tabBarIcon: ({ color }) => (
-            <AntDesign name="line-chart" size={24} color={color} />
-          ),
-          headerRight: () => (
-            <Pressable
-              onPress={() => router.push("/setting")}
-              style={{ marginRight: 15 }}
-            >
-              <Feather name="settings" size={24} color="black" />
-            </Pressable>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="test-screen"
-        options={{
-          title: "Test",
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="test-tube" size={24} color={color} />
           ),
         }}
       />

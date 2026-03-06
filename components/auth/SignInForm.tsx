@@ -1,3 +1,6 @@
+import { request } from "@/api/client";
+import { useAuth } from "@/context/AuthContext";
+import type { Token } from "@/types/token";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -9,10 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-import { request } from "@/api/client";
-import { useAuth } from "@/context/AuthContext";
-import type { Token } from "@/types/token";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 type Props = {
@@ -25,8 +24,8 @@ export default function SignInForm({
   onForgotPassword,
 }: Props) {
   const { signin } = useAuth();
-  const [username, setUsername] = useState("qwer");
-  const [password, setPassword] = useState("123456789");
+  const [username, setUsername] = useState("prhrurcr09");
+  const [password, setPassword] = useState("kcmtl5cM#");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogin = async () => {

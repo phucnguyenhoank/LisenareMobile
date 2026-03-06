@@ -9,13 +9,11 @@ type Props = {
 
 export function CollectionRow({ item }: Props) {
   const getStatusColor = () => {
-    // TODO: Get real score for each collection
-    if (Math.random() < 0.2) return "transparent";
+    if (item.learned_count === 0) return "transparent";
+    const learned_ratio = item.learned_count / item.brick_count;
 
-    const randomScore = Math.random();
-
-    if (randomScore < 0.4) return "#FF5252";
-    if (randomScore < 0.8) return "#FFB100";
+    if (learned_ratio < 0.34) return "#FF5252";
+    if (learned_ratio < 0.67) return "#FFB100";
     return "#4CAF50";
   };
 
@@ -39,7 +37,8 @@ export function CollectionRow({ item }: Props) {
               {item.name}
             </Text>
             <Text style={styles.subtitle}>
-              {item.brick_count} {item.brick_count === 1 ? "brick" : "bricks"}
+              {item.learned_count} / {item.brick_count}{" "}
+              {item.brick_count === 1 ? "brick" : "bricks"}
             </Text>
           </View>
           <Entypo name="chevron-right" size={20} color="#CCC" />

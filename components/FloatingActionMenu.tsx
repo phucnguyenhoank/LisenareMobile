@@ -66,17 +66,6 @@ export default function FloatingActionMenu({ onCreateCollection }: Props) {
             style={styles.miniFabWithLabel}
             onPress={() => {
               setIsOpen(false);
-              router.push("/search");
-            }}
-          >
-            <Ionicons name="search-sharp" size={24} color="white" />
-            <Text style={styles.miniFabText}>Tìm kiếm</Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.miniFabWithLabel}
-            onPress={() => {
-              setIsOpen(false);
               router.push("/practice");
             }}
           >
@@ -95,10 +84,9 @@ export default function FloatingActionMenu({ onCreateCollection }: Props) {
 
 const styles = StyleSheet.create({
   fabContainer: {
-    //
     position: "absolute",
-    right: 30,
-    bottom: 30,
+    right: 32,
+    bottom: 32,
     alignItems: "flex-end",
   },
   menuItems: {

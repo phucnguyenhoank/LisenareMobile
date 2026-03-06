@@ -4,6 +4,7 @@ export type Collection = {
   creator_id: number;
   created_at: string;
   brick_count: number;
+  learned_count: number;
 };
 
 export type GroupStats = {
