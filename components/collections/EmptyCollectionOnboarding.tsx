@@ -1,16 +1,17 @@
 import { request } from "@/api/client";
 import colors from "@/theme/colors";
 import { useState } from "react";
-import {
-  Alert,
-  Button,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import TextButton from "../TextButton";
 
-const GROUPS = ["A1", "A2", "B1", "B2"];
+const GROUPS = [
+  "Vỡ lòng (A1)",
+  "Sơ cấp (A2)",
+  "Trung cấp (B1)",
+  "Cao trung cấp (B2)",
+  "Cao cấp (C1)",
+  "Thành thạo (C2)",
+];
 
 interface Props {
   onSuccess: () => void;
@@ -52,8 +53,8 @@ export default function EmptyCollectionOnboarding({ onSuccess }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Select the collection to learn</Text>
-      <Text style={styles.subtitle}>You don't have any collections yet.</Text>
+      <Text style={styles.title}>Chọn bài học theo trình độ của bạn</Text>
+      <Text style={styles.subtitle}>Bạn chưa có bài học nào</Text>
 
       <View style={styles.groupContainer}>
         {GROUPS.map((group) => {
@@ -77,10 +78,9 @@ export default function EmptyCollectionOnboarding({ onSuccess }: Props) {
         })}
       </View>
 
-      <Button
+      <TextButton
         title={isSubmitting ? "Saving..." : "Save"}
         onPress={handleSave}
-        disabled={isSubmitting}
       />
     </View>
   );

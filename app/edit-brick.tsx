@@ -7,14 +7,14 @@ import { Picker } from "@react-native-picker/picker";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Pressable,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -73,7 +73,7 @@ export default function EditBrickScreen() {
           native_text: nativeText,
           target_text: targetText,
           is_public: isPublic,
-          collection_ids: [collectionId],
+          collection_id: collectionId,
         },
       });
       Alert.alert("Đã lưu");

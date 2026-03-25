@@ -6,7 +6,7 @@ import { BrickDisplay } from "@/components/practice/BrickDisplay";
 import { LearnMenu } from "@/components/practice/LearnMenu";
 import ResultDisplay from "@/components/practice/ResultDisplay";
 import { Toast } from "@/components/Toast";
-import { useAudioCache } from "@/hooks/useAudioCache";
+import { useCachedAudio } from "@/hooks/useCachedAudio";
 import type { StatusResponse } from "@/types/api";
 import type { AudioTranscription } from "@/types/audio";
 import type { Brick } from "@/types/brick";
@@ -62,7 +62,7 @@ export default function PracticeScreen() {
   const collectionIds = normalizeCollectionIds(collection_ids);
   const [brick, setBrick] = useState<Brick | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const { audioPath, audioLoading } = useAudioCache(audioUrl);
+  const { audioPath, isAudioLoading } = useCachedAudio(audioUrl);
   const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
   const [showTarget, setShowTarget] = useState<boolean>(
     DEFAULT_SETTINGS.firstShowTarget,
@@ -239,7 +239,7 @@ export default function PracticeScreen() {
       fetchBrickFSRS();
       const status = await AudioModule.requestRecordingPermissionsAsync();
       if (!status.granted) {
-        Alert.alert("Permission to access microphone was denied");
+        Alert.alert("Quyền truy cập microphone bị từ chối");
         return;
       }
       await setAudioModeAsync({
@@ -299,7 +299,7 @@ export default function PracticeScreen() {
           <Text>Loading brick...</Text>
         )}
 
-        {audioLoading ? (
+        {isAudioLoading ? (
           <ActivityIndicator />
         ) : (
           <PlaySoundButton onPress={playSound} />

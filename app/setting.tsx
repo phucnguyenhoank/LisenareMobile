@@ -2,15 +2,15 @@ import { request } from "@/api/client";
 import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 import SignInForm from "@/components/auth/SignInForm";
 import SignUpForm from "@/components/auth/SignUpForm";
+import TextButton from "@/components/TextButton";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Button,
   StyleSheet,
   Text,
-  View,
+  View
 } from "react-native";
 
 interface User {
@@ -77,9 +77,9 @@ export default function SettingScreen() {
         </Text>
         <Text style={styles.subtitle}>Mã người học: {user?.id}</Text>
         <View style={styles.spacing} />
-        <Button title="Đổi mật khẩu" onPress={handleChangePassword} />
+        <TextButton title="Đổi mật khẩu" onPress={handleChangePassword} />
         <View style={styles.spacingSmall} />
-        <Button title="Đăng xuất" onPress={signout} />
+        <TextButton title="Đăng xuất" onPress={signout} />
       </View>
     );
   }

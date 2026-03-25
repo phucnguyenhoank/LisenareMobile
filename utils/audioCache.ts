@@ -1,6 +1,6 @@
 import { Directory, File, Paths } from "expo-file-system";
 
-const AUDIO_CACHE_DIR = new Directory(Paths.cache, "brick_audio");
+const AUDIO_CACHE_DIR = new Directory(Paths.cache, "lisenare_audio");
 
 export const getCachedAudioUri = async (
   filename: string,
@@ -18,7 +18,7 @@ export const getCachedAudioUri = async (
     }
 
     const output = await File.downloadFileAsync(remoteUrl, localFile);
-    console.log("Download and cached: ", output.uri);
+    console.log("Downloaded and cached: ", output.uri);
     return output.uri;
   } catch (error) {
     console.error("Audio caching failed: ", error);

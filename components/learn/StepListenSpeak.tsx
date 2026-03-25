@@ -1,4 +1,4 @@
-import { useAudioCache } from "@/hooks/useAudioCache";
+import { useCachedAudio } from "@/hooks/useCachedAudio";
 import { useAudioPlayer } from "expo-audio";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import PlaySoundButton from "../PlaySoundButton";
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function StepListenSpeak({ audioUri, changeStep }: Props) {
-  const { audioPath, audioLoading } = useAudioCache(audioUri);
+  const { audioPath, isAudioLoading } = useCachedAudio(audioUri);
   const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
 
   const playSound = () => {
@@ -22,7 +22,7 @@ export default function StepListenSpeak({ audioUri, changeStep }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Nghe và Nói theo</Text>
-      {audioLoading ? (
+      {isAudioLoading ? (
         <ActivityIndicator />
       ) : (
         <PlaySoundButton onPress={playSound} style={styles.playSoundButton} />

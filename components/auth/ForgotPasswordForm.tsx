@@ -1,4 +1,5 @@
 import { request } from "@/api/client";
+import colors from "@/theme/colors";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -112,7 +113,7 @@ export default function ForgotPasswordForm({ onBackToSignin }: Props) {
       )}
 
       {loading ? (
-        <ActivityIndicator color="#007AFF" />
+        <ActivityIndicator color={colors.secondary} />
       ) : (
         <TouchableOpacity
           style={styles.button}
@@ -158,12 +159,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   button: {
-    backgroundColor: "#007AFF",
+    backgroundColor: colors.secondary,
     padding: 16,
     borderRadius: 8,
     alignItems: "center",
   },
   buttonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
   backButton: { marginTop: 20, alignItems: "center" },
-  backText: { color: "#007AFF", fontSize: 14 },
+  backText: { color: colors.secondary, fontSize: 14 },
 });

@@ -9,11 +9,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-type Props = {
-  onCreateCollection: () => void;
-};
-
-export default function FloatingActionMenu({ onCreateCollection }: Props) {
+export default function FloatingActionMenu() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -40,26 +36,11 @@ export default function FloatingActionMenu({ onCreateCollection }: Props) {
             style={styles.miniFabWithLabel}
             onPress={() => {
               setIsOpen(false);
-              onCreateCollection();
-            }}
-          >
-            <MaterialCommunityIcons
-              name="folder-plus-outline"
-              size={24}
-              color="white"
-            />
-            <Text style={styles.miniFabText}>Thêm bộ sưu tập</Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.miniFabWithLabel}
-            onPress={() => {
-              setIsOpen(false);
               router.push("/chat-topics");
             }}
           >
             <Ionicons name="chatbubbles-outline" size={24} color="white" />
-            <Text style={styles.miniFabText}>Trò chuyện</Text>
+            <Text style={styles.miniFabText}>Trò chuyện (fixing)</Text>
           </Pressable>
 
           <Pressable

@@ -3,13 +3,13 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Button,
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import TextButton from "../TextButton";
 
 type Props = {
   onSwitchToSignin: () => void;
@@ -111,11 +111,11 @@ export default function SignUpForm({ onSwitchToSignin }: Props) {
         <ActivityIndicator />
       ) : (
         <>
-          <Button title="Đăng ký" onPress={handleSignUp} />
+          <TextButton title="Đăng ký" onPress={handleSignUp} />
           <View style={styles.spacing} />
           <Text style={styles.smallText}>Hoặc</Text>
           <View style={styles.spacing} />
-          <Button
+          <TextButton
             title="Đã có tài khoản? Đăng nhập"
             onPress={onSwitchToSignin}
           />

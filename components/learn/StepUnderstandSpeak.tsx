@@ -1,7 +1,8 @@
 import { request } from "@/api/client";
-import { useAudioCache } from "@/hooks/useAudioCache";
+import { useCachedAudio } from "@/hooks/useCachedAudio";
 import type { PronunciationAnalysisResponse } from "@/types/audio";
 import {
+  AudioModule,
   RecordingPresets,
   useAudioPlayer,
   useAudioRecorder,
@@ -28,7 +29,7 @@ export default function StepUnderstandSpeak({
   native_text,
   setResult,
 }: Props) {
-  const { audioPath, audioLoading } = useAudioCache(audioUri);
+  const { audioPath, isAudioLoading } = useCachedAudio(audioUri);
   const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
   const DEFAULT_SETTINGS = {
     firstShowTarget: false,
@@ -52,8 +53,12 @@ export default function StepUnderstandSpeak({
     player.play();
   };
 
-  // TODO: Ask for permission (currently only ask if first in the practice.tsx screen.)
   const record = async () => {
+    const permission = await AudioModule.requestRecordingPermissionsAsync();
+    if (!permission.granted) {
+      alert("Quyền truy cập microphone bị từ chối");
+      return;
+    }
     setStatusMessage("Đang ghi âm...");
     await audioRecorder.prepareToRecordAsync();
     audioRecorder.record();
@@ -69,6 +74,7 @@ export default function StepUnderstandSpeak({
       name: "learner_recording.m4a",
       type: "audio/m4a",
     } as any);
+    formData;
 
     const endpoint = `/audio/ipa-evaluation?target_brick_id=${encodeURIComponent(brick_id)}`;
 
@@ -106,7 +112,7 @@ export default function StepUnderstandSpeak({
         setShowNative={setShowNative}
       />
 
-      {audioLoading ? (
+      {isAudioLoading ? (
         <ActivityIndicator />
       ) : (
         <PlaySoundButton onPress={playSound} />

@@ -34,7 +34,15 @@ export function CollectionRow({ item }: Props) {
         <View style={styles.content}>
           <View style={styles.textGroup}>
             <Text style={styles.title} numberOfLines={1}>
-              {item.name}
+              {(() => {
+                const name = item.name.trim();
+                // Kiểm tra nếu không có khoảng trắng (chuỗi chỉ gồm 1 từ)
+                if (!name.includes(" ")) {
+                  // Nếu ký tự cuối là dấu chấm, thì cắt bỏ nó
+                  return name.endsWith(".") ? name.slice(0, -1) : name;
+                }
+                return name;
+              })()}
             </Text>
             <Text style={styles.subtitle}>
               {item.learned_count} / {item.brick_count}{" "}

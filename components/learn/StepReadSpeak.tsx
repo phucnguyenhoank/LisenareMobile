@@ -1,4 +1,4 @@
-import { useAudioCache } from "@/hooks/useAudioCache";
+import { useCachedAudio } from "@/hooks/useCachedAudio";
 import { useAudioPlayer } from "expo-audio";
 import { useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
@@ -19,7 +19,7 @@ export default function StepReadSpeak({
   native_text,
   changeStep,
 }: Props) {
-  const { audioPath, audioLoading } = useAudioCache(audioUri);
+  const { audioPath, isAudioLoading } = useCachedAudio(audioUri);
   const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
   const DEFAULT_SETTINGS = {
     firstShowTarget: true,
@@ -48,7 +48,7 @@ export default function StepReadSpeak({
         setShowTarget={setShowTarget}
         setShowNative={setShowNative}
       />
-      {audioLoading ? (
+      {isAudioLoading ? (
         <ActivityIndicator />
       ) : (
         <PlaySoundButton onPress={playSound} style={styles.playSoundButton} />

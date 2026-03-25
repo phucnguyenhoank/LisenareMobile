@@ -1,18 +1,19 @@
 import { request } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
+import colors from "@/theme/colors";
 import type { Token } from "@/types/token";
 import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Button,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import TextButton from "../TextButton";
 
 type Props = {
   onSwitchToSignup: () => void;
@@ -101,15 +102,15 @@ export default function SignInForm({
       {isSubmitting ? (
         <ActivityIndicator />
       ) : (
-        <Button title="Đăng nhập" onPress={handleLogin} />
+        <TextButton title="Đăng nhập" onPress={handleLogin} />
       )}
 
       <View style={styles.spacing} />
       <Text style={styles.smallText}>Hoặc</Text>
       <View style={styles.spacing} />
-      <Button title="Đăng ký" onPress={handleSignUp} />
+      <TextButton title="Đăng ký" onPress={handleSignUp} />
       <View style={styles.spacingSmall} />
-      <Button title="Đăng ký với Google" onPress={handleGoogleSignIn} />
+      <TextButton title="Đăng ký với Google" onPress={handleGoogleSignIn} />
     </KeyboardAwareScrollView>
   );
 }
@@ -153,7 +154,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   forgotText: {
-    color: "#007AFF",
+    color: colors.secondary,
     fontSize: 13,
     fontWeight: "500",
   },

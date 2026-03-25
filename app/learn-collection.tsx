@@ -131,7 +131,7 @@ export default function LearnScreen() {
 
       {step === 1 && currentBrick && (
         <StepListenSpeak
-          audioUri={currentBrick.target_audio_uri}
+          audioUri={currentBrick.target_audio_uri} // brick-audios/GUksrGBeln0_sentence_254.wav
           changeStep={goNext}
         />
       )}
