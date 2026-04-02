@@ -1,7 +1,9 @@
 import { FontAwesome6, Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { formatDistanceToNow } from "date-fns";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   StyleSheet,
   Text,
@@ -9,10 +11,16 @@ import {
   View,
 } from "react-native";
 
+import { request } from "@/api/client";
+import { useAuth } from "@/context/AuthContext";
 import { useCachedAudio } from "@/hooks/useCachedAudio";
 import colors from "@/theme/colors";
+import { WordSegmentSecond } from "@/types/forced-alignment";
 import { Post } from "@/types/post";
+import { SentenceTranslateResponse } from "@/types/sentence";
+import { showAlert } from "@/utils/alerts";
 import { useAudioPlayer } from "expo-audio";
+import { useRouter } from "expo-router";
 import Word from "./Word";
 
 interface FeedItemProps {
@@ -20,16 +28,101 @@ interface FeedItemProps {
 }
 
 export default function FeedItem({ item }: FeedItemProps) {
+  const { token } = useAuth();
   const [showFullTranslation, setShowFullTranslation] = useState(false);
-  const [hideSubtitle, setHideSubtitle] = useState(true);
+  const [fetchedTranslation, setFetchedTranslation] = useState(
+    item.translation || "",
+  );
   const { audioPath, isAudioLoading } = useCachedAudio(item.audio_uri);
+  const [segments, setSegments] = useState<WordSegmentSecond[]>([]);
   const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const router = useRouter();
 
   const playPostAudio = () => {
     player.volume = 1.0;
     player.seekTo(0);
     player.play();
   };
+
+  const showTranslation = async () => {
+    const nextState = !showFullTranslation;
+    setShowFullTranslation(nextState);
+
+    if (nextState && !fetchedTranslation) {
+      setIsLoading(true);
+      try {
+        const sentenceTranslation = await request<SentenceTranslateResponse>(
+          "/text/translations",
+          {
+            method: "POST",
+            body: { text: item.content },
+          },
+        );
+        setFetchedTranslation(sentenceTranslation.text);
+      } catch (error) {
+        console.error("Translation failed", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleAddBrick = async () => {
+    if (!token) {
+      Alert.alert("Thông báo", "Bạn hãy đăng nhập trước nhé");
+      showAlert({
+        title: "Thông báo",
+        message: "Bạn hãy đăng nhập trước nhé",
+        confirmText: "Đăng nhập",
+        onConfirm: () => {
+          router.push("/setting");
+        },
+      });
+      return;
+    }
+
+    let finalTranslation = item.translation || fetchedTranslation;
+    if (!finalTranslation) {
+      try {
+        setIsLoading(true);
+
+        const res = await request<SentenceTranslateResponse>(
+          "/text/translations",
+          {
+            method: "POST",
+            body: { text: item.content },
+          },
+        );
+
+        finalTranslation = res.text;
+        setFetchedTranslation(res.text); // cache it
+      } catch (error) {
+        console.error("Translation failed", error);
+        finalTranslation = "";
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    router.push({
+      pathname: "/add-brick",
+      params: {
+        native: finalTranslation,
+        target: item.content, // The original text
+        audio_uri: audioPath,
+      },
+    });
+  };
+
+  useEffect(() => {
+    (async () => {
+      const word_segments = await request<WordSegmentSecond[]>(
+        `/text/forced_alignment/${item.audio_uri}`,
+      );
+      setSegments(word_segments);
+    })();
+  }, []);
 
   return (
     <View style={styles.card}>
@@ -44,7 +137,16 @@ export default function FeedItem({ item }: FeedItemProps) {
 
         <View>
           <Text style={styles.author}>{item.creator.full_name}</Text>
-          <Text style={styles.timestamp}>{item.created_at}</Text>
+          <Text style={styles.timestamp}>
+            {item.created_at
+              ? formatDistanceToNow(
+                  // 1. Convert space to 'T' for strict ISO compliance
+                  // 2. Append 'Z' to force UTC interpretation
+                  new Date(item.created_at.replace(" ", "T") + "Z"),
+                  { addSuffix: true },
+                )
+              : ""}
+          </Text>
         </View>
       </View>
 
@@ -60,34 +162,35 @@ export default function FeedItem({ item }: FeedItemProps) {
       {/* Content */}
       <View style={styles.contentContainer}>
         {item.content.split(" ").map((word, index) => (
-          <Word key={index} word={word} blur={hideSubtitle} />
+          <Word
+            key={index}
+            word={word}
+            segment={segments[index]}
+            player={player}
+          />
         ))}
       </View>
 
       {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity
-          onPress={() => setShowFullTranslation(!showFullTranslation)}
-        >
+        <TouchableOpacity onPress={showTranslation}>
           <Text style={styles.actionText}>
             {showFullTranslation ? "Hide Translation" : "View Translation"}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setHideSubtitle(!hideSubtitle)}>
-          <Text style={styles.actionText}>
-            {hideSubtitle ? "Show Subtitle" : "Hide Subtitle"}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.saveIcon}>
+        <TouchableOpacity style={styles.saveIcon} onPress={handleAddBrick}>
           <FontAwesome6 name="add" size={24} color="#555" />
         </TouchableOpacity>
       </View>
 
       {showFullTranslation && (
         <View style={styles.translationBox}>
-          <Text style={styles.translationText}>{item.translation}</Text>
+          {isLoading ? (
+            <ActivityIndicator size="small" />
+          ) : (
+            <Text style={styles.translationText}>{fetchedTranslation}</Text>
+          )}
         </View>
       )}
     </View>

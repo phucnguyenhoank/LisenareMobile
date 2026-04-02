@@ -1,24 +1,40 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-export function Toast({ message }: { message: string }) {
+export function Toast({
+  message,
+  onClose,
+}: {
+  message: string;
+  onClose: () => void;
+}) {
   return (
-    <View style={styles.toast}>
+    <View style={styles.toastContainer}>
       <Text style={styles.toastText}>{message}</Text>
+
+      <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+        <Text style={{ color: "#fff", fontWeight: "bold", marginLeft: 10 }}>
+          ✕
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  toast: {
-    position: "absolute",
-    bottom: 80,
-    backgroundColor: "#333",
-    paddingHorizontal: 16,
+  toastContainer: {
+    flexDirection: "row", // Để nội dung và nút X nằm ngang
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.8)",
+    paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 20,
+    justifyContent: "space-between",
   },
   toastText: {
-    color: "white",
-    fontSize: 14,
+    color: "#fff",
+    maxWidth: "85%", // Tránh chữ đè lên nút X
+  },
+  closeButton: {
+    padding: 5,
   },
 });

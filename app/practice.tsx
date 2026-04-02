@@ -4,6 +4,7 @@ import PlaySoundButton from "@/components/PlaySoundButton";
 import { AnswerInputRow } from "@/components/practice/AnswerInputRow";
 import { BrickDisplay } from "@/components/practice/BrickDisplay";
 import { LearnMenu } from "@/components/practice/LearnMenu";
+import { ReportOtherInput } from "@/components/practice/ReportOtherInput";
 import ResultDisplay from "@/components/practice/ResultDisplay";
 import { Toast } from "@/components/Toast";
 import { useCachedAudio } from "@/hooks/useCachedAudio";
@@ -11,6 +12,8 @@ import type { StatusResponse } from "@/types/api";
 import type { AudioTranscription } from "@/types/audio";
 import type { Brick } from "@/types/brick";
 import type { SentenceCompareResponse } from "@/types/comparison";
+import { showAlert } from "@/utils/alerts";
+
 import {
   AudioModule,
   RecordingPresets,
@@ -19,7 +22,7 @@ import {
   useAudioRecorder,
   useAudioRecorderState,
 } from "expo-audio";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -56,6 +59,7 @@ const DEFAULT_SETTINGS = {
 const NUM_TRANSCRIPTION_ATTEMPTS = 5;
 
 export default function PracticeScreen() {
+  const router = useRouter();
   const { collection_ids } = useLocalSearchParams<{
     collection_ids?: string | string[];
   }>();
@@ -86,6 +90,10 @@ export default function PracticeScreen() {
   const [isAnswerRevealed, setIsAnswerRevealed] = useState<boolean>(false);
   const [hasSentReview, setHasSentReview] = useState<boolean>(false);
 
+  // Report
+  const [isReporting, setIsReporting] = useState(false);
+  const [otherText, setOtherText] = useState("");
+
   const fetchBrickFSRS = async () => {
     try {
       setShowTarget(DEFAULT_SETTINGS.firstShowTarget);
@@ -98,8 +106,23 @@ export default function PracticeScreen() {
       setAudioUrl(br.target_audio_uri);
       setIsAnswerRevealed(false);
       setHasSentReview(false);
-    } catch (err) {
-      console.error("Failed to fetch brick:", err);
+    } catch (err: any) {
+      if (err.status == 400) {
+        showAlert({
+          title: "Chưa có dữ liệu",
+          message:
+            "Bạn chưa có câu nào trong bộ sưu tập để luyện tập. Hãy thêm câu mới trước nhé!",
+          cancelText: "Để sau",
+          onCancel: () => router.back(),
+          confirmText: "Thêm ngay",
+          onConfirm: () => {
+            router.push("/add-brick");
+          },
+          showCancel: true,
+        });
+      } else {
+        console.error("Failed to fetch brick:", err);
+      }
     }
   };
 
@@ -110,22 +133,31 @@ export default function PracticeScreen() {
     setIsAnswerRevealed(true);
   };
 
-  const showQuickMessage = (message: string) => {
-    setToast(message);
-    setTimeout(() => {
-      setToast(null);
-    }, 2500);
+  const reportBrokenFile = () => {
+    Alert.alert(
+      "Báo cáo lỗi",
+      "Câu này có gì sai vậy?",
+      [
+        { text: "Khác...", onPress: () => setIsReporting(true) }, // Shows the simple input
+        {
+          text: "Sai loại câu",
+          onPress: () => sendReport("wrong brick type"),
+        },
+        { text: "Audio bị hỏng", onPress: () => sendReport("broken audio") },
+      ],
+      { cancelable: true },
+    );
   };
 
-  const reportBrokenFile = async () => {
+  const sendReport = async (description: string) => {
+    const cleanFilename = brick?.target_audio_uri.split("/").pop();
     const response = await request<StatusResponse>(
-      `/bricks/report/${brick?.target_audio_uri}`,
-      {
-        method: "POST",
-      },
+      `/bricks/report/${cleanFilename}?description=${encodeURIComponent(description)}`,
+      { method: "POST" },
     );
-    showQuickMessage(`${response.message}. Cảm ơn bạn!`);
-    fetchBrickFSRS();
+    setToast(`${response.message}. Cảm ơn bạn!`);
+    setIsReporting(false);
+    setOtherText("");
   };
 
   const submitAnswer = async () => {
@@ -137,7 +169,7 @@ export default function PracticeScreen() {
     }
 
     if (!finalAnswer.trim() || !brick) {
-      showQuickMessage("Nhập câu trả lời của bạn trước nha!");
+      setToast("Nhập câu trả lời của bạn trước nha!");
       return;
     }
 
@@ -168,7 +200,7 @@ export default function PracticeScreen() {
       setCompareResult(result);
     } catch (err) {
       console.error("Comparison failed:", err);
-      showQuickMessage("Failed to check answer.");
+      setToast("Failed to check answer.");
     } finally {
       setSubmitting(false);
       setAnswer(finalAnswer);
@@ -262,7 +294,7 @@ export default function PracticeScreen() {
         useNativeDriver: true,
       }).start();
     } else {
-      showQuickMessage(
+      setToast(
         `Làm lại nhé 💪, bạn được ${Math.round(compareResult.score * 100)}%`,
       );
     }
@@ -316,11 +348,23 @@ export default function PracticeScreen() {
         />
 
         <Text style={styles.microStatusLabel}>{microStatusMessage}</Text>
+
+        {isReporting && (
+          <ReportOtherInput
+            value={otherText}
+            onChangeText={setOtherText}
+            onCancel={() => {
+              setIsReporting(false);
+              setOtherText("");
+            }}
+            onSubmit={(text) => sendReport(text)}
+          />
+        )}
       </KeyboardAwareScrollView>
 
       {toast && (
         <View style={styles.toastWrapper}>
-          <Toast message={toast} />
+          <Toast message={toast} onClose={() => setToast(null)} />
         </View>
       )}
 
@@ -421,5 +465,44 @@ const styles = StyleSheet.create({
 
   debugText: {
     fontSize: 10,
+  },
+
+  //
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  reportCard: {
+    width: "85%",
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 20,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 6,
+    padding: 10,
+    marginTop: 10,
+    minHeight: 40,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 20,
+  },
+  picker: {
+    width: "100%",
   },
 });

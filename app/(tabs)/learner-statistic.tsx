@@ -1,7 +1,8 @@
 import { request } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
-import { Link } from "expo-router";
+import { showAlert } from "@/utils/alerts";
+import { Link, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -24,6 +25,7 @@ interface LearnerMe {
 }
 
 export default function LearnerState() {
+  const router = useRouter();
   const { token, isTokenLoading } = useAuth();
 
   const [stats, setStats] = useState<LearnerStats | null>(null);
@@ -43,8 +45,21 @@ export default function LearnerState() {
 
       setStats(statsData);
       setUser(userData);
-    } catch (err) {
-      console.error("Failed to fetch learner data:", err);
+    } catch (err: any) {
+      if (err.status == 401) {
+        showAlert({
+          title: "Phiên đăng nhập hết hạn",
+          message: "Hãy đăng nhập lại",
+          confirmText: "Đăng nhập",
+          onConfirm: () => {
+            router.push("/setting");
+          },
+          showCancel: false,
+          cancelable: false,
+        });
+      } else {
+        console.error("Failed to fetch learner data:", err);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);

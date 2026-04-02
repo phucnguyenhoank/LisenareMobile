@@ -6,12 +6,24 @@ interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: any;
   headers?: Record<string, string>;
-  requiresAuth?: boolean; // Automate token injection
+}
+
+export class ApiError extends Error {
+  status: number;
+  data: any;
+
+  constructor(status: number, message: string, data?: any) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.data = data;
+  }
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {
   const text = await res.text();
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
+  if (!res.ok)
+    throw new ApiError(res.status, `HTTP ${res.status}: ${text}`, text);
   if (!text) return null as T;
   try {
     return JSON.parse(text) as T;
@@ -20,22 +32,43 @@ async function handleResponse<T>(res: Response): Promise<T> {
   }
 }
 
+/**
+ * A universal fetch wrapper for API calls with automate token injection.
+ *
+ * @param endpoint - The API path (appended to API_BASE_URL).
+ * @param options - Configuration including method, body, custom headers.
+ * @returns Parsed JSON or raw text response of type T.
+ * @throws {ApiError} If the response status is not 2xx.
+ *
+ * @example
+ * // 1. Simple GET (Auth is included by default)
+ * const data = await request<User>("/me");
+ *
+ * @example
+ * // 2. POST with JSON body
+ * const newBrick = await request<Brick>("/bricks", {
+ *   method: "POST",
+ *   body: { text: "Hello", lang: "en" }
+ * });
+ *
+ * @example
+ * // 3. Multipart File Upload (FormData)
+ * const formData = new FormData();
+ * formData.append("audio", { uri: "...", name: "rec.m4a", type: "audio/m4a" } as any);
+ * await request("/upload", {
+ *   method: "POST",
+ *   body: formData
+ * });
+ */
 export async function request<T>(
   endpoint: string,
-  {
-    method = "GET",
-    body = null,
-    headers = {},
-    requiresAuth = true,
-  }: RequestOptions = {},
+  { method = "GET", body = null, headers = {} }: RequestOptions = {},
 ): Promise<T> {
   // Initialize headers without a default Content-Type
   const finalHeaders: Record<string, string> = { ...headers };
 
-  if (requiresAuth) {
-    const token = await getToken();
-    if (token) finalHeaders["Authorization"] = `Bearer ${token}`;
-  }
+  const token = await getToken();
+  if (token) finalHeaders["Authorization"] = `Bearer ${token}`;
 
   let finalBody: any = body;
 

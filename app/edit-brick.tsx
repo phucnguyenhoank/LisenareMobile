@@ -27,12 +27,13 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <View style={styles.field}>
+    <View style={styles.fieldCard}>
       <Text style={styles.label}>{label}</Text>
       {children}
     </View>
   );
 }
+const cleanText = (text: string) => text.replace(/\n/g, " ");
 
 export default function EditBrickScreen() {
   const { brick_id } = useLocalSearchParams();
@@ -86,51 +87,62 @@ export default function EditBrickScreen() {
     return <ActivityIndicator style={{ flex: 1 }} color={colors.secondary2} />;
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-      <KeyboardAwareScrollView
-        bottomOffset={62}
-        contentContainerStyle={styles.container}
-      >
-        <Text style={styles.muted}>Brick #{brick?.id}</Text>
+    <SafeAreaView style={styles.screen} edges={["top"]}>
+      <KeyboardAwareScrollView contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Chỉnh sửa Brick</Text>
+          <Text style={styles.idBadge}>#{brick?.id}</Text>
+        </View>
 
         <Field label="Bộ sưu tập">
-          <Picker
-            selectedValue={collectionId}
-            onValueChange={setCollectionId}
-            style={styles.picker}
-          >
-            {collections.map((c) => (
-              <Picker.Item key={c.id} label={c.name} value={c.id} />
-            ))}
-          </Picker>
+          <View>
+            <Picker
+              selectedValue={collectionId}
+              onValueChange={setCollectionId}
+            >
+              {collections.map((c) => (
+                <Picker.Item key={c.id} label={c.name} value={c.id} />
+              ))}
+            </Picker>
+          </View>
         </Field>
 
-        <Pressable onPress={() => alert("Change coming soon")}>
-          <Text style={styles.muted}>
-            Audio: {brick?.target_audio_uri?.split("/").pop()}
-          </Text>
-        </Pressable>
+        <View style={styles.audioRow}>
+          <Text style={styles.audioLabel}>Audio:</Text>
+          <Pressable onPress={() => alert("Change coming soon")}>
+            <Text style={styles.audioFile}>
+              {brick?.target_audio_uri?.split("/").pop()}
+            </Text>
+          </Pressable>
+        </View>
 
-        <Field label="Tiếng việt">
+        <Field label="Tiếng Việt">
           <TextInput
             style={styles.input}
             value={nativeText}
-            onChangeText={setNativeText}
+            onChangeText={(t) => setNativeText(cleanText(t))}
             multiline
+            placeholder="Nhập nghĩa tiếng Việt..."
           />
         </Field>
 
-        <Field label="Tiếng anh">
+        <Field label="Tiếng Anh">
           <TextInput
-            style={styles.input}
+            style={[styles.input, styles.targetText]}
             value={targetText}
-            onChangeText={setTargetText}
+            onChangeText={(t) => setTargetText(cleanText(t))}
             multiline
+            placeholder="Enter English text..."
           />
         </Field>
 
-        <View style={styles.row}>
-          <Text>Công khai</Text>
+        <View style={styles.switchCard}>
+          <View>
+            <Text style={styles.switchLabel}>Chế độ công khai</Text>
+            <Text style={styles.switchSubLabel}>
+              Mọi người có thể thấy câu này
+            </Text>
+          </View>
           <Switch
             value={isPublic}
             onValueChange={setIsPublic}
@@ -140,13 +152,16 @@ export default function EditBrickScreen() {
 
         <View style={styles.actionRow}>
           <TextButton
-            title="Thoát"
+            title="Hủy bỏ"
             variant="outline"
             onPress={() => router.back()}
-            style={{ flex: 1 }}
+            style={styles.flex1}
           />
-
-          <TextButton title="Lưu" onPress={handleSave} style={{ flex: 1 }} />
+          <TextButton
+            title="Lưu thay đổi"
+            onPress={handleSave}
+            style={styles.flex1}
+          />
         </View>
       </KeyboardAwareScrollView>
     </SafeAreaView>
@@ -154,40 +169,87 @@ export default function EditBrickScreen() {
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#F2F4F7", // Soft grey background makes cards "pop"
+  },
   container: {
+    padding: 20,
     gap: 16,
-    padding: 16,
   },
-  field: {
-    gap: 6,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#555",
-  },
-  input: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.secondary2,
-    paddingVertical: 10,
-    fontSize: 14,
-  },
-  picker: {
-    marginLeft: -8,
-  },
-  row: {
+  header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 24,
+    marginBottom: 8,
   },
-  muted: {
+  title: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#1A1C1E",
+  },
+  idBadge: {
+    backgroundColor: "#E0E4E9",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
     fontSize: 12,
-    color: "#888",
+    color: "#666",
+    overflow: "hidden",
   },
+  fieldCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#EAEAEF",
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.secondary2,
+    marginBottom: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  input: {
+    fontSize: 16,
+    color: "#333",
+    minHeight: 40,
+    paddingTop: 8,
+  },
+  targetText: {
+    fontWeight: "600",
+    color: "#000",
+  },
+  audioRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 4,
+  },
+  audioLabel: { fontSize: 13, color: "#888" },
+  audioFile: {
+    fontSize: 13,
+    color: colors.secondary2,
+    textDecorationLine: "underline",
+  },
+  switchCard: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#FFF",
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 8,
+  },
+  switchLabel: { fontSize: 15, fontWeight: "600", color: "#333" },
+  switchSubLabel: { fontSize: 12, color: "#888", marginTop: 2 },
   actionRow: {
     flexDirection: "row",
     gap: 12,
-    marginTop: 40,
+    marginTop: 24,
+    paddingBottom: 40,
   },
+  flex1: { flex: 1 },
 });

@@ -13,7 +13,7 @@ import {
 } from "react-native";
 
 export default function DiscoveryScreen() {
-  const { token, isTokenLoading } = useAuth();
+  const { token } = useAuth();
   const [feed, setFeed] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);

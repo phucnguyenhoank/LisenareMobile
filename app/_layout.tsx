@@ -1,16 +1,21 @@
 import { AuthProvider } from "@/context/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
+import { StatusBar } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
   return (
-    <KeyboardProvider>
-      <QueryClientProvider client={queryClient}>
-        {/* Wrap the Stack so all screens can use useAuth() */}
-        <AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <KeyboardProvider>
+          <StatusBar
+            barStyle="dark-content"
+            backgroundColor="#ffffff"
+            translucent={true}
+          />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" options={{ title: "Home" }} />
             <Stack.Screen
@@ -42,8 +47,8 @@ export default function RootLayout() {
               }}
             />
           </Stack>
-        </AuthProvider>
-      </QueryClientProvider>
-    </KeyboardProvider>
+        </KeyboardProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

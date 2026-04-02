@@ -1,7 +1,6 @@
 import colors from "@/theme/colors";
 import {
   AntDesign,
-  Ionicons,
   MaterialCommunityIcons,
   MaterialIcons,
 } from "@expo/vector-icons";
@@ -26,7 +25,7 @@ export default function FloatingActionMenu() {
           >
             <MaterialCommunityIcons
               name="toy-brick-plus-outline"
-              size={24}
+              size={28}
               color="white"
             />
             <Text style={styles.miniFabText}>Thêm câu</Text>
@@ -39,8 +38,12 @@ export default function FloatingActionMenu() {
               router.push("/chat-topics");
             }}
           >
-            <Ionicons name="chatbubbles-outline" size={24} color="white" />
-            <Text style={styles.miniFabText}>Trò chuyện (fixing)</Text>
+            <MaterialCommunityIcons
+              name="robot-happy-outline"
+              size={28}
+              color="white"
+            />
+            <Text style={styles.miniFabText}>Tutor</Text>
           </Pressable>
 
           <Pressable
@@ -50,7 +53,7 @@ export default function FloatingActionMenu() {
               router.push("/practice");
             }}
           >
-            <MaterialIcons name="fitness-center" size={24} color="white" />
+            <MaterialIcons name="fitness-center" size={28} color="white" />
             <Text style={styles.miniFabText}>Luyện nói</Text>
           </Pressable>
         </View>

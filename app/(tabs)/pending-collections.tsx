@@ -13,6 +13,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -23,10 +24,8 @@ const LIMIT = 20;
 
 export default function CollectionScreen() {
   const { token, isTokenLoading } = useAuth();
-  const [isCreateCollectionVisible, setIsCreateCollectionVisible] =
-    useState(false);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
-
+  const [refreshing, setRefreshing] = useState(false);
   const {
     data: stats = [],
     isLoading: isStatsLoading,
@@ -47,22 +46,38 @@ export default function CollectionScreen() {
     }
   }, [stats]);
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery({
-      queryKey: ["collections", selectedGroupName],
-      queryFn: ({ pageParam = 1 }) =>
-        request<Collection[]>(
-          `/collections?page=${pageParam}&limit=${LIMIT}&group_name=${encodeURIComponent(selectedGroupName!)}`,
-        ),
-      initialPageParam: 1,
-      getNextPageParam: (lastPage, allPages) =>
-        lastPage.length === LIMIT ? allPages.length + 1 : undefined, // Nếu trang cuối đủ số lượng thì mới có trang tiếp
-      enabled: !!selectedGroupName && !!token,
-    });
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch: refetchCollections,
+  } = useInfiniteQuery({
+    queryKey: ["collections", selectedGroupName],
+    queryFn: ({ pageParam = 1 }) =>
+      request<Collection[]>(
+        `/collections?page=${pageParam}&limit=${LIMIT}&group_name=${encodeURIComponent(selectedGroupName!)}`,
+      ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length === LIMIT ? allPages.length + 1 : undefined, // Nếu trang cuối đủ số lượng thì mới có trang tiếp
+    enabled: !!selectedGroupName && !!token,
+  });
   const allCollections = data?.pages.flat() ?? [];
 
   const handleGroupNameChange = (groupName: string) => {
     setSelectedGroupName(groupName);
+  };
+
+  const onRefresh = async () => {
+    if (refreshing) return;
+
+    setRefreshing(true);
+    try {
+      await Promise.all([refetchStats(), refetchCollections()]);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   // If stats are still loading or we haven't picked a group yet
@@ -125,6 +140,9 @@ export default function CollectionScreen() {
           ) : (
             <View style={{ height: 100 }} />
           ) // Khoảng trống cuối danh sách
+        }
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
 

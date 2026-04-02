@@ -8,8 +8,9 @@ import {
   useAudioRecorder,
   useAudioRecorderState,
 } from "expo-audio";
-import { router } from "expo-router";
-import React, { useState } from "react";
+import * as DocumentPicker from "expo-document-picker";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -35,14 +36,23 @@ const Input = ({ label, value, onChange, ...props }: any) => (
 );
 
 export default function AddBrickScreen() {
+  const params = useLocalSearchParams<{
+    native?: string;
+    target?: string;
+    audio_uri?: string;
+  }>();
+
   const [form, setForm] = useState({
-    native: "",
-    target: "",
+    native: params.native || "",
+    target: params.target || "",
     coll: "my collection",
     group: "my group",
     public: true,
   });
   const [loading, setLoading] = useState(false);
+  const [audioUri, setAudioUri] = useState<string | null>(
+    params.audio_uri ?? null,
+  );
 
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const { isRecording } = useAudioRecorderState(recorder);
@@ -51,7 +61,10 @@ export default function AddBrickScreen() {
   const toggleRecord = async () => {
     if (isRecording) {
       await recorder.stop();
-      if (recorder.uri) player.replace({ uri: recorder.uri });
+      if (recorder.uri) {
+        setAudioUri(recorder.uri);
+        player.replace({ uri: recorder.uri });
+      }
     } else {
       if (!(await AudioModule.requestRecordingPermissionsAsync()).granted)
         return Alert.alert("Lỗi", "Cần quyền micro");
@@ -61,13 +74,13 @@ export default function AddBrickScreen() {
   };
 
   const onSubmit = async () => {
-    if (!recorder.uri || !form.native || !form.target)
+    if (!audioUri || !form.native || !form.target)
       return Alert.alert("Lỗi", "Thiếu thông tin hoặc chưa ghi âm");
 
     setLoading(true);
     const data = new FormData();
     data.append("audio_file", {
-      uri: recorder.uri,
+      uri: audioUri,
       name: `rec.m4a`,
       type: "audio/m4a",
     } as any);
@@ -83,11 +96,37 @@ export default function AddBrickScreen() {
         { text: "OK", onPress: () => router.back() },
       ]);
     } catch (e) {
-      Alert.alert("Lỗi", "Không thể lưu. Kiểm tra lại kết nối.");
+      Alert.alert("Lỗi", "Kiểm tra kết nối.");
     } finally {
       setLoading(false);
     }
   };
+
+  const pickAudioFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "audio/*", // Limit to audio files
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled) {
+        const asset = result.assets[0];
+
+        setAudioUri(asset.uri);
+        player.replace({ uri: asset.uri });
+
+        Alert.alert("Thành công", "Đã chọn file: " + asset.name);
+      }
+    } catch (err) {
+      Alert.alert("Lỗi", "Không thể chọn file");
+    }
+  };
+
+  useEffect(() => {
+    if (audioUri) {
+      player.replace({ uri: audioUri });
+    }
+  }, [audioUri]);
 
   return (
     <View style={styles.screen}>
@@ -96,26 +135,40 @@ export default function AddBrickScreen() {
         keyboardShouldPersistTaps="handled" // Giúp nhấn nút submit mượt hơn khi bàn phím đang mở
       >
         <View style={styles.card}>
-          <TouchableOpacity
-            onPress={toggleRecord}
-            style={[styles.mic, isRecording && { backgroundColor: "#FF3B30" }]}
-          >
-            <FontAwesome
-              name={isRecording ? "stop" : "microphone"}
-              size={30}
-              color="#fff"
-            />
-          </TouchableOpacity>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 20 }}>
+            {/* Record Button */}
+            <TouchableOpacity
+              onPress={toggleRecord}
+              style={[
+                styles.mic,
+                isRecording && { backgroundColor: "#FF3B30" },
+              ]}
+            >
+              <FontAwesome
+                name={isRecording ? "stop" : "microphone"}
+                size={30}
+                color="#fff"
+              />
+            </TouchableOpacity>
+
+            {/* Upload Button */}
+            {!isRecording && (
+              <TouchableOpacity
+                onPress={pickAudioFile}
+                style={[styles.mic, { backgroundColor: colors.secondary }]} // Or any color you like
+              >
+                <FontAwesome name="upload" size={25} color="#fff" />
+              </TouchableOpacity>
+            )}
+          </View>
+
           <Text style={styles.status}>
-            {isRecording
-              ? "Đang ghi âm..."
-              : recorder.uri
-                ? "Đã ghi âm thành công"
-                : "Nhấn để bắt đầu ghi âm"}
+            {isRecording ? "Đang ghi âm..." : "Ghi âm hoặc Tải lên file audio"}
           </Text>
-          {recorder.uri && !isRecording && (
+          {audioUri && !isRecording && (
             <TouchableOpacity
               onPress={() => {
+                if (!audioUri) return;
                 player.seekTo(0);
                 player.play();
               }}
@@ -135,12 +188,14 @@ export default function AddBrickScreen() {
             value={form.native}
             onChange={(t: string) => setForm((f) => ({ ...f, native: t }))}
             placeholder="Xin chào"
+            multiline
           />
           <Input
             label="Tiếng Anh"
             value={form.target}
             onChange={(t: string) => setForm((f) => ({ ...f, target: t }))}
             placeholder="Hello"
+            multiline
           />
           <Input
             label="Bộ sưu tập"
