@@ -56,7 +56,7 @@ export default function CollectionScreen() {
     queryKey: ["collections", selectedGroupName],
     queryFn: ({ pageParam = 1 }) =>
       request<Collection[]>(
-        `/collections?page=${pageParam}&limit=${LIMIT}&group_name=${encodeURIComponent(selectedGroupName!)}`,
+        `/collections/pending?page=${pageParam}&limit=${LIMIT}&group_name=${encodeURIComponent(selectedGroupName!)}`,
       ),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) =>

@@ -1,7 +1,10 @@
 import { request } from "@/api/client";
+import { BrickMetadataSelector } from "@/components/brick-form/BrickMetadataSelector";
+import { FormField } from "@/components/FormField";
 import TextButton from "@/components/TextButton";
 import colors from "@/theme/colors";
-import type { Brick } from "@/types/brick";
+import type { Brick, GrammarPoint } from "@/types/brick";
+import { SentenceFunction, SentenceStructure, UnitType } from "@/types/brick";
 import type { Collection } from "@/types/collection";
 import { Picker } from "@react-native-picker/picker";
 import { router, useLocalSearchParams } from "expo-router";
@@ -19,20 +22,6 @@ import {
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={styles.fieldCard}>
-      <Text style={styles.label}>{label}</Text>
-      {children}
-    </View>
-  );
-}
 const cleanText = (text: string) => text.replace(/\n/g, " ");
 
 export default function EditBrickScreen() {
@@ -48,6 +37,13 @@ export default function EditBrickScreen() {
   const [isPublic, setIsPublic] = useState(true);
   const [collectionId, setCollectionId] = useState<number>(1);
 
+  const [metadata, setMetadata] = useState({
+    unitType: UnitType.word,
+    structure: null as SentenceStructure | null,
+    func: null as SentenceFunction | null,
+    selectedGrammarPoints: [] as GrammarPoint[],
+  });
+
   useEffect(() => {
     (async () => {
       try {
@@ -59,6 +55,17 @@ export default function EditBrickScreen() {
         setNativeText(b.native_text);
         setTargetText(b.target_text);
         setIsPublic(b.is_public);
+        setCollectionId(b.collection_id || 1);
+
+        setMetadata({
+          unitType: b.brick_metadata.unit_type,
+          structure: b.brick_metadata.structure,
+          func: b.brick_metadata.function,
+          selectedGrammarPoints:
+            b.brick_metadata.grammar_points?.map((gp) => gp.grammar_point) ||
+            [],
+        });
+
         setCollections(c);
       } finally {
         setLoading(false);
@@ -75,9 +82,17 @@ export default function EditBrickScreen() {
           target_text: targetText,
           is_public: isPublic,
           collection_id: collectionId,
+          brick_metadata: {
+            unit_type: metadata.unitType,
+            structure: metadata.structure,
+            function: metadata.func,
+            grammar_points: metadata.selectedGrammarPoints.map((p) => ({
+              grammar_point: p,
+            })),
+          },
         },
       });
-      Alert.alert("Đã lưu");
+      Alert.alert("Thành công", "Đã lưu chỉnh sửa");
     } catch {
       Alert.alert("Error", "Failed to save");
     }
@@ -94,7 +109,7 @@ export default function EditBrickScreen() {
           <Text style={styles.idBadge}>#{brick?.id}</Text>
         </View>
 
-        <Field label="Bộ sưu tập">
+        <FormField label="Bộ sưu tập">
           <View>
             <Picker
               selectedValue={collectionId}
@@ -105,7 +120,7 @@ export default function EditBrickScreen() {
               ))}
             </Picker>
           </View>
-        </Field>
+        </FormField>
 
         <View style={styles.audioRow}>
           <Text style={styles.audioLabel}>Audio:</Text>
@@ -116,7 +131,7 @@ export default function EditBrickScreen() {
           </Pressable>
         </View>
 
-        <Field label="Tiếng Việt">
+        <FormField label="Tiếng Việt">
           <TextInput
             style={styles.input}
             value={nativeText}
@@ -124,9 +139,9 @@ export default function EditBrickScreen() {
             multiline
             placeholder="Nhập nghĩa tiếng Việt..."
           />
-        </Field>
+        </FormField>
 
-        <Field label="Tiếng Anh">
+        <FormField label="Tiếng Anh">
           <TextInput
             style={[styles.input, styles.targetText]}
             value={targetText}
@@ -134,7 +149,7 @@ export default function EditBrickScreen() {
             multiline
             placeholder="Enter English text..."
           />
-        </Field>
+        </FormField>
 
         <View style={styles.switchCard}>
           <View>
@@ -150,9 +165,14 @@ export default function EditBrickScreen() {
           />
         </View>
 
+        <BrickMetadataSelector
+          state={metadata}
+          onChange={(patch) => setMetadata((prev) => ({ ...prev, ...patch }))}
+        />
+
         <View style={styles.actionRow}>
           <TextButton
-            title="Hủy bỏ"
+            title="Thoát"
             variant="outline"
             onPress={() => router.back()}
             style={styles.flex1}
@@ -196,21 +216,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     overflow: "hidden",
-  },
-  fieldCard: {
-    backgroundColor: "#FFF",
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#EAEAEF",
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.secondary2,
-    marginBottom: 4,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
   },
   input: {
     fontSize: 16,

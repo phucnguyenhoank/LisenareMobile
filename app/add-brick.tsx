@@ -1,5 +1,13 @@
 import { request } from "@/api/client";
+import { BrickMetadataSelector } from "@/components/brick-form/BrickMetadataSelector";
+import { FormField } from "@/components/FormField";
 import colors from "@/theme/colors";
+import {
+  GrammarPoint,
+  SentenceFunction,
+  SentenceStructure,
+  UnitType,
+} from "@/types/brick";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import {
   AudioModule,
@@ -19,21 +27,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-
-const Input = ({ label, value, onChange, ...props }: any) => (
-  <View style={{ gap: 8 }}>
-    <Text style={styles.label}>{label}</Text>
-    <TextInput
-      style={styles.input}
-      value={value}
-      onChangeText={onChange}
-      {...props}
-    />
-  </View>
-);
 
 export default function AddBrickScreen() {
   const params = useLocalSearchParams<{
@@ -58,6 +54,14 @@ export default function AddBrickScreen() {
   const { isRecording } = useAudioRecorderState(recorder);
   const player = useAudioPlayer(null);
 
+  // Metadata Fields
+  const [metadata, setMetadata] = useState({
+    unitType: UnitType.word,
+    structure: null as SentenceStructure | null,
+    func: null as SentenceFunction | null,
+    selectedGrammarPoints: [] as GrammarPoint[],
+  });
+
   const toggleRecord = async () => {
     if (isRecording) {
       await recorder.stop();
@@ -79,19 +83,42 @@ export default function AddBrickScreen() {
 
     setLoading(true);
     const data = new FormData();
+
+    // 1. Append the audio file as usual
     data.append("audio_file", {
       uri: audioUri,
       name: `rec.m4a`,
       type: "audio/m4a",
     } as any);
-    data.append("native_text", form.native);
-    data.append("target_text", form.target);
-    data.append("collection_name", form.coll);
-    data.append("group_name", form.group);
-    data.append("is_public", String(form.public));
+
+    // 2. Prepare the structured JSON object matching BrickCreateRequest
+    const brickRequestData = {
+      native_text: form.native,
+      target_text: form.target,
+      collection_name: form.coll,
+      group_name: form.group,
+      is_public: form.public,
+      brick_metadata: {
+        unit_type: metadata.unitType,
+        structure: metadata.structure,
+        function: metadata.func,
+        grammar_points: metadata.selectedGrammarPoints.map((p) => ({
+          grammar_point: p,
+        })),
+      },
+    };
+
+    // 3. Append as a serialized string
+    data.append("brick_data", JSON.stringify(brickRequestData));
 
     try {
-      await request("/bricks", { method: "POST", body: data });
+      await request("/bricks", {
+        method: "POST",
+        body: data,
+        // Note: Do NOT manually set Content-Type header to multipart/form-data here
+        // fetch/axios handles the boundary automatically when passed FormData
+      });
+
       Alert.alert("Thành công", "Đã tạo Brick!", [
         { text: "OK", onPress: () => router.back() },
       ]);
@@ -183,33 +210,53 @@ export default function AddBrickScreen() {
         </View>
 
         <View style={styles.form}>
-          <Input
-            label="Tiếng Việt"
-            value={form.native}
-            onChange={(t: string) => setForm((f) => ({ ...f, native: t }))}
-            placeholder="Xin chào"
-            multiline
-          />
-          <Input
-            label="Tiếng Anh"
-            value={form.target}
-            onChange={(t: string) => setForm((f) => ({ ...f, target: t }))}
-            placeholder="Hello"
-            multiline
-          />
-          <Input
-            label="Bộ sưu tập"
-            value={form.coll}
-            onChange={(t: string) => setForm((f) => ({ ...f, coll: t }))}
-          />
-          <Input
-            label="Tên nhóm"
-            value={form.group}
-            onChange={(t: string) => setForm((f) => ({ ...f, group: t }))}
-          />
+          <FormField label="Tiếng Việt">
+            <TextInput
+              style={styles.input}
+              value={form.native}
+              onChangeText={(t: string) =>
+                setForm((f) => ({ ...f, native: t }))
+              }
+              multiline
+              placeholder="Xin chào"
+            />
+          </FormField>
 
-          <View style={styles.row}>
-            <Text style={styles.label}>Chế độ công khai</Text>
+          <FormField label="Tiếng Anh">
+            <TextInput
+              style={styles.input}
+              value={form.target}
+              onChangeText={(t: string) =>
+                setForm((f) => ({ ...f, target: t }))
+              }
+              multiline
+              placeholder="Hello"
+            />
+          </FormField>
+
+          <FormField label="Bộ sưu tập">
+            <TextInput
+              style={styles.input}
+              value={form.coll}
+              onChangeText={(t: string) => setForm((f) => ({ ...f, coll: t }))}
+            />
+          </FormField>
+
+          <FormField label="Tên nhóm">
+            <TextInput
+              style={styles.input}
+              value={form.group}
+              onChangeText={(t: string) => setForm((f) => ({ ...f, group: t }))}
+            />
+          </FormField>
+
+          <View style={styles.switchCard}>
+            <View>
+              <Text style={styles.switchLabel}>Chế độ công khai</Text>
+              <Text style={styles.switchSubLabel}>
+                Mọi người có thể thấy câu này
+              </Text>
+            </View>
             <Switch
               value={form.public}
               onValueChange={(v) => setForm((f) => ({ ...f, public: v }))}
@@ -217,6 +264,11 @@ export default function AddBrickScreen() {
             />
           </View>
         </View>
+
+        <BrickMetadataSelector
+          state={metadata}
+          onChange={(patch) => setMetadata((prev) => ({ ...prev, ...patch }))}
+        />
 
         <TouchableOpacity
           style={[styles.btn, (loading || isRecording) && { opacity: 0.5 }]}
@@ -268,25 +320,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   form: { gap: 16 },
-  label: { fontSize: 15, fontWeight: "700", color: "#333" },
+
   input: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
-    padding: 14,
     fontSize: 16,
+    color: "#333",
+    minHeight: 40,
+    paddingTop: 8,
   },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
+
   btn: {
     backgroundColor: colors.secondary,
     height: 56,
@@ -296,5 +337,39 @@ const styles = StyleSheet.create({
     marginTop: 30,
     elevation: 2,
   },
+
   btnText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+
+  // metadata
+  metadataToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    marginTop: 8,
+  },
+  metadataToggleText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#888",
+  },
+  metadataContainer: {
+    gap: 12,
+  },
+
+  //
+  switchCard: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#FFF",
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  switchLabel: { fontSize: 15, fontWeight: "600", color: "#333" },
+  switchSubLabel: { fontSize: 12, color: "#888", marginTop: 2 },
 });

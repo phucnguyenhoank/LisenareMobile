@@ -54,7 +54,7 @@ export default function FloatingActionMenu() {
             }}
           >
             <MaterialIcons name="fitness-center" size={28} color="white" />
-            <Text style={styles.miniFabText}>Luyện nói</Text>
+            <Text style={styles.miniFabText}>Luyện nói câu</Text>
           </Pressable>
         </View>
       )}
