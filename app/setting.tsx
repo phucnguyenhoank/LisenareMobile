@@ -1,17 +1,12 @@
 import { request } from "@/api/client";
+import ChangePasswordForm from "@/components/auth/ChangePasswordForm";
 import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 import SignInForm from "@/components/auth/SignInForm";
 import SignUpForm from "@/components/auth/SignUpForm";
 import TextButton from "@/components/TextButton";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  Text,
-  View
-} from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 
 interface User {
   id: number;
@@ -25,9 +20,11 @@ export default function SettingScreen() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
   const [mode, setMode] = useState<AuthMode>("signin");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   // Fetch user info when authenticated
   useEffect(() => {
+    setIsChangingPassword(false);
     const fetchUser = async () => {
       if (!token) {
         setUser(null);
@@ -72,14 +69,27 @@ export default function SettingScreen() {
   if (token) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>
-          Hello, {user ? user.full_name : "expired_token"}
-        </Text>
-        <Text style={styles.subtitle}>Mã người học: {user?.id}</Text>
-        <View style={styles.spacing} />
-        <TextButton title="Đổi mật khẩu" onPress={handleChangePassword} />
-        <View style={styles.spacingSmall} />
-        <TextButton title="Đăng xuất" onPress={signout} />
+        {isChangingPassword ? (
+          <ChangePasswordForm onCancel={() => setIsChangingPassword(false)} />
+        ) : (
+          <>
+            <Text style={styles.title}>
+              Hello, {user ? user.full_name : "expired_token"}
+            </Text>
+            <Text style={styles.subtitle}>Mã người học: {user?.id}</Text>
+            <View style={styles.spacing} />
+            <TextButton
+              title="Đổi mật khẩu"
+              onPress={() => setIsChangingPassword(true)}
+            />
+            <View style={styles.spacingSmall} />
+            <TextButton
+              title="Đăng xuất"
+              onPress={signout}
+              variant={"outline"}
+            />
+          </>
+        )}
       </View>
     );
   }

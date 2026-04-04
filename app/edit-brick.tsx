@@ -109,18 +109,22 @@ export default function EditBrickScreen() {
           <Text style={styles.idBadge}>#{brick?.id}</Text>
         </View>
 
-        <FormField label="Bộ sưu tập">
-          <View>
-            <Picker
-              selectedValue={collectionId}
-              onValueChange={setCollectionId}
-            >
-              {collections.map((c) => (
-                <Picker.Item key={c.id} label={c.name} value={c.id} />
-              ))}
-            </Picker>
-          </View>
-        </FormField>
+        {collections.length > 0 ? (
+          <FormField label="Bộ sưu tập">
+            <View>
+              <Picker
+                selectedValue={collectionId}
+                onValueChange={setCollectionId}
+              >
+                {collections.map((c) => (
+                  <Picker.Item key={c.id} label={c.name} value={c.id} />
+                ))}
+              </Picker>
+            </View>
+          </FormField>
+        ) : (
+          <View></View>
+        )}
 
         <View style={styles.audioRow}>
           <Text style={styles.audioLabel}>Audio:</Text>

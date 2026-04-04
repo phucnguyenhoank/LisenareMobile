@@ -21,7 +21,7 @@ export function CollectionRow({ item }: Props) {
 
   const getStatusColor = () => {
     if (item.learned_count === 0) return "transparent";
-    const ratio = item.learned_count / item.brick_count;
+    const ratio = (item.learned_count ?? 0) / (item.brick_count ?? 1);
 
     if (ratio < 0.34) return "#FF5252";
     if (ratio < 0.67) return "#FFB100";

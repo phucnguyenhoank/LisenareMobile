@@ -25,7 +25,7 @@ export default function ForgotPasswordForm({ onBackToSignin }: Props) {
 
   const handleForgetPassword = async () => {
     if (!username?.trim()) {
-      Alert.alert("Error", "Please enter your username");
+      Alert.alert("Thông báo", "Hãy nhập tên tài khoản");
       return;
     }
 
@@ -42,8 +42,8 @@ export default function ForgotPasswordForm({ onBackToSignin }: Props) {
       setStep(2);
 
       Alert.alert(
-        "Check Your Email",
-        "If an account exists with this username, a recovery code has been sent.",
+        "Kiểm tra email của bạn",
+        "Mã OTP đã được gửi nếu tên tài khoản này tồn tại.",
       );
     } catch (err) {
       // Only show network/system errors
@@ -54,18 +54,19 @@ export default function ForgotPasswordForm({ onBackToSignin }: Props) {
   };
 
   const handleResetPassword = async () => {
-    if (!otp || !newPassword) return Alert.alert("Error", "Fill in all fields");
+    if (!otp || !newPassword)
+      return Alert.alert("Thông báo", "Hãy nhập đủ thông tin");
     setLoading(true);
     try {
       await request("/accounts/reset-password", {
         method: "POST",
         body: { username, otp, new_password: newPassword },
       });
-      Alert.alert("Success", "Password updated!", [
+      Alert.alert("Thành công", "Mật khẩu đã được cập nhật!", [
         { text: "Login", onPress: onBackToSignin },
       ]);
     } catch (err) {
-      Alert.alert("Error", "Invalid OTP or request failed");
+      Alert.alert("Thông báo", "Mã OTP không hợp lệ hoặc lỗi mạng.");
     } finally {
       setLoading(false);
     }
@@ -77,17 +78,17 @@ export default function ForgotPasswordForm({ onBackToSignin }: Props) {
       keyboardShouldPersistTaps="handled"
     >
       <Text style={styles.title}>
-        {step === 1 ? "Forgot Password" : "Verify OTP"}
+        {step === 1 ? "Đặt lại mật khẩu" : "Xác thực OTP"}
       </Text>
       <Text style={styles.subtitle}>
         {step === 1
-          ? "Enter your username to receive a reset code."
-          : "Check your email for the code sent to your account."}
+          ? "Nhập tên đăng nhập của bạn"
+          : "Kiểm tra mã OTP được gửi đến email đã đăng ký của bạn."}
       </Text>
 
       {step === 1 ? (
         <TextInput
-          placeholder="Username"
+          placeholder="Tên tài khoản"
           style={styles.input}
           value={username}
           onChangeText={setUsername}
@@ -96,14 +97,14 @@ export default function ForgotPasswordForm({ onBackToSignin }: Props) {
       ) : (
         <>
           <TextInput
-            placeholder="Enter OTP"
+            placeholder="Mã OTP"
             style={styles.input}
             value={otp}
             onChangeText={setOtp}
             keyboardType="number-pad"
           />
           <TextInput
-            placeholder="New Password"
+            placeholder="Mật khẩu mới"
             style={styles.input}
             value={newPassword}
             onChangeText={setNewPassword}
@@ -120,13 +121,13 @@ export default function ForgotPasswordForm({ onBackToSignin }: Props) {
           onPress={step === 1 ? handleForgetPassword : handleResetPassword}
         >
           <Text style={styles.buttonText}>
-            {step === 1 ? "Send Code" : "Reset Password"}
+            {step === 1 ? "Gửi mã" : "Đặt lại mật khẩu"}
           </Text>
         </TouchableOpacity>
       )}
 
       <TouchableOpacity onPress={onBackToSignin} style={styles.backButton}>
-        <Text style={styles.backText}>Back to Signin</Text>
+        <Text style={styles.backText}>Quay lại Đăng nhập</Text>
       </TouchableOpacity>
     </KeyboardAwareScrollView>
   );

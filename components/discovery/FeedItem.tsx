@@ -200,7 +200,7 @@ export default function FeedItem({ item }: FeedItemProps) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
-    marginVertical: 8,
+    marginVertical: 4,
     padding: 16,
     borderRadius: 0, // Flat look like FB
     shadowColor: "#000",

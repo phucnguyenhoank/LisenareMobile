@@ -115,7 +115,6 @@ export default function CollectionScreen() {
         <Ionicons name="options-outline" size={18} color={colors.primary} />
         <Text style={styles.filterText}>Lọc</Text>
 
-        {/* Hiển thị tóm tắt bộ lọc hiện tại nếu muốn */}
         <Text style={styles.filterSummary} numberOfLines={1}>
           • {selectedGroupName} • Tất cả
         </Text>
