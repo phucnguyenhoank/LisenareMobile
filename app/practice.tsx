@@ -1,5 +1,6 @@
 import { request } from "@/api/client";
 import CloseButton from "@/components/CloseButton";
+import { IconButton } from "@/components/IconButton";
 import PlaySoundButton from "@/components/PlaySoundButton";
 import { AnswerInputRow } from "@/components/practice/AnswerInputRow";
 import { BrickDisplay } from "@/components/practice/BrickDisplay";
@@ -13,6 +14,7 @@ import type { AudioTranscription } from "@/types/audio";
 import type { Brick } from "@/types/brick";
 import type { SentenceCompareResponse } from "@/types/comparison";
 import { showAlert } from "@/utils/alerts";
+import { AntDesign } from "@expo/vector-icons";
 
 import {
   AudioModule,
@@ -65,9 +67,17 @@ export default function PracticeScreen() {
   }>();
   const collectionIds = normalizeCollectionIds(collection_ids);
   const [brick, setBrick] = useState<Brick | null>(null);
+
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const { audioPath, isAudioLoading } = useCachedAudio(audioUrl);
   const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(audioRecorder);
+
+  const [recordedUri, setRecordedUri] = useState<string | null>(null);
+  const userRecordedPlayer = useAudioPlayer(
+    recordedUri ? { uri: recordedUri } : null,
+  );
   const [showTarget, setShowTarget] = useState<boolean>(
     DEFAULT_SETTINGS.firstShowTarget,
   );
@@ -80,8 +90,7 @@ export default function PracticeScreen() {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [compareResult, setCompareResult] =
     useState<SentenceCompareResponse | null>(null);
-  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const recorderState = useAudioRecorderState(audioRecorder);
+
   const [microStatusMessage, setMicroStatusMessage] =
     useState<string>("nhấn mic để nói");
   const screenHeight = Dimensions.get("window").height;
@@ -106,6 +115,7 @@ export default function PracticeScreen() {
       setAudioUrl(br.target_audio_uri);
       setIsAnswerRevealed(false);
       setHasSentReview(false);
+      setRecordedUri(null);
     } catch (err: any) {
       if (err.status == 400) {
         showAlert({
@@ -133,6 +143,12 @@ export default function PracticeScreen() {
     setIsAnswerRevealed(true);
   };
 
+  const playUserRecorded = () => {
+    if (!recordedUri) return;
+    userRecordedPlayer.seekTo(0);
+    userRecordedPlayer.play();
+  };
+
   const reportBrokenFile = () => {
     Alert.alert(
       "Báo cáo lỗi",
@@ -143,7 +159,10 @@ export default function PracticeScreen() {
           text: "Sai loại câu",
           onPress: () => sendReport("wrong brick type"),
         },
-        { text: "Audio bị hỏng", onPress: () => sendReport("broken audio") },
+        {
+          text: "Audio bị hỏng",
+          onPress: () => sendReport("broken audio"),
+        },
       ],
       { cancelable: true },
     );
@@ -158,6 +177,7 @@ export default function PracticeScreen() {
     setToast(`${response.message}. Cảm ơn bạn!`);
     setIsReporting(false);
     setOtherText("");
+    fetchBrickFSRS();
   };
 
   const submitAnswer = async () => {
@@ -216,11 +236,13 @@ export default function PracticeScreen() {
 
   const stopRecordingAudio = async () => {
     await audioRecorder.stop();
+    setRecordedUri(audioRecorder.uri);
     setMicroStatusMessage("nhấn mic để nói");
   };
 
   const stopRecordingAndTranscribeAudio = async (): Promise<string | null> => {
     await audioRecorder.stop();
+    setRecordedUri(audioRecorder.uri);
     setMicroStatusMessage("đang hiểu");
     console.log(`audioRecorder.uri:${audioRecorder.uri}`);
     const formData = new FormData();
@@ -347,6 +369,17 @@ export default function PracticeScreen() {
           onQuitRecording={stopRecordingAudio}
         />
 
+        {recordedUri && (
+          <View style={styles.userAudioPreview}>
+            <IconButton
+              onPress={playUserRecorded}
+              icon={<AntDesign name="sound" size={18} color="white" />}
+              style={styles.userAudioButtonSmall}
+            />
+            <Text style={styles.previewLabel}>Nghe lại</Text>
+          </View>
+        )}
+
         <Text style={styles.microStatusLabel}>{microStatusMessage}</Text>
 
         {isReporting && (
@@ -364,7 +397,11 @@ export default function PracticeScreen() {
 
       {toast && (
         <View style={styles.toastWrapper}>
-          <Toast message={toast} onClose={() => setToast(null)} />
+          <Toast
+            message={toast}
+            onClose={() => setToast(null)}
+            duration={1000}
+          />
         </View>
       )}
 
@@ -393,6 +430,7 @@ export default function PracticeScreen() {
               fetchBrickFSRS();
             }}
             onPlaySound={playSound}
+            onPlayUserRecordedSound={playUserRecorded}
           />
 
           <View style={styles.sheetFooter}></View>
@@ -504,5 +542,24 @@ const styles = StyleSheet.create({
   },
   picker: {
     width: "100%",
+  },
+  //
+  userAudioPreview: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+    gap: 8,
+  },
+
+  userAudioButtonSmall: {
+    backgroundColor: "#000", // 👈 black like you want
+    padding: 10,
+    borderRadius: 20,
+  },
+
+  previewLabel: {
+    fontSize: 12,
+    color: "#666",
   },
 });

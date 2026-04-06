@@ -1,6 +1,7 @@
 import colors from "@/theme/colors";
 import {
   AntDesign,
+  Feather,
   MaterialCommunityIcons,
   MaterialIcons,
 } from "@expo/vector-icons";
@@ -44,6 +45,17 @@ export default function FloatingActionMenu() {
               color="white"
             />
             <Text style={styles.miniFabText}>Tutor</Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.miniFabWithLabel}
+            onPress={() => {
+              setIsOpen(false);
+              router.push("/listening-practice");
+            }}
+          >
+            <Feather name="headphones" size={28} color="white" />
+            <Text style={styles.miniFabText}>Luyện nghe</Text>
           </Pressable>
 
           <Pressable

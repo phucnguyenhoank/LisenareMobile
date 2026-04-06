@@ -67,7 +67,7 @@ export default function FilterSortModal({
               style={styles.content}
             >
               {/* PHẦN 1: BỘ SƯU TẬP */}
-              <Text style={styles.sectionTitle}>Bộ sưu tập</Text>
+              <Text style={styles.sectionTitle}>Nhóm</Text>
               <View style={styles.chipGrid}>
                 {stats.map((item) => (
                   <TouchableOpacity
