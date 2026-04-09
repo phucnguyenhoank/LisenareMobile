@@ -14,6 +14,7 @@ interface TextButtonProps {
   onPress: () => void;
   variant?: "primary" | "outline"; // Restricts to these two strings
   style?: StyleProp<ViewStyle>; // Allows passing extra container styles
+  disabled?: boolean;
 }
 
 const TextButton: React.FC<TextButtonProps> = ({
@@ -21,12 +22,14 @@ const TextButton: React.FC<TextButtonProps> = ({
   onPress,
   variant = "primary",
   style,
+  disabled,
 }) => {
   const isPrimary = variant === "primary";
 
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       style={({ pressed }) => [
         styles.baseButton,
         isPrimary ? styles.primaryButton : styles.outlineButton,

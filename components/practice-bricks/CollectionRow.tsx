@@ -5,7 +5,7 @@ import type { Collection } from "@/types/collection";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { BrickListDropdown } from "./BrickListDropdown";
 
 type Props = {
@@ -17,7 +17,9 @@ export function CollectionRow({ item }: Props) {
 
   const [expanded, setExpanded] = useState(false);
   const [pendingBricks, setPendingBricks] = useState<any[]>([]);
-  const [loaded, setLoaded] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
 
   const getStatusColor = () => {
     if (item.learned_count === 0) return "transparent";
@@ -32,15 +34,18 @@ export function CollectionRow({ item }: Props) {
     const newState = !expanded;
     setExpanded(newState);
 
-    if (newState && !loaded) {
+    if (newState && !hasFetched) {
+      setIsLoading(true);
       try {
         const data = await request<SimpleBrick[]>(
           `/collections/pending-bricks?collection_id=${item.id}`,
         );
         setPendingBricks(data);
-        setLoaded(true);
+        setHasFetched(true); // Mark as done
       } catch (err) {
         console.error("Failed to load pending bricks", err);
+      } finally {
+        setIsLoading(false); // Stop loading regardless of success/error
       }
     }
   };
@@ -57,6 +62,44 @@ export function CollectionRow({ item }: Props) {
       pathname: "/edit-brick",
       params: { brick_id: brickId },
     });
+  };
+  const performDelete = async (brickId: number) => {
+    try {
+      // 1. Call your delete endpoint
+      await request(`/bricks/${brickId}`, {
+        method: "DELETE",
+      });
+
+      // 2. Update local state so the UI reflects the deletion immediately
+      setPendingBricks((prevBricks) =>
+        prevBricks.filter((b) => b.id !== brickId),
+      );
+
+      // Optional: Show a brief success toast or log
+      console.log("Brick deleted successfully");
+    } catch (err) {
+      Alert.alert("Error", "Could not delete the brick. Please try again.");
+      console.error(err);
+    }
+  };
+
+  const handleDeleteBrick = (brickId: number) => {
+    Alert.alert(
+      "Bạn có chắc muốn xóa Brick này?", // Title
+      "Hành động này KHÔNG THỂ HOÀN TÁC và tất cả các lịch sử  của brick này sẽ MẤT VĨNH VIỄN.", // Message
+      [
+        {
+          text: "Thoát",
+          style: "cancel", // No action taken
+        },
+        {
+          text: "Xóa",
+          style: "destructive", // Red text on iOS
+          onPress: () => performDelete(brickId),
+        },
+      ],
+      { cancelable: true },
+    );
   };
 
   return (
@@ -97,8 +140,9 @@ export function CollectionRow({ item }: Props) {
       {expanded && (
         <BrickListDropdown
           bricks={pendingBricks}
+          isLoading={isLoading} // Pass the intuitive name
           onEdit={handleEditBrick}
-          onDelete={(id) => console.log("Delete", id)}
+          onDelete={handleDeleteBrick}
         />
       )}
     </View>

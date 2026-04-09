@@ -21,6 +21,7 @@ type MetadataState = {
 type Props = {
   state: MetadataState;
   onChange: (newState: Partial<MetadataState>) => void;
+  readOnly?: boolean;
 };
 
 function Field({
@@ -38,10 +39,11 @@ function Field({
   );
 }
 
-export function BrickMetadataSelector({ state, onChange }: Props) {
+export function BrickMetadataSelector({ state, onChange, readOnly }: Props) {
   const [showMetadata, setShowMetadata] = useState(false);
 
   const toggleGrammarPoint = (point: GrammarPoint) => {
+    if (readOnly) return;
     const { selectedGrammarPoints } = state;
     const next = selectedGrammarPoints.includes(point)
       ? selectedGrammarPoints.filter((p) => p !== point)
@@ -64,11 +66,15 @@ export function BrickMetadataSelector({ state, onChange }: Props) {
       </Pressable>
 
       {showMetadata && (
-        <View style={styles.metadataContainer}>
+        <View
+          style={styles.metadataContainer}
+          pointerEvents={readOnly ? "none" : "auto"}
+        >
           <Field label="Loại đơn vị">
             <Picker
               selectedValue={state.unitType}
               onValueChange={(v) => onChange({ unitType: v })}
+              enabled={!readOnly}
             >
               {Object.values(UnitType).map((v) => (
                 <Picker.Item
@@ -85,6 +91,7 @@ export function BrickMetadataSelector({ state, onChange }: Props) {
               unitType={state.unitType}
               selectedPoints={state.selectedGrammarPoints}
               onToggle={toggleGrammarPoint}
+              readOnly={readOnly}
             />
           </Field>
 
@@ -94,6 +101,7 @@ export function BrickMetadataSelector({ state, onChange }: Props) {
                 <Picker
                   selectedValue={state.structure}
                   onValueChange={(v) => onChange({ structure: v })}
+                  enabled={!readOnly}
                 >
                   <Picker.Item label="Không xác định" value={null} />
                   {Object.values(SentenceStructure).map((v) => (
@@ -106,6 +114,7 @@ export function BrickMetadataSelector({ state, onChange }: Props) {
                 <Picker
                   selectedValue={state.func}
                   onValueChange={(v) => onChange({ func: v })}
+                  enabled={!readOnly}
                 >
                   <Picker.Item label="Không xác định" value={null} />
                   {Object.values(SentenceFunction).map((v) => (

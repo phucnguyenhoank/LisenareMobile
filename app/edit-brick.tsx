@@ -2,11 +2,15 @@ import { request } from "@/api/client";
 import { BrickMetadataSelector } from "@/components/brick-form/BrickMetadataSelector";
 import { FormField } from "@/components/FormField";
 import TextButton from "@/components/TextButton";
+import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
 import type { Brick, GrammarPoint } from "@/types/brick";
 import { SentenceFunction, SentenceStructure, UnitType } from "@/types/brick";
 import type { Collection } from "@/types/collection";
+import { Learner } from "@/types/learnner";
+import { cleanText } from "@/utils/brick-preprocessing";
 import { Picker } from "@react-native-picker/picker";
+import { useQuery } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -22,9 +26,9 @@ import {
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const cleanText = (text: string) => text.replace(/\n/g, " ");
-
 export default function EditBrickScreen() {
+  const { token, isTokenLoading } = useAuth();
+
   const { brick_id } = useLocalSearchParams();
   const brickId = Number(brick_id);
 
@@ -32,6 +36,7 @@ export default function EditBrickScreen() {
   const [brick, setBrick] = useState<Brick | null>(null);
   const [collections, setCollections] = useState<Collection[]>([]);
 
+  const [creatorId, setCreatorId] = useState(1);
   const [nativeText, setNativeText] = useState("");
   const [targetText, setTargetText] = useState("");
   const [isPublic, setIsPublic] = useState(true);
@@ -44,6 +49,14 @@ export default function EditBrickScreen() {
     selectedGrammarPoints: [] as GrammarPoint[],
   });
 
+  const { data: user, isLoading: userLoading } = useQuery({
+    queryKey: [token],
+    queryFn: () => request<Learner>("/learners/me"),
+    enabled: !!token,
+  });
+
+  const isCreator = user?.id === creatorId;
+
   useEffect(() => {
     (async () => {
       try {
@@ -52,6 +65,7 @@ export default function EditBrickScreen() {
           request<Collection[]>("/collections"),
         ]);
         setBrick(b);
+        setCreatorId(b.creator_id);
         setNativeText(b.native_text);
         setTargetText(b.target_text);
         setIsPublic(b.is_public);
@@ -98,8 +112,45 @@ export default function EditBrickScreen() {
     }
   };
 
-  if (loading)
-    return <ActivityIndicator style={{ flex: 1 }} color={colors.secondary2} />;
+  // if (isTokenLoading) {
+  //   return (
+  //     <View>
+  //       <ActivityIndicator size="large" color={colors.secondary} />
+  //       <Text>Đang tải token</Text>
+  //     </View>
+  //   );
+  // }
+  // if (userLoading) {
+  //   return (
+  //     <View>
+  //       <ActivityIndicator size="large" color={colors.secondary} />
+  //       <Text>Đang tải thông tin người học</Text>
+  //     </View>
+  //   );
+  // }
+
+  // if (loading) {
+  //   return (
+  //     <View>
+  //       <ActivityIndicator size="large" color={colors.secondary} />
+  //       <Text>Đang tải brick</Text>
+  //     </View>
+  //   );
+  // }
+  if (isTokenLoading || userLoading || loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.secondary} />
+        <Text style={styles.loadingText}>
+          {isTokenLoading
+            ? "Đang tải token..."
+            : userLoading
+              ? "Đang tải thông tin người học..."
+              : "Đang tải brick..."}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
@@ -109,12 +160,13 @@ export default function EditBrickScreen() {
           <Text style={styles.idBadge}>#{brick?.id}</Text>
         </View>
 
-        {collections.length > 0 ? (
+        {collections.length > 0 && isCreator ? (
           <FormField label="Bộ sưu tập">
             <View>
               <Picker
                 selectedValue={collectionId}
                 onValueChange={setCollectionId}
+                enabled={isCreator}
               >
                 {collections.map((c) => (
                   <Picker.Item key={c.id} label={c.name} value={c.id} />
@@ -146,13 +198,18 @@ export default function EditBrickScreen() {
         </FormField>
 
         <FormField label="Tiếng Anh">
-          <TextInput
-            style={[styles.input, styles.targetText]}
-            value={targetText}
-            onChangeText={(t) => setTargetText(cleanText(t))}
-            multiline
-            placeholder="Enter English text..."
-          />
+          <View style={{ opacity: isCreator ? 1 : 0.6 }}>
+            <TextInput
+              style={[styles.input, styles.targetText]}
+              value={targetText}
+              onChangeText={(t) => setTargetText(cleanText(t))}
+              multiline
+              readOnly={true} // do not let user edit the target text for now
+            />
+            {!isCreator && (
+              <Text style={styles.warningText}>Câu này đã được sở hữu.</Text>
+            )}
+          </View>
         </FormField>
 
         <View style={styles.switchCard}>
@@ -165,13 +222,16 @@ export default function EditBrickScreen() {
           <Switch
             value={isPublic}
             onValueChange={setIsPublic}
+            disabled={!isCreator}
             trackColor={{ true: colors.secondary2 }}
+            style={{ opacity: isCreator ? 1 : 0.5 }}
           />
         </View>
 
         <BrickMetadataSelector
           state={metadata}
           onChange={(patch) => setMetadata((prev) => ({ ...prev, ...patch }))}
+          readOnly={!isCreator}
         />
 
         <View style={styles.actionRow}>
@@ -195,11 +255,23 @@ export default function EditBrickScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F2F4F7", // Soft grey background makes cards "pop"
+    backgroundColor: "#F2F4F7",
   },
   container: {
     padding: 20,
     gap: 16,
+  },
+  checkLoader: {
+    position: "absolute",
+    right: 12,
+    top: 15, // Adjust based on your input's padding
+  },
+  warningText: {
+    color: colors.secondary2, // System red
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: "500",
   },
   header: {
     flexDirection: "row",
@@ -261,4 +333,15 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   flex1: { flex: 1 },
+  centered: {
+    flex: 1, // Fill the whole screen
+    justifyContent: "center", // Center vertically
+    alignItems: "center", // Center horizontally
+    backgroundColor: "#fff", // Optional: match your background color
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#666",
+    fontSize: 14,
+  },
 });

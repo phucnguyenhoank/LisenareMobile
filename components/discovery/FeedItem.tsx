@@ -179,8 +179,16 @@ export default function FeedItem({ item }: FeedItemProps) {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.saveIcon} onPress={handleAddBrick}>
-          <FontAwesome6 name="add" size={24} color="#555" />
+        <TouchableOpacity
+          style={styles.saveIcon}
+          onPress={handleAddBrick}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color={colors.secondary2} />
+          ) : (
+            <FontAwesome6 name="add" size={24} color={colors.secondary2} />
+          )}
         </TouchableOpacity>
       </View>
 

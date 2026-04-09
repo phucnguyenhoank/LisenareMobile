@@ -1,23 +1,23 @@
 // api/streamClient.ts
 import { API_BASE_URL } from "@/config/env";
-import { getToken } from "@/utils/authStorage";
-import { fetch } from 'expo/fetch';
+import { getToken } from "@/utils/auth-storage";
+import { fetch } from "expo/fetch";
 
 export const streamChat = async (
   messages: { role: string; content: string }[],
-  onChunk: (chunk: string) => void
+  onChunk: (chunk: string) => void,
 ) => {
   console.log(`messages:${messages}`);
   const response = await fetch(`${API_BASE_URL}/text/chat`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${await getToken()}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${await getToken()}`,
     },
     body: JSON.stringify({ messages }),
   });
 
-  if (!response.ok) throw new Error('Streaming failed');
+  if (!response.ok) throw new Error("Streaming failed");
   const reader = response.body?.getReader();
   const decoder = new TextDecoder();
   while (true) {
@@ -27,4 +27,3 @@ export const streamChat = async (
     onChunk(chunkValue); // Send new text to the UI state
   }
 };
-

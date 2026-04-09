@@ -7,12 +7,14 @@ type Props = {
   unitType: UnitType;
   selectedPoints: GrammarPoint[];
   onToggle: (point: GrammarPoint) => void;
+  readOnly?: boolean;
 };
 
 export function GrammarPointSelector({
   unitType,
   selectedPoints,
   onToggle,
+  readOnly,
 }: Props) {
   // Filter points based on unit type to keep the list manageable
   const availablePoints = Object.values(GrammarPoint).filter((p) => {
@@ -52,8 +54,14 @@ export function GrammarPointSelector({
         return (
           <TouchableOpacity
             key={p}
-            style={[styles.chip, isSelected && styles.chipSelected]}
+            style={[
+              styles.chip,
+              isSelected && styles.chipSelected,
+              // add a 'locked' visual style if it's read-only
+              readOnly && isSelected && styles.readOnlyChip,
+            ]}
             onPress={() => onToggle(p)}
+            disabled={readOnly}
           >
             <Text
               style={[styles.chipText, isSelected && styles.chipTextSelected]}
@@ -94,5 +102,9 @@ const styles = StyleSheet.create({
   chipTextSelected: {
     color: "#FFF",
     fontWeight: "600",
+  },
+  readOnlyChip: {
+    opacity: 0.6, // Makes it look inactive
+    borderColor: "#ccc",
   },
 });

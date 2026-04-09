@@ -60,7 +60,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="grammar-studying"
+        name="grammar-learning"
         options={{
           title: "Ngữ pháp",
           tabBarIcon: ({ color }) => (

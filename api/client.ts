@@ -1,6 +1,6 @@
 // api/client.ts
 import { API_BASE_URL } from "@/config/env";
-import { getToken } from "@/utils/authStorage";
+import { getToken } from "@/utils/auth-storage";
 
 interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -21,15 +21,18 @@ export class ApiError extends Error {
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {
-  const text = await res.text();
-  if (!res.ok)
-    throw new ApiError(res.status, `HTTP ${res.status}: ${text}`, text);
-  if (!text) return null as T;
-  try {
-    return JSON.parse(text) as T;
-  } catch (e) {
-    return text as T;
+  const contentType = res.headers.get("content-type");
+  const isJson = contentType && contentType.includes("application/json");
+
+  // Get raw body once
+  const body = await (isJson ? res.json() : res.text());
+
+  if (!res.ok) {
+    const message = body?.detail || body || `HTTP ${res.status}`;
+    throw new ApiError(res.status, message, body);
   }
+
+  return body as T;
 }
 
 /**

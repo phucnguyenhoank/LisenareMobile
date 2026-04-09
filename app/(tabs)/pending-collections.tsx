@@ -3,6 +3,8 @@ import EmptyCollectionOnboarding from "@/components/collections/EmptyCollectionO
 import FilterSortModal from "@/components/collections/FilterSortModal";
 import FloatingActionMenu from "@/components/FloatingActionMenu";
 import { CollectionRow } from "@/components/practice-bricks/CollectionRow";
+import { PAGINATION_LIMIT } from "@/constants/api";
+import { SORT_OPTIONS, STATUS_OPTIONS } from "@/constants/collections";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
 import type { Collection, GroupStats } from "@/types/collection";
@@ -20,12 +22,21 @@ import {
   View,
 } from "react-native";
 
-const LIMIT = 20;
-
-export default function CollectionScreen() {
+export default function PendingCollectionsScreen() {
   const { token, isTokenLoading } = useAuth();
+
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedGroupName, setSelectedGroupName] = useState<string>("");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const currentStatusLabel =
+    STATUS_OPTIONS.find((opt) => opt.value === selectedStatus)?.label ||
+    "Tất cả";
+  const [selectedSort, setSelectedSort] = useState("recommended");
+  const currentSort =
+    SORT_OPTIONS.find((sortOption) => sortOption.value === selectedSort)
+      ?.label || "Đề xuất";
+
   const {
     data: stats = [],
     isLoading: isStatsLoading,
@@ -36,38 +47,34 @@ export default function CollectionScreen() {
     enabled: !!token,
   });
 
-  const [selectedGroupName, setSelectedGroupName] = useState<string | null>(
-    null,
-  );
-
-  useEffect(() => {
-    if (!selectedGroupName && stats.length > 0) {
-      setSelectedGroupName(stats[0].group_name);
-    }
-  }, [stats]);
-
   const {
     data,
+    isLoading: isCollectionsLoading, // First load of the list
+    isFetching, // Any fetch (including filter changes)
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     refetch: refetchCollections,
   } = useInfiniteQuery({
-    queryKey: ["collections", selectedGroupName],
+    queryKey: ["collections", selectedGroupName, selectedStatus, selectedSort],
     queryFn: ({ pageParam = 1 }) =>
       request<Collection[]>(
-        `/collections/pending?page=${pageParam}&limit=${LIMIT}&group_name=${encodeURIComponent(selectedGroupName!)}`,
+        `/collections/pending?` +
+          new URLSearchParams({
+            page: pageParam.toString(),
+            limit: PAGINATION_LIMIT.toString(),
+            group_name: selectedGroupName || "",
+            status: selectedStatus,
+            sort_by: selectedSort,
+          }),
       ),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) =>
-      lastPage.length === LIMIT ? allPages.length + 1 : undefined, // Nếu trang cuối đủ số lượng thì mới có trang tiếp
+      lastPage.length === PAGINATION_LIMIT ? allPages.length + 1 : undefined, // Nếu trang cuối đủ số lượng thì mới có trang tiếp
     enabled: !!selectedGroupName && !!token,
   });
-  const allCollections = data?.pages.flat() ?? [];
 
-  const handleGroupNameChange = (groupName: string) => {
-    setSelectedGroupName(groupName);
-  };
+  const allCollections = data?.pages.flat() ?? [];
 
   const onRefresh = async () => {
     if (refreshing) return;
@@ -80,17 +87,30 @@ export default function CollectionScreen() {
     }
   };
 
-  // If stats are still loading or we haven't picked a group yet
-  if (isTokenLoading || isStatsLoading) {
+  useEffect(() => {
+    if (!selectedGroupName && stats.length > 0) {
+      setSelectedGroupName(stats[0].group_name);
+    }
+  }, [stats]);
+
+  if (isTokenLoading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={colors.secondary} />
-        <Text>Đang tải bộ sưu tập của bạn...</Text>
+        <Text>Đang tải thông tin người học</Text>
       </View>
     );
   }
 
-  // Not authenticated
+  if (isStatsLoading && !stats.length) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.secondary} />
+        <Text>Đang tải dữ liệu</Text>
+      </View>
+    );
+  }
+
   if (!token) {
     return (
       <View style={styles.centered}>
@@ -116,34 +136,51 @@ export default function CollectionScreen() {
         <Text style={styles.filterText}>Lọc</Text>
 
         <Text style={styles.filterSummary} numberOfLines={1}>
-          • {selectedGroupName} • Tất cả
+          • {selectedGroupName} • {currentStatusLabel} • {currentSort}
         </Text>
       </TouchableOpacity>
 
-      <FlatList
-        data={allCollections}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <CollectionRow item={item} />}
-        // Tự động gọi trang tiếp theo khi cuộn gần tới đáy
-        onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-        }}
-        onEndReachedThreshold={0.5}
-        // Chỉ hiện loading xoay xoay ở dưới cùng khi đang tải thêm trang mới
-        ListFooterComponent={
-          isFetchingNextPage ? (
-            <ActivityIndicator
-              style={{ marginVertical: 20 }}
-              color={colors.primary}
-            />
-          ) : (
-            <View style={{ height: 100 }} />
-          ) // Khoảng trống cuối danh sách
-        }
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      />
+      {isCollectionsLoading || (isFetching && !allCollections.length) ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={{ marginTop: 10, color: "#666" }}>
+            Đang tìm bài học...
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={allCollections}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => <CollectionRow item={item} />}
+          ListEmptyComponent={
+            !isFetchingNextPage ? ( // Only show if we aren't currently loading more
+              <View style={styles.emptyContainer}>
+                <Ionicons name="document-text-outline" size={48} color="#ccc" />
+                <Text style={styles.emptyText}>Không thấy bài học nào.</Text>
+              </View>
+            ) : null
+          }
+          // Tự động gọi trang tiếp theo khi cuộn gần tới đáy
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+          }}
+          onEndReachedThreshold={0.5}
+          // Chỉ hiện loading xoay xoay ở dưới cùng khi đang tải thêm trang mới
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <ActivityIndicator
+                style={{ marginVertical: 20 }}
+                color={colors.primary}
+              />
+            ) : (
+              <View style={{ height: 100 }} />
+            ) // Khoảng trống cuối danh sách
+          }
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        />
+      )}
 
       <FloatingActionMenu />
 
@@ -152,8 +189,11 @@ export default function CollectionScreen() {
         onClose={() => setIsFilterVisible(false)}
         stats={stats}
         selectedGroup={selectedGroupName}
-        onGroupChange={handleGroupNameChange}
-        // Truyền thêm các state status & sort vào đây
+        selectedStatus={selectedStatus}
+        selectedSort={selectedSort}
+        onGroupChange={(groupName) => setSelectedGroupName(groupName)}
+        onStatusChange={(groupStatus) => setSelectedStatus(groupStatus)}
+        onSortChange={(groupSort) => setSelectedSort(groupSort)}
       />
     </View>
   );
@@ -205,5 +245,17 @@ const styles = StyleSheet.create({
   loadMoreText: {
     fontSize: 16,
     fontWeight: "600",
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 100, // Push it down a bit so it's not glued to the top
+  },
+  emptyText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#999",
+    textAlign: "center",
   },
 });

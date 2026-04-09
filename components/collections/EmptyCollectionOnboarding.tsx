@@ -29,7 +29,7 @@ export default function EmptyCollectionOnboarding({ onSuccess }: Props) {
 
   const handleSave = async () => {
     if (selectedGroups.length === 0) {
-      Alert.alert("Please choose at least one level.");
+      Alert.alert("Chọn ít nhất một nhóm bài học nha.");
       return;
     }
 
@@ -45,7 +45,7 @@ export default function EmptyCollectionOnboarding({ onSuccess }: Props) {
 
       onSuccess(); // refetch stats
     } catch (err) {
-      Alert.alert("Failed to save selection");
+      Alert.alert("Failed to save selection", "/collections/overrides");
     } finally {
       setIsSubmitting(false);
     }
@@ -81,6 +81,7 @@ export default function EmptyCollectionOnboarding({ onSuccess }: Props) {
       <TextButton
         title={isSubmitting ? "Saving..." : "Save"}
         onPress={handleSave}
+        disabled={isSubmitting}
       />
     </View>
   );

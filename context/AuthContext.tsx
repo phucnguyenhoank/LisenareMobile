@@ -1,4 +1,5 @@
-import * as authStorage from "@/utils/authStorage";
+import { authActions } from "@/utils/auth-events";
+import * as authStorage from "@/utils/auth-storage";
 import {
   createContext,
   ReactNode,
@@ -20,6 +21,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isTokenLoading, setIsLoading] = useState(true);
 
+  const signin = async (newToken: string) => {
+    setToken(newToken);
+    await authStorage.saveToken(newToken);
+  };
+
+  const signout = async () => {
+    setToken(null);
+    await authStorage.removeToken();
+  };
+
   // Load the token once when the app start
   useEffect(() => {
     const initializeAuth = async () => {
@@ -30,15 +41,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initializeAuth();
   }, []);
 
-  const signin = async (newToken: string) => {
-    setToken(newToken);
-    await authStorage.saveToken(newToken);
-  };
-
-  const signout = async () => {
-    setToken(null);
-    await authStorage.removeToken();
-  };
+  useEffect(() => {
+    authActions.signout = signout;
+  }, [signout]);
 
   return (
     <AuthContext.Provider value={{ token, isTokenLoading, signin, signout }}>

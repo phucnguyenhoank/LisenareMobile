@@ -7,7 +7,13 @@ import {
 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function FloatingActionMenu() {
   const router = useRouter();
@@ -17,7 +23,7 @@ export default function FloatingActionMenu() {
     <View style={styles.fabContainer}>
       {isOpen && (
         <View style={styles.menuItems}>
-          <Pressable
+          <TouchableOpacity
             style={styles.miniFabWithLabel}
             onPress={() => {
               setIsOpen(false);
@@ -30,9 +36,9 @@ export default function FloatingActionMenu() {
               color="white"
             />
             <Text style={styles.miniFabText}>Thêm câu</Text>
-          </Pressable>
+          </TouchableOpacity>
 
-          <Pressable
+          <TouchableOpacity
             style={styles.miniFabWithLabel}
             onPress={() => {
               setIsOpen(false);
@@ -45,9 +51,9 @@ export default function FloatingActionMenu() {
               color="white"
             />
             <Text style={styles.miniFabText}>Tutor</Text>
-          </Pressable>
+          </TouchableOpacity>
 
-          <Pressable
+          <TouchableOpacity
             style={styles.miniFabWithLabel}
             onPress={() => {
               setIsOpen(false);
@@ -56,9 +62,9 @@ export default function FloatingActionMenu() {
           >
             <Feather name="headphones" size={28} color="white" />
             <Text style={styles.miniFabText}>Luyện nghe</Text>
-          </Pressable>
+          </TouchableOpacity>
 
-          <Pressable
+          <TouchableOpacity
             style={styles.miniFabWithLabel}
             onPress={() => {
               setIsOpen(false);
@@ -67,7 +73,7 @@ export default function FloatingActionMenu() {
           >
             <MaterialIcons name="fitness-center" size={28} color="white" />
             <Text style={styles.miniFabText}>Luyện nói câu</Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
       )}
 

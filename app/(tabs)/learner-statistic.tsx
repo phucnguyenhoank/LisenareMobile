@@ -1,9 +1,10 @@
 import { request } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
-import { showAlert } from "@/utils/alerts";
-import { Link, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import { Learner } from "@/types/learnner";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "expo-router";
+import React from "react";
 import {
   ActivityIndicator,
   RefreshControl,
@@ -19,64 +20,38 @@ interface LearnerStats {
   due_count: number;
 }
 
-interface LearnerMe {
-  id: number;
-  full_name: string;
-}
+export default function LearnerStatisticScreen() {
+  const { token, isTokenLoading: authLoading } = useAuth();
 
-export default function LearnerState() {
-  const router = useRouter();
-  const { token, isTokenLoading } = useAuth();
+  // Fetch Stats
+  const {
+    data: stats,
+    isLoading: statsLoading,
+    refetch: refetchStats,
+  } = useQuery({
+    queryKey: ["learnerStats"],
+    queryFn: () => request<LearnerStats>("/learning-cards/stats"),
+    enabled: !!token,
+  });
 
-  const [stats, setStats] = useState<LearnerStats | null>(null);
-  const [user, setUser] = useState<LearnerMe | null>(null);
+  // Fetch User Profile
+  const {
+    data: user,
+    isLoading: userLoading,
+    refetch: refetchUser,
+  } = useQuery({
+    queryKey: ["learnerMe"],
+    queryFn: () => request<Learner>("/learners/me"),
+    enabled: !!token,
+  });
 
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const fetchData = async () => {
-    if (!token) return;
-
-    try {
-      const [statsData, userData] = await Promise.all([
-        request<LearnerStats>("/learning-cards/stats"),
-        request<LearnerMe>("/learners/me"),
-      ]);
-
-      setStats(statsData);
-      setUser(userData);
-    } catch (err: any) {
-      if (err.status == 401) {
-        showAlert({
-          title: "Phiên đăng nhập hết hạn",
-          message: "Hãy đăng nhập lại",
-          confirmText: "Đăng nhập",
-          onConfirm: () => {
-            router.push("/setting");
-          },
-          showCancel: false,
-          cancelable: false,
-        });
-      } else {
-        console.error("Failed to fetch learner data:", err);
-      }
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+  const onRefresh = async () => {
+    await Promise.all([refetchStats(), refetchUser()]);
   };
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    if (!token) return;
-    fetchData();
-  }, [token]);
-
-  if (loading || isTokenLoading) {
+  // 1. Show loader only if we are actually waiting for the token or data
+  const dataLoading = (statsLoading || userLoading) && !!token;
+  if (authLoading || dataLoading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.secondary} />
@@ -84,6 +59,7 @@ export default function LearnerState() {
     );
   }
 
+  // 2. Show sign-in view if no token
   if (!token) {
     return (
       <View style={styles.center}>
@@ -103,14 +79,14 @@ export default function LearnerState() {
     <ScrollView
       contentContainerStyle={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl
+          refreshing={statsLoading || userLoading}
+          onRefresh={onRefresh}
+        />
       }
     >
-      {/* User Info */}
       <Text style={styles.name}>{user?.full_name}</Text>
-      <Text style={styles.id}>Mã người học: {user?.id}</Text>
 
-      {/* Stats */}
       <View style={styles.card}>
         <Stat
           label="Đã học"
@@ -149,11 +125,6 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 2,
-  },
-
-  id: {
-    color: "#666",
     marginBottom: 20,
   },
 

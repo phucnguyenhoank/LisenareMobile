@@ -1,3 +1,4 @@
+import { SORT_OPTIONS, STATUS_OPTIONS } from "@/constants/collections";
 import colors from "@/theme/colors";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
@@ -15,9 +16,12 @@ interface FilterSortModalProps {
   visible: boolean;
   onClose: () => void;
   stats: any[];
-  selectedGroup: string | null;
+  selectedGroup: string;
+  selectedStatus: string;
+  selectedSort: string;
   onGroupChange: (groupName: string) => void;
-  // Bạn có thể thêm onStatusChange hoặc onSortChange ở đây nếu cần sync lên cha
+  onStatusChange: (groupStatus: string) => void;
+  onSortChange: (groupSort: string) => void;
 }
 
 export default function FilterSortModal({
@@ -25,28 +29,30 @@ export default function FilterSortModal({
   onClose,
   stats,
   selectedGroup,
+  selectedStatus,
+  selectedSort,
   onGroupChange,
+  onStatusChange,
+  onSortChange,
 }: FilterSortModalProps) {
-  const statuses = ["Tất cả", "Chưa học", "Đang học", "Hoàn thành"];
-  const sortOptions = ["Đề xuất", "Mới thêm"];
-
-  // State tạm thời để người dùng chọn thoải mái trước khi nhấn "Áp dụng"
+  // Use technical values for state, NOT labels
   const [tempGroup, setTempGroup] = useState(selectedGroup);
-  const [tempStatus, setTempStatus] = useState("Tất cả");
-  const [tempSort, setTempSort] = useState("Đề xuất");
+  const [tempStatus, setTempStatus] = useState(selectedStatus);
+  const [tempSort, setTempSort] = useState(selectedSort);
 
-  // Đồng bộ lại state tạm thời mỗi khi modal mở ra
+  // Sync state when modal opens
   useEffect(() => {
     if (visible) {
       setTempGroup(selectedGroup);
+      setTempStatus(selectedStatus);
+      setTempSort(selectedSort);
     }
-  }, [visible, selectedGroup]);
+  }, [visible, selectedGroup, selectedStatus, selectedSort]);
 
   const handleApply = () => {
-    if (tempGroup) {
-      onGroupChange(tempGroup);
-      // Ghi chú: Nếu có API lọc theo status/sort, hãy gọi ở đây
-    }
+    onGroupChange(tempGroup);
+    onStatusChange(tempStatus);
+    onSortChange(tempSort);
     onClose();
   };
 
@@ -66,7 +72,7 @@ export default function FilterSortModal({
               showsVerticalScrollIndicator={false}
               style={styles.content}
             >
-              {/* PHẦN 1: BỘ SƯU TẬP */}
+              {/* PHẦN 1: NHÓM */}
               <Text style={styles.sectionTitle}>Nhóm</Text>
               <View style={styles.chipGrid}>
                 {stats.map((item) => (
@@ -90,22 +96,26 @@ export default function FilterSortModal({
                 ))}
               </View>
 
-              {/* PHẦN 2: TRẠNG THÁI */}
+              {/* PHẦN 2: TRẠNG THÁI - Loop through STATUS_OPTIONS */}
               <Text style={styles.sectionTitle}>Trạng thái</Text>
               <View style={styles.chipGrid}>
-                {statuses.map((s) => (
+                {STATUS_OPTIONS.map((opt) => (
                   <TouchableOpacity
-                    key={s}
-                    onPress={() => setTempStatus(s)}
-                    style={[styles.chip, tempStatus === s && styles.activeChip]}
+                    key={opt.value}
+                    onPress={() => setTempStatus(opt.value)} // Set the value (all, not_started, etc.)
+                    style={[
+                      styles.chip,
+                      tempStatus === opt.value && styles.activeChip,
+                    ]}
                   >
                     <Text
                       style={[
                         styles.chipText,
-                        tempStatus === s && styles.activeChipText,
+                        tempStatus === opt.value && styles.activeChipText,
                       ]}
                     >
-                      {s}
+                      {opt.label}{" "}
+                      {/* Show the label (Tất cả, Chưa học, etc.) */}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -114,25 +124,26 @@ export default function FilterSortModal({
               {/* PHẦN 3: SẮP XẾP */}
               <Text style={styles.sectionTitle}>Sắp xếp theo</Text>
               <View style={styles.chipGrid}>
-                {sortOptions.map((o) => (
+                {SORT_OPTIONS.map((opt) => (
                   <TouchableOpacity
-                    key={o}
-                    onPress={() => setTempSort(o)}
-                    style={[styles.chip, tempSort === o && styles.activeChip]}
+                    key={opt.value}
+                    onPress={() => setTempSort(opt.value)}
+                    style={[
+                      styles.chip,
+                      tempSort === opt.value && styles.activeChip,
+                    ]}
                   >
                     <Text
                       style={[
                         styles.chipText,
-                        tempSort === o && styles.activeChipText,
+                        tempSort === opt.value && styles.activeChipText,
                       ]}
                     >
-                      {o}
+                      {opt.label}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
-
-              <View style={{ height: 40 }} />
             </ScrollView>
 
             <TouchableOpacity style={styles.applyButton} onPress={handleApply}>

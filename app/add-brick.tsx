@@ -8,6 +8,7 @@ import {
   SentenceStructure,
   UnitType,
 } from "@/types/brick";
+import { cleanText } from "@/utils/brick-preprocessing";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import {
   AudioModule,
@@ -27,9 +28,12 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import {
+  KeyboardAwareScrollView,
+  KeyboardToolbar,
+} from "react-native-keyboard-controller";
 
 export default function AddBrickScreen() {
   const params = useLocalSearchParams<{
@@ -49,6 +53,9 @@ export default function AddBrickScreen() {
   const [audioUri, setAudioUri] = useState<string | null>(
     params.audio_uri ?? null,
   );
+
+  const [isTargetTextUnique, setIsTargetTextUnique] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
 
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const { isRecording } = useAudioRecorderState(recorder);
@@ -71,15 +78,19 @@ export default function AddBrickScreen() {
       }
     } else {
       if (!(await AudioModule.requestRecordingPermissionsAsync()).granted)
-        return Alert.alert("Lỗi", "Cần quyền micro");
+        return Alert.alert("Thông báo", "Cần quyền micro");
       await recorder.prepareToRecordAsync();
       recorder.record();
     }
   };
 
   const onSubmit = async () => {
-    if (!audioUri || !form.native || !form.target)
-      return Alert.alert("Lỗi", "Thiếu thông tin hoặc chưa ghi âm");
+    if (!audioUri) return Alert.alert("Thông báo", "Hãy thêm ghi âm");
+    if (!form.native || !form.target)
+      return Alert.alert(
+        "Thông báo",
+        "Thiếu đầy đủ câu tiếng Việt và tiếng Anh",
+      );
 
     setLoading(true);
     const data = new FormData();
@@ -115,8 +126,6 @@ export default function AddBrickScreen() {
       await request("/bricks", {
         method: "POST",
         body: data,
-        // Note: Do NOT manually set Content-Type header to multipart/form-data here
-        // fetch/axios handles the boundary automatically when passed FormData
       });
 
       Alert.alert("Thành công", "Đã tạo Brick!", [
@@ -154,6 +163,29 @@ export default function AddBrickScreen() {
       player.replace({ uri: audioUri });
     }
   }, [audioUri]);
+
+  useEffect(() => {
+    if (!form.target) {
+      setIsTargetTextUnique(true); // true is just for sensible UI
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsChecking(true);
+      try {
+        const res = await request<{ exists: boolean }>(
+          `/bricks/check-exists?target_text=${encodeURIComponent(form.target)}`,
+        );
+        setIsTargetTextUnique(!res.exists);
+      } catch (err) {
+        console.error("Check failed", err);
+      } finally {
+        setIsChecking(false);
+      }
+    }, 500); // Wait 500ms after user stops typing
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [form.target]);
 
   return (
     <View style={styles.screen}>
@@ -215,7 +247,7 @@ export default function AddBrickScreen() {
               style={styles.input}
               value={form.native}
               onChangeText={(t: string) =>
-                setForm((f) => ({ ...f, native: t }))
+                setForm((f) => ({ ...f, native: cleanText(t) }))
               }
               multiline
               placeholder="Xin chào"
@@ -227,11 +259,17 @@ export default function AddBrickScreen() {
               style={styles.input}
               value={form.target}
               onChangeText={(t: string) =>
-                setForm((f) => ({ ...f, target: t }))
+                setForm((f) => ({ ...f, target: cleanText(t) }))
               }
               multiline
               placeholder="Hello"
             />
+            {isChecking && (
+              <ActivityIndicator size="small" style={styles.checkLoader} />
+            )}
+            {!isTargetTextUnique && (
+              <Text style={styles.warningText}>Câu này đã được sở hữu.</Text>
+            )}
           </FormField>
 
           <FormField label="Bộ sưu tập">
@@ -271,9 +309,12 @@ export default function AddBrickScreen() {
         />
 
         <TouchableOpacity
-          style={[styles.btn, (loading || isRecording) && { opacity: 0.5 }]}
+          style={[
+            styles.btn,
+            (loading || isRecording || !isTargetTextUnique) && { opacity: 0.5 },
+          ]}
           onPress={onSubmit}
-          disabled={loading || isRecording}
+          disabled={loading || isRecording || !isTargetTextUnique}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
@@ -282,7 +323,7 @@ export default function AddBrickScreen() {
           )}
         </TouchableOpacity>
       </KeyboardAwareScrollView>
-      {/* <KeyboardToolbar /> */}
+      <KeyboardToolbar />
     </View>
   );
 }
@@ -372,4 +413,18 @@ const styles = StyleSheet.create({
   },
   switchLabel: { fontSize: 15, fontWeight: "600", color: "#333" },
   switchSubLabel: { fontSize: 12, color: "#888", marginTop: 2 },
+
+  //
+  checkLoader: {
+    position: "absolute",
+    right: 12,
+    top: 15, // Adjust based on your input's padding
+  },
+  warningText: {
+    color: colors.secondary2, // System red
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: "500",
+  },
 });

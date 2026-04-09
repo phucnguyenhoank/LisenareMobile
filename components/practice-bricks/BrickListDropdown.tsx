@@ -1,15 +1,34 @@
 import { SimpleBrick } from "@/types/brick";
 import Entypo from "@expo/vector-icons/Entypo";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 type Props = {
   bricks: SimpleBrick[];
+  isLoading: boolean;
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
 };
 
-export function BrickListDropdown({ bricks, onEdit, onDelete }: Props) {
+export function BrickListDropdown({
+  bricks,
+  isLoading,
+  onEdit,
+  onDelete,
+}: Props) {
+  if (isLoading) {
+    return (
+      <View style={styles.dropdown}>
+        <ActivityIndicator size="small" color="#CCC" />
+      </View>
+    );
+  }
   if (bricks.length === 0) {
     return (
       <View style={styles.dropdown}>
