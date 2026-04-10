@@ -88,11 +88,7 @@ export default function LearnerStatisticScreen() {
       <Text style={styles.name}>{user?.full_name}</Text>
 
       <View style={styles.card}>
-        <Stat
-          label="Đã học"
-          value={`${total} câu & từ`}
-          color={colors.primary}
-        />
+        <Stat label="Đã học" value={`${total} câu`} color={colors.primary} />
         <Stat label="Thành thạo" value={mastered} />
         <Stat label="Cần luyện lại" value={due} color="#FF3B30" />
       </View>

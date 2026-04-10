@@ -8,7 +8,7 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import { router, Stack } from "expo-router";
-import { StatusBar } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
 const queryClient = new QueryClient({
@@ -50,20 +50,9 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <KeyboardProvider>
-          <StatusBar
-            barStyle="dark-content"
-            backgroundColor="#ffffff"
-            translucent={true}
-          />
+          <StatusBar style="auto" />
           <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" options={{ title: "Home" }} />
-            <Stack.Screen
-              name="setting"
-              options={{
-                title: "Cài đặt",
-                headerShown: true,
-              }}
-            />
+            <Stack.Screen name="(tabs)" />
             <Stack.Screen
               name="add-brick"
               options={{
@@ -71,17 +60,11 @@ export default function RootLayout() {
                 headerShown: true,
               }}
             />
+
             <Stack.Screen
-              name="search"
+              name="setting"
               options={{
-                title: "Tìm câu",
-                headerShown: true,
-              }}
-            />
-            <Stack.Screen
-              name="chat-topics"
-              options={{
-                title: "Chủ đề hội thoại",
+                title: "Cài đặt",
                 headerShown: true,
               }}
             />

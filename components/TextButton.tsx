@@ -33,7 +33,8 @@ const TextButton: React.FC<TextButtonProps> = ({
       style={({ pressed }) => [
         styles.baseButton,
         isPrimary ? styles.primaryButton : styles.outlineButton,
-        pressed && styles.pressed,
+        disabled && styles.disabledButton,
+        !disabled && pressed && styles.pressed,
         style,
       ]}
     >
@@ -41,6 +42,7 @@ const TextButton: React.FC<TextButtonProps> = ({
         style={[
           styles.baseText,
           isPrimary ? styles.primaryText : styles.outlineText,
+          disabled && styles.disabledText,
         ]}
       >
         {title}
@@ -78,6 +80,14 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.7,
+  },
+  disabledButton: {
+    backgroundColor: "#D3D3D3", // Light grey for primary
+    borderColor: "#A9A9A9", // Darker grey for outline borders
+    opacity: 0.6, // Softens the look further
+  },
+  disabledText: {
+    color: "#8E8E8E", // Muted text color
   },
 });
 

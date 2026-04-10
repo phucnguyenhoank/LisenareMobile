@@ -1,6 +1,6 @@
 # TODO
 
-1. Add a global way to handle exceptions
+1. Add a global way to handle exceptions by refactor all to tanstack query
 
 # Welcome to your Expo app 👋
 

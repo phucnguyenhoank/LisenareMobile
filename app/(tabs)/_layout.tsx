@@ -5,14 +5,22 @@ import Feather from "@expo/vector-icons/Feather";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs, useRouter } from "expo-router";
 import { Pressable } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabLayout() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.secondary,
         tabBarHideOnKeyboard: true,
+        tabBarStyle: {
+          height: 60 + insets.bottom, //  height of bar + system navigation bar
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+        },
       }}
     >
       <Tabs.Screen
@@ -32,6 +40,7 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="pending-collections"
         options={{
@@ -59,6 +68,7 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="grammar-learning"
         options={{

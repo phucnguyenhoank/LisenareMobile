@@ -42,7 +42,7 @@ export default function FloatingActionMenu() {
             style={styles.miniFabWithLabel}
             onPress={() => {
               setIsOpen(false);
-              router.push("/chat-topics");
+              router.push("/chat");
             }}
           >
             <MaterialCommunityIcons

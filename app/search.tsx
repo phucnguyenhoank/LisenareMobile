@@ -3,21 +3,16 @@ import ModeTabs from "@/components/context-search/ModeTabs";
 import SearchBar from "@/components/context-search/SearchBar";
 import SearchResultsList from "@/components/context-search/SearchResultsList";
 import { ContextSearchResult, SearchMode } from "@/types/context-search";
-import React, { useRef, useState } from "react";
-import { Animated, Keyboard, StyleSheet, View } from "react-native";
+import React, { useState } from "react";
+import { Keyboard, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SearchScreen() {
+  const insets = useSafeAreaInsets();
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<SearchMode>("videos");
   const [results, setResults] = useState<ContextSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const headerTranslateY = scrollY.interpolate({
-    inputRange: [0, 100], // Adjust 100 based on the header height
-    outputRange: [0, -100],
-    extrapolate: "clamp",
-  });
 
   const handleSearch = async () => {
     const q = query.trim();
@@ -45,19 +40,13 @@ export default function SearchScreen() {
 
   return (
     <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.headerContainer,
-          { transform: [{ translateY: headerTranslateY }] },
-        ]}
-      >
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <SearchBar
           query={query}
           setQuery={setQuery}
           onSearch={handleSearch}
           loading={loading}
         />
-
         <ModeTabs
           mode={mode}
           setMode={(m) => {
@@ -65,32 +54,22 @@ export default function SearchScreen() {
             if (query.trim()) handleSearch();
           }}
         />
-      </Animated.View>
+      </View>
 
       <SearchResultsList
         mode={mode}
         results={results}
         loading={loading}
         query={query}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true },
-        )}
       />
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FAFAFA",
   },
-  headerContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    backgroundColor: "#FAFAFA",
-  },
+  header: { backgroundColor: "#FAFAFA" },
 });

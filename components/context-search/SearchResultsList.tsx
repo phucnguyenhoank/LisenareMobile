@@ -5,7 +5,13 @@ import {
   VideoContextSearchResult,
 } from "@/types/context-search";
 import React from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import BrickCard from "./BrickCard";
 import VideoCard from "./VideoCard";
 
@@ -26,7 +32,6 @@ type Props = {
   results: ContextSearchResult[];
   loading: boolean;
   query: string;
-  onScroll: any;
 };
 
 export default function SearchResultsList({
@@ -34,21 +39,15 @@ export default function SearchResultsList({
   results,
   loading,
   query,
-  onScroll,
 }: Props) {
-  if (loading) return null;
-
-  if (!results.length) {
-    return <EmptyState query={query} label={mode} />;
-  }
+  if (loading) return <ActivityIndicator style={{ marginTop: 20 }} />;
 
   return (
-    <Animated.FlatList // 1. Must use Animated version
+    <FlatList
       data={results}
-      onScroll={onScroll} // 2. Use the prop from parent
-      scrollEventThrottle={16} // 3. Updates at 60fps
       keyExtractor={(_, i) => i.toString()}
-      contentContainerStyle={styles.listContent} // 4. Add padding for header
+      // If no results, show EmptyState as part of the list
+      ListEmptyComponent={<EmptyState query={query} label={mode} />}
       renderItem={({ item }) =>
         mode === "videos" ? (
           <VideoCard item={item as VideoContextSearchResult} />

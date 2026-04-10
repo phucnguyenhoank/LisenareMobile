@@ -1,132 +1,169 @@
-import { streamChat } from '@/api/streamClient';
-import colors from '@/theme/colors';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { streamChat } from "@/api/stream-client";
+import colors from "@/theme/colors";
+import { Feather } from "@expo/vector-icons";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  KeyboardAwareScrollView,
+  KeyboardStickyView,
+} from "react-native-keyboard-controller";
+import Markdown from "react-native-markdown-display";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Define the Message type
-type Message = { role: 'user' | 'assistant'; content: string };
+type Message = { role: "user" | "assistant"; content: string };
 
 export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState('');
+  const [userQuestion, setUserQuestion] = useState("");
   const insets = useSafeAreaInsets();
 
   const sendMessage = async () => {
-    if (!inputText.trim()) return;
+    if (!userQuestion.trim()) return;
 
-    const userText = inputText;
-    setInputText(''); // Clear input immediately for UX
+    setUserQuestion("");
 
-    const newUserMsg: Message = { role: 'user', content: userText };
-    const updatedHistory = [...messages, newUserMsg];
-    setMessages([...updatedHistory, {role: 'assistant', content: ''}])
-    
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", content: userQuestion },
+      { role: "assistant", content: "" },
+    ]);
+
     try {
-      await streamChat(updatedHistory, (chunk) => {
+      await streamChat(userQuestion, (chunk) => {
         setMessages((prev) => {
-          const lastMsg = prev[prev.length - 1];
-          const otherMsgs = prev.slice(0, -1);
-          return [...otherMsgs, { ...lastMsg, content: lastMsg.content + chunk }];
+          const last = prev[prev.length - 1];
+          return [
+            ...prev.slice(0, -1),
+            { ...last, content: last.content + chunk },
+          ];
         });
       });
-    } catch (error) {
-      console.error("Streaming error:", error);
+    } catch (err) {
+      console.error("Streaming error:", err);
     }
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: 'white'}}>
-      <KeyboardAwareScrollView 
-        contentContainerStyle={styles.container}
-      >
-        {messages.map((msg, index) => (
-          <View key={index} style={[styles.bubble, msg.role === 'user' ? styles.userBubble : styles.botBubble]}>
-            <Text style={msg.role === 'user' ? styles.userMessageText : styles.botMessageText}>{msg.content}</Text>
+    <View style={styles.root}>
+      <KeyboardAwareScrollView contentContainerStyle={styles.container}>
+        {messages.map((msg, i) => (
+          <View key={i} style={styles.section}>
+            {msg.role === "user" ? (
+              <View style={styles.questionHeader}>
+                <View style={styles.bullet} />
+                <Text style={styles.questionText}>{msg.content}</Text>
+              </View>
+            ) : (
+              <View style={styles.markdownContainer}>
+                <Markdown style={markdownStyles}>{msg.content}</Markdown>
+              </View>
+            )}
           </View>
         ))}
       </KeyboardAwareScrollView>
-      <SafeAreaView
-        edges={['bottom']} 
-        style={{ backgroundColor: 'white' }}
-      >
-        <KeyboardStickyView
-          offset={{
-            closed: 0,
-            opened: insets.bottom
-          }}
-        >
-          <View style={styles.inputBar}>
+
+      <KeyboardStickyView offset={{ closed: 0, opened: insets.bottom }}>
+        <View style={{ paddingHorizontal: 12 }}>
+          <View
+            style={[
+              styles.inputBar,
+              {
+                marginBottom: insets.bottom + 8,
+              },
+            ]}
+          >
             <TextInput
-              placeholder="Type a message..." 
-              style={styles.textInput} 
-              value={inputText}
-              onChangeText={setInputText}
+              placeholder="Bạn cần hỏi gì?"
+              placeholderTextColor="#999"
+              style={styles.input}
+              value={userQuestion}
+              onChangeText={setUserQuestion}
               onSubmitEditing={sendMessage}
             />
-            <Pressable
-              onPress={sendMessage}
-            >
-              <FontAwesome 
-                name="paper-plane" 
-                size={24} 
-                color={colors.secondary2} 
-                style={styles.sendButton} 
+            <Pressable onPress={sendMessage}>
+              <Feather
+                name="arrow-up"
+                size={22}
+                color="white"
+                style={styles.send}
               />
             </Pressable>
           </View>
-        </KeyboardStickyView>
-      </SafeAreaView>
+        </View>
+      </KeyboardStickyView>
     </View>
   );
 }
 
+const markdownStyles = {
+  body: {
+    color: "black",
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  text: {
+    color: "black",
+  },
+} as const;
+
 const styles = StyleSheet.create({
+  inputBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 6,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+
+  input: {
+    flex: 1,
+    height: 48,
+    paddingHorizontal: 12,
+    color: "black",
+  },
+
+  send: {
+    backgroundColor: colors.primary,
+    padding: 8,
+    borderRadius: 16,
+  },
+  root: {
+    flex: 1,
+    backgroundColor: "#FBFAFA",
+  },
+  markdownContainer: {
+    paddingLeft: 10,
+  },
   container: {
     padding: 16,
+    paddingTop: 32,
   },
-  bubble: {
-    padding: 12,
-    borderRadius: 12,
+  section: {
+    marginBottom: 24,
+  },
+  questionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
-    maxWidth: '80%',
-  },
-  userBubble: {
-    backgroundColor: colors.secondary,
-    alignSelf: 'flex-end',
-  },
-  botBubble: {
-    backgroundColor: '#E9E9EB',
-    alignSelf: 'flex-start',
-  },
-  userMessageText: {
-    color: 'white',
-  },
-  botMessageText: {
-    color: 'black',
-  },
-  textInput: {
-    height: 45,
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 8,
-    borderColor: '#d8d8d8',
-    backgroundColor: '#fff',
+    backgroundColor: "#F0F4F8",
     padding: 8,
+    borderRadius: 6,
+    alignSelf: "flex-start",
   },
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 2,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#eee'
+  bullet: {
+    width: 4,
+    height: 16,
+    backgroundColor: colors.secondary2,
+    marginRight: 10,
+    borderRadius: 2,
   },
-  sendButton: {
-    padding: 4,
-    marginTop: 2,
-    marginRight: 4,
-  }
+  questionText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "black",
+  },
 });

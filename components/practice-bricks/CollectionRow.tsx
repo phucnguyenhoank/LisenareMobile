@@ -75,10 +75,9 @@ export function CollectionRow({ item }: Props) {
         prevBricks.filter((b) => b.id !== brickId),
       );
 
-      // Optional: Show a brief success toast or log
       console.log("Brick deleted successfully");
-    } catch (err) {
-      Alert.alert("Error", "Could not delete the brick. Please try again.");
+    } catch (err: any) {
+      Alert.alert("Không thể xóa", err.message);
       console.error(err);
     }
   };

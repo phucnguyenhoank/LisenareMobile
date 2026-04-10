@@ -112,31 +112,6 @@ export default function EditBrickScreen() {
     }
   };
 
-  // if (isTokenLoading) {
-  //   return (
-  //     <View>
-  //       <ActivityIndicator size="large" color={colors.secondary} />
-  //       <Text>Đang tải token</Text>
-  //     </View>
-  //   );
-  // }
-  // if (userLoading) {
-  //   return (
-  //     <View>
-  //       <ActivityIndicator size="large" color={colors.secondary} />
-  //       <Text>Đang tải thông tin người học</Text>
-  //     </View>
-  //   );
-  // }
-
-  // if (loading) {
-  //   return (
-  //     <View>
-  //       <ActivityIndicator size="large" color={colors.secondary} />
-  //       <Text>Đang tải brick</Text>
-  //     </View>
-  //   );
-  // }
   if (isTokenLoading || userLoading || loading) {
     return (
       <View style={styles.centered}>

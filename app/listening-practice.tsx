@@ -143,7 +143,7 @@ export default function ListeningPracticeScreen() {
   const showLoading = isFetching || (isSessionActive && isAudioLoading);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 10 }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <Text style={styles.title}>Listening Practice</Text>
       <Text style={styles.subtitle}>Choose what you want to listen to</Text>
 
