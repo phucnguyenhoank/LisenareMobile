@@ -2,15 +2,14 @@ import { request } from "@/api/client";
 import colors from "@/theme/colors";
 import { useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import TextButton from "../TextButton";
 
-const GROUPS = [
-  "Vỡ lòng (A1)",
-  "Sơ cấp (A2)",
-  "Trung cấp (B1)",
-  "Cao trung cấp (B2)",
-  "Cao cấp (C1)",
-  "Thành thạo (C2)",
+const GROUP_NAMES = [
+  "Vỡ lòng",
+  "Sơ cấp",
+  "Trung cấp",
+  "Cao trung cấp",
+  "Cao cấp",
+  "Thành thạo",
 ];
 
 interface Props {
@@ -21,31 +20,35 @@ export default function EmptyCollectionOnboarding({ onSuccess }: Props) {
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const toggleGroup = (group: string) => {
+  // Logic chọn tất cả
+  const selectRecommended = () => {
+    // Nếu đã chọn đủ rồi thì bỏ chọn hết, còn không thì chọn tất cả
+    if (selectedGroups.length === GROUP_NAMES.length) {
+      setSelectedGroups([]);
+    } else {
+      setSelectedGroups([...GROUP_NAMES]);
+    }
+  };
+
+  const toggleGroup = (name: string) => {
     setSelectedGroups((prev) =>
-      prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group],
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
     );
   };
 
   const handleSave = async () => {
-    if (selectedGroups.length === 0) {
-      Alert.alert("Chọn ít nhất một nhóm bài học nha.");
-      return;
-    }
+    if (selectedGroups.length === 0)
+      return Alert.alert("Chọn ít nhất một nhóm bài học nha.");
 
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
-
       await request("/collections/overrides", {
         method: "POST",
-        body: {
-          group_names: selectedGroups,
-        },
+        body: { group_names: selectedGroups }, // Sending the strings directly
       });
-
-      onSuccess(); // refetch stats
+      onSuccess();
     } catch (err) {
-      Alert.alert("Failed to save selection", "/collections/overrides");
+      Alert.alert("Lỗi lưu dữ liệu", "Vui lòng thử lại sau.");
     } finally {
       setIsSubmitting(false);
     }
@@ -53,36 +56,67 @@ export default function EmptyCollectionOnboarding({ onSuccess }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Chọn bài học theo trình độ của bạn</Text>
-      <Text style={styles.subtitle}>Bạn chưa có bài học nào</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Trình độ của bạn?</Text>
+        <Text style={styles.subtitle}>
+          Chọn các nhóm bài học bạn muốn bắt đầu nhé
+        </Text>
+      </View>
 
-      <View style={styles.groupContainer}>
-        {GROUPS.map((group) => {
-          const isSelected = selectedGroups.includes(group);
+      {/* Nút Đề xuất (Select All) */}
+      <TouchableOpacity
+        activeOpacity={0.7}
+        style={[
+          styles.recommendedBtn,
+          selectedGroups.length === GROUP_NAMES.length &&
+            styles.recommendedBtnActive,
+        ]}
+        onPress={selectRecommended}
+      >
+        <Text
+          style={[
+            styles.recommendedText,
+            selectedGroups.length === GROUP_NAMES.length &&
+              styles.recommendedTextActive,
+          ]}
+        >
+          ✨ Đề xuất
+        </Text>
+      </TouchableOpacity>
+
+      <View style={styles.chipContainer}>
+        {GROUP_NAMES.map((name) => {
+          const isSelected = selectedGroups.includes(name);
           return (
             <TouchableOpacity
-              key={group}
-              style={[styles.groupButton, isSelected && styles.groupSelected]}
-              onPress={() => toggleGroup(group)}
+              key={name}
+              activeOpacity={0.7}
+              style={[styles.chip, isSelected && styles.chipSelected]}
+              onPress={() => toggleGroup(name)}
             >
               <Text
-                style={[
-                  styles.groupText,
-                  isSelected && styles.groupTextSelected,
-                ]}
+                style={[styles.chipText, isSelected && styles.chipTextSelected]}
               >
-                {group}
+                {name}
               </Text>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      <TextButton
-        title={isSubmitting ? "Saving..." : "Save"}
+      <TouchableOpacity
+        style={[
+          styles.saveButton,
+          (selectedGroups.length === 0 || isSubmitting) &&
+            styles.saveButtonDisabled,
+        ]}
         onPress={handleSave}
-        disabled={isSubmitting}
-      />
+        disabled={isSubmitting || selectedGroups.length === 0}
+      >
+        <Text style={styles.saveButtonText}>
+          {isSubmitting ? "Đang lưu..." : "Bắt đầu học ngay"}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -90,42 +124,89 @@ export default function EmptyCollectionOnboarding({ onSuccess }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 24,
+    backgroundColor: colors.background,
     justifyContent: "center",
-    paddingHorizontal: 24,
+  },
+  header: {
+    marginBottom: 32,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "700",
-    textAlign: "center",
+    fontSize: 28,
+    fontWeight: "800",
+    color: colors.primary, // Đen
     marginBottom: 8,
   },
   subtitle: {
-    textAlign: "center",
+    fontSize: 16,
     color: "#666",
-    marginBottom: 24,
+    lineHeight: 22,
   },
-  groupContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: 12,
-    marginBottom: 24,
-  },
-  groupButton: {
-    borderWidth: 1,
-    borderColor: "#ccc",
+  recommendedBtn: {
+    // Trạng thái chưa chọn: Nền xám nhạt/viền border giống Chip
+    backgroundColor: "#F3F4F6",
     paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 20,
+    alignSelf: "flex-start",
   },
-  groupSelected: {
+  recommendedBtnActive: {
+    // Khi được chọn: Giống hệt chipSelected (Xanh lá đậm nhất)
     backgroundColor: colors.secondary,
     borderColor: colors.secondary,
   },
-  groupText: {
-    fontWeight: "600",
+  recommendedText: {
+    // Chữ màu ghi đậm khi chưa chọn
+    color: "#4B4B4B",
+    fontWeight: "700",
+    fontSize: 15,
   },
-  groupTextSelected: {
-    color: "white",
+  recommendedTextActive: {
+    // Chữ trắng khi được chọn
+    color: "#fff",
+  },
+
+  chipContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 40,
+  },
+  chip: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 100,
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  chipSelected: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.secondary,
+  },
+  chipText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#4B4B4B",
+  },
+  chipTextSelected: {
+    color: "#fff",
+  },
+  saveButton: {
+    backgroundColor: colors.primary, // Nút Save màu Đen theo đúng primary của bạn
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: "center",
+  },
+  saveButtonDisabled: {
+    backgroundColor: "#CCC",
+  },
+  saveButtonText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "700",
   },
 });

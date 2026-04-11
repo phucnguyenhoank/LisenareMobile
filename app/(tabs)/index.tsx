@@ -1,5 +1,6 @@
 import { request } from "@/api/client";
 import FeedItem from "@/components/discovery/FeedItem";
+import FloatingActionMenu from "@/components/FloatingActionMenu";
 import { useAuth } from "@/context/AuthContext";
 import { Post, PostPage } from "@/types/post";
 import React, { useEffect, useState } from "react";
@@ -79,6 +80,7 @@ export default function DiscoveryScreen() {
           </View>
         }
       />
+      <FloatingActionMenu />
     </View>
   );
 }

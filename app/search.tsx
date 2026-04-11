@@ -3,7 +3,7 @@ import ModeTabs from "@/components/context-search/ModeTabs";
 import SearchBar from "@/components/context-search/SearchBar";
 import SearchResultsList from "@/components/context-search/SearchResultsList";
 import { ContextSearchResult, SearchMode } from "@/types/context-search";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Keyboard, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -38,6 +38,10 @@ export default function SearchScreen() {
     }
   };
 
+  useEffect(() => {
+    handleSearch();
+  }, [mode]);
+
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
@@ -47,13 +51,7 @@ export default function SearchScreen() {
           onSearch={handleSearch}
           loading={loading}
         />
-        <ModeTabs
-          mode={mode}
-          setMode={(m) => {
-            setMode(m);
-            if (query.trim()) handleSearch();
-          }}
-        />
+        <ModeTabs mode={mode} setMode={(m) => setMode(m)} />
       </View>
 
       <SearchResultsList
@@ -62,6 +60,7 @@ export default function SearchScreen() {
         loading={loading}
         query={query}
       />
+      <View style={{ paddingBottom: insets.bottom }} />
     </View>
   );
 }

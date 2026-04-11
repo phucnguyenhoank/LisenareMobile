@@ -1,4 +1,5 @@
 import { request } from "@/api/client";
+import FloatingActionMenu from "@/components/FloatingActionMenu";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
 import { Learner } from "@/types/learnner";
@@ -92,6 +93,7 @@ export default function LearnerStatisticScreen() {
         <Stat label="Thành thạo" value={mastered} />
         <Stat label="Cần luyện lại" value={due} color="#FF3B30" />
       </View>
+      <FloatingActionMenu />
     </ScrollView>
   );
 }

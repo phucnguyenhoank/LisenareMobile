@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   },
 
   listContent: {
-    paddingTop: 110, // Matches your header height (SearchBar + Tabs)
+    paddingTop: 110,
     paddingBottom: 20,
   },
 });
