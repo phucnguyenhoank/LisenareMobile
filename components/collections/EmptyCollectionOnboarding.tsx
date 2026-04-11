@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   recommendedBtn: {
     // Trạng thái chưa chọn: Nền xám nhạt/viền border giống Chip
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#f3f6f4",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 12,

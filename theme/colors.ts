@@ -6,6 +6,7 @@ const colors = {
   secondary4: "#72B43A",
   secondary5: "#4CAF50",
   background: "#ffffff",
+  buttonBackground: "#e6fee1",
   text: "#111827",
   border: "#e5e7eb",
 };

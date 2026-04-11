@@ -6,6 +6,7 @@ export interface VideoContextSearchResult {
 }
 
 export interface BrickContextSearchResult {
+  brick_id: number;
   native_text: string;
   target_text: string;
   target_audio_uri: string;
