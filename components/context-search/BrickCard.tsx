@@ -24,13 +24,6 @@ export default function BrickCard({
       <View style={styles.info}>
         <Text style={styles.quote}>{item.target_text}</Text>
         <Text style={styles.nativeText}>{item.native_text}</Text>
-
-        {/* 1. Only show the badge if cefr_level is not null/undefined */}
-        {item.cefr_level && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{item.cefr_level}</Text>
-          </View>
-        )}
       </View>
     </Pressable>
   );
