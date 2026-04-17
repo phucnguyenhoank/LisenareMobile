@@ -128,7 +128,7 @@ export default function EditBrickScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.screen} edges={["top"]}>
+    <SafeAreaView style={styles.screen}>
       <KeyboardAwareScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Chỉnh sửa Brick</Text>

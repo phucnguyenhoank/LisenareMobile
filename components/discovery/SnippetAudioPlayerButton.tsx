@@ -15,7 +15,7 @@ export default function SnippetAudioPlayerButton({
 
   return (
     <TouchableOpacity onPress={onPress} style={styles.audioButton}>
-      <Ionicons name="play" size={40} color={colors.secondary2} />
+      <Ionicons name="play" size={40} color={colors.secondary} />
       <Text style={styles.audioText}>Listen</Text>
     </TouchableOpacity>
   );
@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
   },
   audioText: {
     marginLeft: 6,
-    color: colors.secondary2,
+    color: colors.secondary,
     fontWeight: "500",
   },
 });

@@ -113,9 +113,11 @@ export default function AddBrickScreen() {
         unit_type: metadata.unitType,
         structure: metadata.structure,
         function: metadata.func,
-        grammar_points: metadata.selectedGrammarPoints.map((p) => ({
-          grammar_point: p,
-        })),
+        grammar_points: metadata.selectedGrammarPoints.map(
+          (selectedGrammarPoint) => ({
+            grammar_point: selectedGrammarPoint,
+          }),
+        ),
       },
     };
 

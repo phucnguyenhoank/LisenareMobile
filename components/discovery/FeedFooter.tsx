@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   },
 
   primaryButton: {
-    backgroundColor: colors.secondary2,
+    backgroundColor: colors.secondary,
   },
 
   disabledButton: {

@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     color: "#8E8E93",
   },
   learnBtn: {
-    backgroundColor: colors.secondary2,
+    backgroundColor: colors.secondary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,

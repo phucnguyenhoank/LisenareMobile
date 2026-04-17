@@ -1,10 +1,10 @@
 import colors from "@/theme/colors";
-import { Entypo, Ionicons } from "@expo/vector-icons";
+import { Entypo, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs, useRouter } from "expo-router";
-import { Pressable } from "react-native";
+import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabLayout() {
@@ -31,12 +31,26 @@ export default function TabLayout() {
             <AntDesign name="compass" size={24} color={color} />
           ),
           headerRight: () => (
-            <Pressable
-              onPress={() => router.push("/search")}
-              style={{ marginRight: 15 }}
+            <View
+              style={{
+                flexDirection: "row",
+                marginRight: 15,
+                alignItems: "center",
+              }}
             >
-              <Ionicons name="search-sharp" size={24} color="black" />
-            </Pressable>
+              {/* Search Button */}
+              <Pressable
+                onPress={() => router.push("/search")}
+                style={{ marginRight: 15 }} // Space between the two buttons
+              >
+                <Ionicons name="search-sharp" size={24} color="black" />
+              </Pressable>
+
+              {/* "Add snippet" Button */}
+              <Pressable onPress={() => router.push("/add-snippet")}>
+                <MaterialIcons name="post-add" size={26} color="black" />
+              </Pressable>
+            </View>
           ),
         }}
       />
