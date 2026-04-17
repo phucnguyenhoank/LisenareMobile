@@ -157,7 +157,7 @@ export default function EditBrickScreen() {
           <Text style={styles.audioLabel}>Audio:</Text>
           <Pressable onPress={() => alert("Change coming soon")}>
             <Text style={styles.audioFile}>
-              {brick?.target_audio_uri?.split("/").pop()}
+              {brick?.target_audio_path?.split("/").pop()}
             </Text>
           </Pressable>
         </View>

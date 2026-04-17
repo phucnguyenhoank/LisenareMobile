@@ -29,5 +29,5 @@ export default function Word({ word, segment, player }: WordProps) {
 }
 
 const styles = StyleSheet.create({
-  word: { fontSize: 18, lineHeight: 28, color: "#1c1e21" },
+  word: { fontSize: 20, lineHeight: 28, color: "#1c1e21" },
 });

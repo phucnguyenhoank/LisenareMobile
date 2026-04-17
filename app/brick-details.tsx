@@ -63,7 +63,7 @@ export default function BrickDetails() {
         <View style={styles.metaSection}>
           <Text style={styles.metaLabel}>Brick ID: {id}</Text>
           <Text style={styles.metaLabel}>
-            Audio Path: {brick.target_audio_uri}
+            Audio Path: {brick.target_audio_path}
           </Text>
         </View>
       </View>

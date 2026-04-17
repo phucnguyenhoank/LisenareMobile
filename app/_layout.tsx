@@ -1,5 +1,6 @@
 import { ApiError } from "@/api/client";
 import { AuthProvider } from "@/context/AuthContext";
+import { SessionProvider } from "@/context/SessionContext";
 import { showAlert } from "@/utils/alerts";
 import { authActions } from "@/utils/auth-events";
 import {
@@ -48,29 +49,31 @@ const queryClient = new QueryClient({
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <KeyboardProvider>
-          <StatusBar style="auto" />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen
-              name="add-brick"
-              options={{
-                title: "Thêm câu",
-                headerShown: true,
-              }}
-            />
+      <SessionProvider>
+        <AuthProvider>
+          <KeyboardProvider>
+            <StatusBar style="auto" />
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen
+                name="add-brick"
+                options={{
+                  title: "Thêm câu",
+                  headerShown: true,
+                }}
+              />
 
-            <Stack.Screen
-              name="setting"
-              options={{
-                title: "Cài đặt",
-                headerShown: true,
-              }}
-            />
-          </Stack>
-        </KeyboardProvider>
-      </AuthProvider>
+              <Stack.Screen
+                name="setting"
+                options={{
+                  title: "Cài đặt",
+                  headerShown: true,
+                }}
+              />
+            </Stack>
+          </KeyboardProvider>
+        </AuthProvider>
+      </SessionProvider>
     </QueryClientProvider>
   );
 }

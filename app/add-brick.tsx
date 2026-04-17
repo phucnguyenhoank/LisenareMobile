@@ -39,7 +39,7 @@ export default function AddBrickScreen() {
   const params = useLocalSearchParams<{
     native?: string;
     target?: string;
-    audio_uri?: string;
+    audio_path?: string;
   }>();
 
   const [form, setForm] = useState({
@@ -50,8 +50,8 @@ export default function AddBrickScreen() {
     public: true,
   });
   const [loading, setLoading] = useState(false);
-  const [audioUri, setAudioUri] = useState<string | null>(
-    params.audio_uri ?? null,
+  const [audioPath, setAudioPath] = useState<string | null>(
+    params.audio_path ?? null,
   );
 
   const [isTargetTextUnique, setIsTargetTextUnique] = useState(false);
@@ -73,7 +73,7 @@ export default function AddBrickScreen() {
     if (isRecording) {
       await recorder.stop();
       if (recorder.uri) {
-        setAudioUri(recorder.uri);
+        setAudioPath(recorder.uri);
         player.replace({ uri: recorder.uri });
       }
     } else {
@@ -85,7 +85,7 @@ export default function AddBrickScreen() {
   };
 
   const onSubmit = async () => {
-    if (!audioUri) return Alert.alert("Thông báo", "Hãy thêm ghi âm");
+    if (!audioPath) return Alert.alert("Thông báo", "Hãy thêm ghi âm");
     if (!form.native || !form.target)
       return Alert.alert(
         "Thông báo",
@@ -97,7 +97,7 @@ export default function AddBrickScreen() {
 
     // 1. Append the audio file as usual
     data.append("audio_file", {
-      uri: audioUri,
+      uri: audioPath,
       name: `rec.m4a`,
       type: "audio/m4a",
     } as any);
@@ -148,7 +148,7 @@ export default function AddBrickScreen() {
       if (!result.canceled) {
         const asset = result.assets[0];
 
-        setAudioUri(asset.uri);
+        setAudioPath(asset.uri);
         player.replace({ uri: asset.uri });
 
         Alert.alert("Thành công", "Đã chọn file: " + asset.name);
@@ -159,10 +159,10 @@ export default function AddBrickScreen() {
   };
 
   useEffect(() => {
-    if (audioUri) {
-      player.replace({ uri: audioUri });
+    if (audioPath) {
+      player.replace({ uri: audioPath });
     }
-  }, [audioUri]);
+  }, [audioPath]);
 
   useEffect(() => {
     if (!form.target) {
@@ -224,10 +224,10 @@ export default function AddBrickScreen() {
           <Text style={styles.status}>
             {isRecording ? "Đang ghi âm..." : "Ghi âm hoặc Tải lên file audio"}
           </Text>
-          {audioUri && !isRecording && (
+          {audioPath && !isRecording && (
             <TouchableOpacity
               onPress={() => {
-                if (!audioUri) return;
+                if (!audioPath) return;
                 player.seekTo(0);
                 player.play();
               }}

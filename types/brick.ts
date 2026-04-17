@@ -79,7 +79,7 @@ export type Brick = {
   id: number;
   native_text: string;
   target_text: string;
-  target_audio_uri: string;
+  target_audio_path: string;
   cefr_level: string | null;
   is_public: boolean;
   creator_id: number;

@@ -112,7 +112,7 @@ export default function PracticeScreen() {
       const url = buildFetchBrickUrl(collectionIds);
       const br = await request<Brick>(url);
       setBrick(br);
-      setAudioUrl(br.target_audio_uri);
+      setAudioUrl(br.target_audio_path);
       setIsAnswerRevealed(false);
       setHasSentReview(false);
       setRecordedUri(null);
@@ -169,7 +169,7 @@ export default function PracticeScreen() {
   };
 
   const sendReport = async (description: string) => {
-    const cleanFilename = brick?.target_audio_uri.split("/").pop();
+    const cleanFilename = brick?.target_audio_path.split("/").pop();
     const response = await request<StatusResponse>(
       `/bricks/report/${cleanFilename}?description=${encodeURIComponent(description)}`,
       { method: "POST" },
