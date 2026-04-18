@@ -1,3 +1,5 @@
+import { Snippet } from "./snippet";
+
 export interface VideoContextSearchResult {
   ytb_video_id: string;
   text: string;
@@ -12,7 +14,8 @@ export interface BrickContextSearchResult {
 }
 
 export type ContextSearchResult =
+  | Snippet
   | VideoContextSearchResult
   | BrickContextSearchResult;
 
-export type SearchMode = "videos" | "bricks";
+export type SearchMode = "snippets" | "videos" | "bricks";

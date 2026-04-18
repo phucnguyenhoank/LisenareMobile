@@ -31,7 +31,7 @@ export default function FeedItem({ item }: FeedItemProps) {
   const { audioPath, isAudioLoading } = useCachedAudio(item.audio_path);
   const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
 
-  const [isHelpful, setIsHelpful] = useState(false);
+  const [isHelpful, setIsHelpful] = useState(item.is_liked);
   const [isAdding, setIsAdding] = useState(false);
 
   const [hasClickedAdd, setHasClickedAdd] = useState(false);
@@ -43,9 +43,9 @@ export default function FeedItem({ item }: FeedItemProps) {
     staleTime: Infinity,
   });
 
-  const playSnippetAudio = () => {
+  const playSnippetAudio = (startTime: number = 0) => {
     player.volume = 1.0;
-    player.seekTo(0);
+    player.seekTo(startTime);
     player.play();
 
     logInteraction({
@@ -56,6 +56,17 @@ export default function FeedItem({ item }: FeedItemProps) {
   };
 
   const handleToggleHelpful = () => {
+    if (!token) {
+      showAlert({
+        title: "Thông báo",
+        message: "Bạn hãy đăng nhập trước nhé",
+        confirmText: "Đăng nhập",
+        onConfirm: () => router.push("/setting"),
+        onCancel: () => {},
+      });
+      return;
+    }
+
     const next = !isHelpful;
     setIsHelpful(next);
 
@@ -86,6 +97,7 @@ export default function FeedItem({ item }: FeedItemProps) {
         message: "Bạn hãy đăng nhập trước nhé",
         confirmText: "Đăng nhập",
         onConfirm: () => router.push("/setting"),
+        onCancel: () => {},
       });
       return;
     }
@@ -124,13 +136,13 @@ export default function FeedItem({ item }: FeedItemProps) {
 
       <SnippetAudioPlayerButton
         isLoading={isAudioLoading}
-        onPress={playSnippetAudio}
+        onPress={() => playSnippetAudio()}
       />
 
       <SnippetContent
         content={item.content}
         segments={segments}
-        player={player}
+        onPlay={playSnippetAudio}
       />
 
       <TranslationSection item={item} />

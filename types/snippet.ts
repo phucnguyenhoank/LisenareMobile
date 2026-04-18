@@ -7,6 +7,7 @@ export interface Snippet {
   created_at: string;
   translation: string;
   creator: Learner;
+  is_liked: boolean;
 }
 
 export interface SnippetPage {

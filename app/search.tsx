@@ -2,16 +2,32 @@ import { request } from "@/api/client"; // Adjust path to your file structure
 import ModeTabs from "@/components/context-search/ModeTabs";
 import SearchBar from "@/components/context-search/SearchBar";
 import SearchResultsList from "@/components/context-search/SearchResultsList";
-import { ContextSearchResult, SearchMode } from "@/types/context-search";
+import {
+  BrickContextSearchResult,
+  SearchMode,
+  VideoContextSearchResult,
+} from "@/types/context-search";
+import { Snippet } from "@/types/snippet";
 import React, { useEffect, useState } from "react";
 import { Keyboard, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+type SearchResultMap = {
+  snippets: Snippet[];
+  videos: VideoContextSearchResult[];
+  bricks: BrickContextSearchResult[];
+};
+
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState("");
-  const [mode, setMode] = useState<SearchMode>("videos");
-  const [results, setResults] = useState<ContextSearchResult[]>([]);
+  const [mode, setMode] = useState<SearchMode>("snippets");
+
+  const [resultsMap, setResultsMap] = useState<SearchResultMap>({
+    snippets: [],
+    videos: [],
+    bricks: [],
+  });
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
@@ -22,15 +38,17 @@ export default function SearchScreen() {
     Keyboard.dismiss();
 
     try {
-      const endpoint =
-        mode === "videos" ? "/context-search/videos" : "/context-search/bricks";
+      const endpoint = `/context-search/${mode}`;
 
-      const data = await request<ContextSearchResult[]>(endpoint, {
+      const data = await request<SearchResultMap[typeof mode]>(endpoint, {
         method: "POST",
         body: { query: q },
       });
 
-      setResults(data || []);
+      setResultsMap((prev) => ({
+        ...prev,
+        [mode]: data || [],
+      }));
     } catch (err) {
       console.error(err);
     } finally {
@@ -56,7 +74,7 @@ export default function SearchScreen() {
 
       <SearchResultsList
         mode={mode}
-        results={results}
+        results={resultsMap[mode] as any}
         loading={loading}
         query={query}
       />

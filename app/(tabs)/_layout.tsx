@@ -38,17 +38,17 @@ export default function TabLayout() {
                 alignItems: "center",
               }}
             >
-              {/* Search Button */}
+              {/* "Add snippet" Button */}
               <Pressable
-                onPress={() => router.push("/search")}
-                style={{ marginRight: 15 }} // Space between the two buttons
+                onPress={() => router.push("/add-snippet")}
+                style={{ marginRight: 20 }} // Space between the two buttons
               >
-                <Ionicons name="search-sharp" size={24} color="black" />
+                <MaterialIcons name="post-add" size={26} color="black" />
               </Pressable>
 
-              {/* "Add snippet" Button */}
-              <Pressable onPress={() => router.push("/add-snippet")}>
-                <MaterialIcons name="post-add" size={26} color="black" />
+              {/* Search Button */}
+              <Pressable onPress={() => router.push("/search")}>
+                <Ionicons name="search-sharp" size={24} color="black" />
               </Pressable>
             </View>
           ),

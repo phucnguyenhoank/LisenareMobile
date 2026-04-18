@@ -1,9 +1,11 @@
+import { useSession } from "@/context/SessionContext";
+import { useAttentionTracking } from "@/hooks/useAttentionTracking";
 import spacing from "@/theme/spacing";
 import {
   BrickContextSearchResult,
-  ContextSearchResult,
-  VideoContextSearchResult,
+  VideoContextSearchResult
 } from "@/types/context-search";
+import { Snippet } from "@/types/snippet";
 import React from "react";
 import {
   ActivityIndicator,
@@ -12,6 +14,7 @@ import {
   Text,
   View,
 } from "react-native";
+import FeedItem from "../discovery/FeedItem";
 import BrickCard from "./BrickCard";
 import VideoCard from "./VideoCard";
 
@@ -27,12 +30,25 @@ function EmptyState({ query, label }: { query: string; label: string }) {
   );
 }
 
-type Props = {
-  mode: string;
-  results: ContextSearchResult[];
-  loading: boolean;
-  query: string;
-};
+type Props =
+  | {
+      mode: "snippets";
+      results: Snippet[];
+      loading: boolean;
+      query: string;
+    }
+  | {
+      mode: "videos";
+      results: VideoContextSearchResult[];
+      loading: boolean;
+      query: string;
+    }
+  | {
+      mode: "bricks";
+      results: BrickContextSearchResult[];
+      loading: boolean;
+      query: string;
+    };
 
 export default function SearchResultsList({
   mode,
@@ -40,21 +56,34 @@ export default function SearchResultsList({
   loading,
   query,
 }: Props) {
+  const { sessionId } = useSession();
+
+  const { onViewableItemsChanged, viewabilityConfig } = useAttentionTracking({
+    sessionId,
+    mode,
+  });
+
   if (loading) return <ActivityIndicator style={{ marginTop: 20 }} />;
 
   return (
     <FlatList
       data={results}
       keyExtractor={(_, i) => i.toString()}
-      // If no results, show EmptyState as part of the list
       ListEmptyComponent={<EmptyState query={query} label={mode} />}
-      renderItem={({ item }) =>
-        mode === "videos" ? (
-          <VideoCard item={item as VideoContextSearchResult} />
-        ) : (
-          <BrickCard item={item as BrickContextSearchResult} />
-        )
-      }
+      renderItem={({ item }) => {
+        switch (mode) {
+          case "snippets":
+            return <FeedItem item={item} />;
+
+          case "videos":
+            return <VideoCard item={item} />;
+
+          case "bricks":
+            return <BrickCard item={item} />;
+        }
+      }}
+      onViewableItemsChanged={onViewableItemsChanged}
+      viewabilityConfig={viewabilityConfig}
     />
   );
 }

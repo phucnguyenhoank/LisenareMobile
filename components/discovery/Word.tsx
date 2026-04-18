@@ -7,18 +7,13 @@ interface WordProps {
     start_sec: number;
     end_sec: number;
   };
-  player: any;
+  onPlay: (startTime?: number) => void;
 }
 
-export default function Word({ word, segment, player }: WordProps) {
-  const handlePress = async () => {
+export default function Word({ word, segment, onPlay }: WordProps) {
+  const handlePress = () => {
     if (!segment) return;
-
-    console.log("Play:", word, segment);
-
-    // Seek to start
-    await player.seekTo(segment.start_sec);
-    player.play();
+    onPlay(segment.start_sec);
   };
 
   return (

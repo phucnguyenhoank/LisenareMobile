@@ -21,17 +21,13 @@ export async function logInteraction({
   duration?: number;
 }) {
   console.log(`snippetId:${snippetId} | type:${type} duration ${duration}`);
-  try {
-    await request("/snippet-interactions", {
-      method: "POST",
-      body: {
-        session_id: sessionId,
-        snippet_id: snippetId,
-        interaction_type: type,
-        duration,
-      },
-    });
-  } catch (e) {
-    // let it silently fails
-  }
+  await request("/snippet-interactions", {
+    method: "POST",
+    body: {
+      session_id: sessionId,
+      snippet_id: snippetId,
+      interaction_type: type,
+      duration,
+    },
+  });
 }

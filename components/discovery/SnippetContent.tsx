@@ -7,11 +7,11 @@ import Word from "./Word";
 export default function SnippetContent({
   content,
   segments,
-  player,
+  onPlay,
 }: {
   content: string;
   segments: WordSegmentSecond[];
-  player: any;
+  onPlay: (startTime?: number) => void;
 }) {
   return (
     <View style={styles.contentContainer}>
@@ -20,7 +20,7 @@ export default function SnippetContent({
           key={index}
           word={word}
           segment={segments[index]}
-          player={player}
+          onPlay={onPlay}
         />
       ))}
     </View>
