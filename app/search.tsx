@@ -38,7 +38,7 @@ export default function SearchScreen() {
     Keyboard.dismiss();
 
     try {
-      const endpoint = `/context-search/${mode}`;
+      const endpoint = `/context-search/${mode}-search`;
 
       const data = await request<SearchResultMap[typeof mode]>(endpoint, {
         method: "POST",

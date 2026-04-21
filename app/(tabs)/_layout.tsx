@@ -38,6 +38,17 @@ export default function TabLayout() {
                 alignItems: "center",
               }}
             >
+              <Pressable
+                onPress={() => router.push("/test-ui")}
+                style={{ marginRight: 20 }}
+              >
+                <MaterialCommunityIcons
+                  name="test-tube"
+                  size={24}
+                  color="black"
+                />
+              </Pressable>
+
               {/* "Add snippet" Button */}
               <Pressable
                 onPress={() => router.push("/add-snippet")}

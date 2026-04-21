@@ -235,22 +235,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: colors.secondary,
   },
-  loadMoreButton: {
-    backgroundColor: "#eee",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
 
-  loadMoreText: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
   emptyContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 100, // Push it down a bit so it's not glued to the top
+    paddingTop: 100,
   },
   emptyText: {
     marginTop: 12,
