@@ -31,19 +31,34 @@ export default function DiscoveryScreen() {
   } = useInfiniteQuery({
     queryKey: ["discovery-snippets", token], // token included so it refetches if auth changes
     queryFn: async ({ pageParam }) => {
-      const data = await request<SnippetPage>(`/snippets/random`);
+      const data = await request<SnippetPage>(`/snippets/recommended/${sessionId}`);
       return data;
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
-      return allPages.length + 1;
+        // allowing "Next Page" if the backend keeps still have items
+        return lastPage.items.length > 0 ? allPages.length + 1 : undefined;
     },
     // Flatten all items into a single array
-    select: (data) => ({
-      pages: data.pages,
-      pageParams: data.pageParams,
-      items: data.pages.flatMap((page) => page.items),
-    }),
+    select: (data) => {
+        const allItems = data.pages.flatMap((page) => page.items);
+        
+        // --- deduplication ---
+        const seenIds = new Set();
+        const uniqueItems = allItems.filter((item) => {
+            if (seenIds.has(item.id)) {
+                return false;
+            }
+            seenIds.add(item.id);
+            return true;
+        });
+
+        return {
+            pages: data.pages,
+            pageParams: data.pageParams,
+            items: uniqueItems,
+        };
+    },
   });
 
   const allSnippets = data?.items ?? [];
