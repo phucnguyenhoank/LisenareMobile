@@ -1,5 +1,5 @@
 import { request } from "@/api/client";
-import { useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Text,
@@ -18,7 +18,7 @@ interface Props {
   onBack: () => void;
 }
 
-export function QuizScreen({ exercise, onBack }: Props) {
+export const QuizScreen = memo(({ exercise, onBack }: Props) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,9 +46,9 @@ export function QuizScreen({ exercise, onBack }: Props) {
     fetchQuestions();
   }, [fetchQuestions]);
 
-  const handleAnswer = (index: number, value: string) => {
+  const handleAnswer = useCallback((index: number, value: string) => {
     setAnswers((prev) => ({ ...prev, [index]: value }));
-  };
+  }, []);
 
   const handleSubmit = () => {
     let correct = 0;
@@ -63,10 +63,15 @@ export function QuizScreen({ exercise, onBack }: Props) {
     setSubmitted(true);
   };
 
-  const allAnswered = questions.every(
-    (_, i) => answers[i] !== undefined && answers[i] !== ""
+  const allAnswered = useMemo(
+    () => questions.every((_, i) => answers[i] !== undefined && answers[i] !== ""),
+    [questions, answers]
   );
-  const unanswered = questions.filter((_, i) => !answers[i] || answers[i] === "").length;
+
+  const unanswered = useMemo(
+    () => questions.filter((_, i) => !answers[i] || answers[i] === "").length,
+    [questions, answers]
+  );
   const pct = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
   const msg =
     pct >= 80 ? "Xuất sắc! 🎉" : pct >= 50 ? "Khá tốt! Cố lên nhé 💪" : "Cần ôn thêm rồi! 📚";
@@ -96,9 +101,6 @@ export function QuizScreen({ exercise, onBack }: Props) {
     <View style={S.fill}>
       {/* Header */}
       <View style={S.header}>
-        <TouchableOpacity style={S.backBtn} onPress={onBack}>
-          <Text style={S.backBtnText}>← Quay lại</Text>
-        </TouchableOpacity>
         <View style={{ flex: 1, marginLeft: 10 }}>
           <Text style={S.headerTitle} numberOfLines={1}>
             {exercise.name}
@@ -131,9 +133,6 @@ export function QuizScreen({ exercise, onBack }: Props) {
             <View style={{ gap: 8 }}>
               <TouchableOpacity style={S.btn} onPress={fetchQuestions}>
                 <Text style={S.btnText}>Làm lại</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={S.btnOutline} onPress={onBack}>
-                <Text style={S.btnOutlineText}>← Quay lại</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -182,4 +181,4 @@ export function QuizScreen({ exercise, onBack }: Props) {
       </KeyboardAwareScrollView>
     </View>
   );
-}
+});

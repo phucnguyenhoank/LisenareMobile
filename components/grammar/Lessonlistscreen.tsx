@@ -13,9 +13,6 @@ export function LessonListScreen({ topic, onSelect, onBack }: Props) {
   return (
     <View style={S.fill}>
       <View style={S.header}>
-        <TouchableOpacity style={S.backBtn} onPress={onBack}>
-          <Text style={S.backBtnText}>← Quay lại</Text>
-        </TouchableOpacity>
         <View style={{ flex: 1, marginLeft: 10 }}>
           <Text style={S.headerTitle} numberOfLines={2}>
             {topic.name}
