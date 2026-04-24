@@ -49,7 +49,9 @@ export default function GrammarStudying() {
     return (
       <LessonListScreen
         topic={screen.topic}
-        onSelect={(l) => setScreen({ type: "exercises", lesson: l })}
+        onSelect={(l) =>
+          setScreen({ type: "exercises", lesson: l, topic: screen.topic }) // ← thêm topic
+        }
         onBack={() => setScreen({ type: "topics" })}
       />
     );
@@ -60,7 +62,7 @@ export default function GrammarStudying() {
       <ExerciseListScreen
         lesson={screen.lesson}
         onSelect={(e) => setScreen({ type: "quiz", exercise: e })}
-        onBack={() => setScreen({ type: "lessons", topic: screen.lesson as any })}
+        onBack={() => setScreen({ type: "lessons", topic: screen.topic })} // ← fix: dùng screen.topic thay vì screen.lesson as any
       />
     );
   }
@@ -70,11 +72,16 @@ export default function GrammarStudying() {
       <QuizScreen
         exercise={screen.exercise}
         onBack={() => {
-          const parentLesson = topics
-            .flatMap((t) => t.lessons)
-            .find((l) => l.exercises.some((e) => e.id === screen.exercise.id));
-          if (parentLesson) {
-            setScreen({ type: "exercises", lesson: parentLesson });
+          const parentTopic = topics.find((t) =>
+            t.lessons.some((l) =>
+              l.exercises.some((e) => e.id === screen.exercise.id)
+            )
+          );
+          const parentLesson = parentTopic?.lessons.find((l) =>
+            l.exercises.some((e) => e.id === screen.exercise.id)
+          );
+          if (parentTopic && parentLesson) {
+            setScreen({ type: "exercises", lesson: parentLesson, topic: parentTopic });
           } else {
             setScreen({ type: "topics" });
           }

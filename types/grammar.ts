@@ -24,5 +24,5 @@ export interface Question {
 export type Screen =
   | { type: "topics" }
   | { type: "lessons"; topic: Topic }
-  | { type: "exercises"; lesson: Lesson }
+  | { type: "exercises"; lesson: Lesson; topic: Topic }
   | { type: "quiz"; exercise: Exercise };
