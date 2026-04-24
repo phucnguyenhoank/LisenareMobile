@@ -1,11 +1,11 @@
+import { memo } from "react";
 import { Text } from "react-native";
 import { S } from "../../theme/grammar_styles";
-
 interface Props {
   text: string;
 }
 
-export function QuestionText({ text }: Props) {
+export const QuestionText = memo(function QuestionText({ text }: Props) {
   const parts = text.split(/([….]{2,})/g);
   return (
     <Text style={S.qText}>
@@ -20,4 +20,4 @@ export function QuestionText({ text }: Props) {
       )}
     </Text>
   );
-}
+});

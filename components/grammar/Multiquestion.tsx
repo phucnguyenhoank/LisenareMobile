@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { C } from "../../theme/grammar_constants";
 import { S } from "../../theme/grammar_styles";
 import { Question } from "../../types/grammar";
 import { QuestionText } from "./QuestionText";
-
 interface Props {
   question: Question;
   index: number;
@@ -12,7 +11,7 @@ interface Props {
   submitted: boolean;
 }
 
-export function MultiQuestion({ question, index, onAnswer, submitted }: Props) {
+export const MultiQuestion = memo(({ question, index, onAnswer, submitted }: Props) => {
   const [selected, setSelected] = useState<string | null>(null);
   const correct = question.correct_answer;
 
@@ -82,4 +81,4 @@ export function MultiQuestion({ question, index, onAnswer, submitted }: Props) {
       )}
     </View>
   );
-}
+});

@@ -41,12 +41,6 @@ export function TopicListScreen({ topics, loading, error, onSelect, onRetry }: P
 
   return (
     <View style={S.fill}>
-      <View style={[S.header, { paddingVertical: 16 }]}>
-        <View>
-          {/* <Text style={[S.headerTitle, { fontSize: 20 }]}>Ngữ pháp</Text> */}
-          <Text style={S.headerSub}>{topics.length} chuyên đề</Text>
-        </View>
-      </View>
       <FlatList
         data={topics}
         keyExtractor={(t) => String(t.id)}
