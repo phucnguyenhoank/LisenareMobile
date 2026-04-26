@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
 
   badge: {
     alignSelf: "flex-start",
-    backgroundColor: "#E8F2FF",
+    backgroundColor: "#eeffe8",
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: 6,

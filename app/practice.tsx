@@ -253,7 +253,7 @@ export default function PracticeScreen() {
     } as any);
     // The recorded file need to be released from the OS for some reason,
     // despite the file already exits and size greater than 0, hence we retry sending the
-    // request until the file is released.
+    // requests until the file is released.
     for (let attempt = 1; attempt <= NUM_TRANSCRIPTION_ATTEMPTS; attempt++) {
       try {
         console.log(`attempt:${attempt}`);

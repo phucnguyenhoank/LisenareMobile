@@ -85,7 +85,7 @@ export function CollectionRow({ item }: Props) {
   const handleDeleteBrick = (brickId: number) => {
     Alert.alert(
       "Bạn có chắc muốn xóa Brick này?", // Title
-      "Hành động này KHÔNG THỂ HOÀN TÁC và tất cả các lịch sử  của brick này sẽ MẤT VĨNH VIỄN.", // Message
+      "Xóa brick KHÔNG THỂ HOÀN TÁC và tất cả tương tác với brick này sẽ MẤT VĨNH VIỄN.",
       [
         {
           text: "Thoát",

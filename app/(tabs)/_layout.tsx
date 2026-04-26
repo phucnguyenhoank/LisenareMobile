@@ -6,6 +6,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs, useRouter } from "expo-router";
 import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Href } from "expo-router";
 
 export default function TabLayout() {
   const router = useRouter();
@@ -38,29 +39,49 @@ export default function TabLayout() {
                 alignItems: "center",
               }}
             >
-              <Pressable
-                onPress={() => router.push("/test-ui")}
-                style={{ marginRight: 20 }}
-              >
-                <MaterialCommunityIcons
-                  name="test-tube"
-                  size={24}
-                  color="black"
-                />
-              </Pressable>
-
-              {/* "Add snippet" Button */}
-              <Pressable
-                onPress={() => router.push("/add-snippet")}
-                style={{ marginRight: 20 }} // Space between the two buttons
-              >
-                <MaterialIcons name="post-add" size={26} color="black" />
-              </Pressable>
-
-              {/* Search Button */}
-              <Pressable onPress={() => router.push("/search")}>
-                <Ionicons name="search-sharp" size={24} color="black" />
-              </Pressable>
+              {[
+                {
+                  name: "test-tube",
+                  lib: MaterialCommunityIcons,
+                  route: "/test-ui" as Href,
+                  size: 24,
+                },
+                {
+                  name: "post-add",
+                  lib: MaterialIcons,
+                  route: "/add-snippet" as Href,
+                  size: 28,
+                },
+                {
+                  name: "search-sharp",
+                  lib: Ionicons,
+                  route: "/search" as Href,
+                  size: 24,
+                },
+              ].map((item, index) => {
+                const IconLib = item.lib;
+                return (
+                  <Pressable
+                    key={item.name}
+                    onPress={() => router.push(item.route)}
+                    // hitSlop adds 16px of "invisible" touch area around the icon
+                    hitSlop={16}
+                    style={({ pressed }) => [
+                      {
+                        opacity: pressed ? 0.3 : 1,
+                        marginLeft: index === 0 ? 0 : 22, // Space between buttons
+                        padding: 4,
+                      },
+                    ]}
+                  >
+                    <IconLib
+                      name={item.name as any}
+                      size={item.size}
+                      color="black"
+                    />
+                  </Pressable>
+                );
+              })}
             </View>
           ),
         }}

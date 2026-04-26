@@ -1,6 +1,24 @@
 import * as SecureStore from "expo-secure-store";
+import { decode } from "base-64";
+import { TokenPayload } from "@/types/token";
 
 const TOKEN_KEY = "access_token";
+
+export function decodeToken(token: string): TokenPayload | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+
+    // Decode the middle part (payload)
+    const payload = parts[1];
+    const decoded: TokenPayload = JSON.parse(decode(payload));
+    
+    return decoded;
+  } catch (error) {
+    console.error("Error decoding token:", error);
+    return null;
+  }
+}
 
 export async function saveToken(token: string): Promise<void> {
   try {
