@@ -1,21 +1,33 @@
+import { useEffect } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export function Toast({
   message,
   onClose,
+  duration,
 }: {
   message: string;
   onClose: () => void;
+  duration?: number;
 }) {
+  useEffect(() => {
+    if (duration) {
+      const timer = setTimeout(onClose, duration);
+      return () => clearTimeout(timer);
+    }
+  }, [duration, onClose]);
+
   return (
     <View style={styles.toastContainer}>
       <Text style={styles.toastText}>{message}</Text>
 
-      <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-        <Text style={{ color: "#fff", fontWeight: "bold", marginLeft: 10 }}>
-          ✕
-        </Text>
-      </TouchableOpacity>
+      {!duration && (
+        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <Text style={{ color: "#fff", fontWeight: "bold", marginLeft: 10 }}>
+            ✕
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }

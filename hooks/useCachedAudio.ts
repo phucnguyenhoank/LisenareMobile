@@ -1,5 +1,5 @@
 import { resolveAudioUrl } from "@/api/endpoints";
-import { getCachedAudioUri } from "@/utils/audioCache";
+import { getCachedAudioUri } from "@/utils/audio-cache";
 import { useEffect, useState } from "react";
 
 export function useCachedAudio(audioUri: string | null) {
@@ -24,7 +24,7 @@ export function useCachedAudio(audioUri: string | null) {
       try {
         const uri = await getCachedAudioUri(
           filename,
-          resolveAudioUrl(audioUri), // TODO: resolve base on the audio is brick or post
+          resolveAudioUrl(audioUri),
         );
         setAudioPath(uri);
       } catch (err) {

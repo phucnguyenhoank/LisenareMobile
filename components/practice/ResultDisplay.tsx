@@ -1,6 +1,7 @@
 import colors from "@/theme/colors";
 import type { SentenceCompareResponse } from "@/types/comparison";
-import { AntDesign, FontAwesome } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import { StyleSheet, Text, View } from "react-native";
 import { IconButton } from "../IconButton";
 
@@ -10,6 +11,32 @@ type Props = {
   userAnswerText?: string;
   onNext: () => void;
   onPlaySound: () => void;
+  onPlayUserRecordedSound: () => void;
+};
+
+const getStars = (score: number) => {
+  if (score >= 0.9) return 5;
+  if (score >= 0.75) return 4;
+  if (score >= 0.6) return 3;
+  if (score >= 0.4) return 2;
+  if (score >= 0.2) return 1;
+  return 0;
+};
+
+const StarRating = ({ score }: { score: number }) => {
+  const stars = getStars(score);
+  return (
+    <View style={styles.starRow}>
+      {[...Array(5)].map((_, i) => (
+        <FontAwesome
+          key={i}
+          name={i < stars ? "star" : "star-o"}
+          size={28}
+          color={i < stars ? "#FFD700" : "#ccc"} // gold / gray
+        />
+      ))}
+    </View>
+  );
 };
 
 export default function ResultDisplay({
@@ -18,6 +45,7 @@ export default function ResultDisplay({
   userAnswerText,
   onNext,
   onPlaySound,
+  onPlayUserRecordedSound,
 }: Props) {
   // Normalize function (lowercase + remove punctuation)
   const normalize = (text: string) =>
@@ -36,15 +64,14 @@ export default function ResultDisplay({
 
   return (
     <View style={styles.sheetContent}>
-      {/* Target Text */}
+      {/* Target */}
       {targetText && <Text style={styles.targetText}>{targetText}</Text>}
 
-      {/* User Answer with Highlight */}
+      {/* User Answer */}
       {userAnswerText && (
         <Text style={styles.userAnswer}>
           {userWords.map((word, index) => {
             const normalizedWord = normalize(word);
-
             const isExtra = !targetWords.has(normalizedWord);
 
             return (
@@ -56,30 +83,32 @@ export default function ResultDisplay({
         </Text>
       )}
 
-      {/* Buttons */}
-      <IconButton
-        onPress={onPlaySound}
-        icon={<AntDesign name="sound" size={24} color="white" />}
-        style={styles.nextButton}
-      />
+      {/* RESULT (moved up) */}
+      <StarRating score={result.score} />
 
-      <IconButton
-        onPress={onNext}
-        icon={<FontAwesome name="check" size={24} color="white" />}
-        style={styles.nextButton}
-      />
+      {/* ACTION ROW */}
+      <View style={styles.actionsRow}>
+        <IconButton
+          onPress={onPlaySound}
+          icon={<AntDesign name="sound" size={20} color="white" />}
+          style={styles.smallButton}
+        />
 
-      {/* Result */}
-      <Text
-        style={[
-          styles.resultScore,
-          { color: result.correct ? "green" : "#e74c3c" },
-        ]}
-      >
-        {result.correct ? "Correct!" : "Try again"} (
-        {Math.round(result.score * 100)}%)
-      </Text>
+        <IconButton
+          onPress={onPlayUserRecordedSound}
+          icon={<AntDesign name="sound" size={20} color="white" />}
+          style={styles.smallButtonAlt}
+        />
 
+        <IconButton
+          onPress={onNext}
+          icon={<FontAwesome name="arrow-right" size={20} color="white" />}
+          style={styles.primaryButton}
+        />
+      </View>
+
+      {/* optional: keep but de-emphasize */}
+      <Text style={styles.scoreSubtle}>{Math.round(result.score * 100)}%</Text>
       <Text style={styles.thresholdInfo}>Threshold: {result.threshold}</Text>
     </View>
   );
@@ -121,10 +150,43 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
 
-  nextButton: {
+  actionsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 8,
+  },
+
+  smallButton: {
     backgroundColor: colors.secondary2,
-    paddingHorizontal: 56,
-    paddingVertical: 14,
-    borderRadius: 16,
+    padding: 14,
+    borderRadius: 50,
+  },
+
+  smallButtonAlt: {
+    backgroundColor: colors.primary,
+    padding: 14,
+    borderRadius: 50,
+  },
+
+  primaryButton: {
+    backgroundColor: colors.secondary2,
+    paddingHorizontal: 28,
+    paddingVertical: 16,
+    borderRadius: 20,
+  },
+
+  starRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 4,
+    marginTop: 8,
+  },
+
+  scoreSubtle: {
+    fontSize: 12,
+    color: "#999",
+    marginTop: 4,
   },
 });

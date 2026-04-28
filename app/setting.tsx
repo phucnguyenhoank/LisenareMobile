@@ -1,33 +1,26 @@
 import { request } from "@/api/client";
+import ChangePasswordForm from "@/components/auth/ChangePasswordForm";
 import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 import SignInForm from "@/components/auth/SignInForm";
 import SignUpForm from "@/components/auth/SignUpForm";
 import TextButton from "@/components/TextButton";
 import { useAuth } from "@/context/AuthContext";
+import { Learner } from "@/types/learnner";
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  Text,
-  View
-} from "react-native";
-
-interface User {
-  id: number;
-  full_name: string;
-}
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 type AuthMode = "signin" | "signup" | "forgot";
 
 export default function SettingScreen() {
   const { token, signout, isTokenLoading } = useAuth();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<Learner | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
   const [mode, setMode] = useState<AuthMode>("signin");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   // Fetch user info when authenticated
   useEffect(() => {
+    setIsChangingPassword(false);
     const fetchUser = async () => {
       if (!token) {
         setUser(null);
@@ -35,7 +28,7 @@ export default function SettingScreen() {
       }
       try {
         setIsLoadingUser(true);
-        const data = await request<User>("/learners/me");
+        const data = await request<Learner>("/learners/me");
         setUser(data);
       } catch (error) {
         console.log("Fetch user error:", error);
@@ -46,10 +39,6 @@ export default function SettingScreen() {
 
     fetchUser();
   }, [token]);
-
-  const handleChangePassword = () => {
-    Alert.alert("Change Password", "Coming soon.");
-  };
 
   if (isTokenLoading) {
     return (
@@ -72,14 +61,27 @@ export default function SettingScreen() {
   if (token) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>
-          Hello, {user ? user.full_name : "expired_token"}
-        </Text>
-        <Text style={styles.subtitle}>Mã người học: {user?.id}</Text>
-        <View style={styles.spacing} />
-        <TextButton title="Đổi mật khẩu" onPress={handleChangePassword} />
-        <View style={styles.spacingSmall} />
-        <TextButton title="Đăng xuất" onPress={signout} />
+        {isChangingPassword ? (
+          <ChangePasswordForm onCancel={() => setIsChangingPassword(false)} />
+        ) : (
+          <>
+            <Text style={styles.title}>
+              Hello, {user ? user.full_name : "expired_token"}
+            </Text>
+            <Text style={styles.subtitle}>Mã người học: {user?.id}</Text>
+            <View style={styles.spacing} />
+            <TextButton
+              title="Đổi mật khẩu"
+              onPress={() => setIsChangingPassword(true)}
+            />
+            <View style={styles.spacingSmall} />
+            <TextButton
+              title="Đăng xuất"
+              onPress={signout}
+              variant={"outline"}
+            />
+          </>
+        )}
       </View>
     );
   }

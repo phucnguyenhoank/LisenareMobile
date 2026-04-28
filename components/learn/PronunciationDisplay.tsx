@@ -1,25 +1,70 @@
+import { useCachedAudio } from "@/hooks/useCachedAudio";
 import colors from "@/theme/colors";
-import type { PronunciationAnalysisResponse } from "@/types/audio";
+import type {
+  PhonemeAnalysis,
+  PronunciationAnalysisResponse,
+} from "@/types/audio";
+
 import { Ionicons } from "@expo/vector-icons";
+import { useAudioPlayer } from "expo-audio";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface PronunciationDisplayProps {
   targetText: string;
   data: PronunciationAnalysisResponse;
+  originalAudioUri: string;
+  recordedAudioUri: string | null;
   onNext?: () => void;
 }
 
-const PronunciationDisplay = ({
+function PhonemeItem({ item }: { item: PhonemeAnalysis }) {
+  return (
+    <View style={styles.phonemeBox}>
+      <Text style={[styles.phonemeText, styles[item.status]]}>
+        {item.phoneme}
+      </Text>
+
+      {item.status === "mispronounced" && item.heard && (
+        <Text style={styles.heardText}>({item.heard})</Text>
+      )}
+
+      {item.status === "missing" && <View style={styles.missingUnderline} />}
+    </View>
+  );
+}
+
+function PronunciationDisplay({
   targetText,
   data,
+  originalAudioUri,
+  recordedAudioUri,
   onNext,
-}: PronunciationDisplayProps) => {
+}: PronunciationDisplayProps) {
+  const { audioPath, isAudioLoading } = useCachedAudio(originalAudioUri);
+  const originalPlayer = useAudioPlayer(audioPath ? { uri: audioPath } : null);
+
+  const recordedPlayer = useAudioPlayer(
+    recordedAudioUri ? { uri: recordedAudioUri } : null,
+  );
+
+  const playOriginal = () => {
+    originalPlayer.seekTo(0);
+    originalPlayer.play();
+  };
+
+  const playRecorded = () => {
+    if (!recordedAudioUri) return;
+    recordedPlayer.seekTo(0);
+    recordedPlayer.play();
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Target Sentence:</Text>
+      {/* 1. TARGET TEXT */}
       <Text style={styles.targetText}>{targetText}</Text>
 
+      {/* 2. ACCURACY */}
       <View style={styles.scoreContainer}>
         <Text style={styles.scoreLabel}>Accuracy:</Text>
         <Text
@@ -32,25 +77,41 @@ const PronunciationDisplay = ({
         </Text>
       </View>
 
-      <Text style={styles.label}>IPA Analysis:</Text>
+      {/* 3. ORIGINAL AUDIO + IPA */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.label}>Teacher Pronunciation</Text>
+        <TouchableOpacity onPress={playOriginal}>
+          <Ionicons name="volume-high" size={22} color="#333" />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.phonemeList}>
         {data.analysis.map((item, index) => (
+          <PhonemeItem key={index} item={item} />
+        ))}
+      </View>
+
+      {/* 4. LEARNER AUDIO + IPA */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.label}>Yours</Text>
+        <TouchableOpacity onPress={playRecorded} disabled={!recordedAudioUri}>
+          <Ionicons
+            name="mic"
+            size={22}
+            color={recordedAudioUri ? "#333" : "#ccc"}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.phonemeList}>
+        {data.learner_phonemes.map((phoneme, index) => (
           <View key={index} style={styles.phonemeBox}>
-            <Text style={[styles.phonemeText, styles[item.status]]}>
-              {item.phoneme}
-            </Text>
-            {/* Show what the AI heard if mispronounced */}
-            {item.status === "mispronounced" && item.heard && (
-              <Text style={styles.heardText}>({item.heard})</Text>
-            )}
-            {/* Visual indicator for missing sounds */}
-            {item.status === "missing" && (
-              <View style={styles.missingUnderline} />
-            )}
+            <Text style={styles.phonemeText}>{phoneme}</Text>
           </View>
         ))}
       </View>
 
+      {/* 5. NEXT BUTTON */}
       {onNext && (
         <TouchableOpacity style={styles.nextButton} onPress={onNext}>
           <Ionicons
@@ -62,7 +123,7 @@ const PronunciationDisplay = ({
       )}
     </View>
   );
-};
+}
 
 // Helper to color the total score
 const getScoreColor = (score: number) => {
@@ -72,6 +133,13 @@ const getScoreColor = (score: number) => {
 };
 
 const styles = StyleSheet.create({
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 12,
+    marginBottom: 6,
+  },
   container: {
     padding: 16,
     backgroundColor: "#fff",
@@ -90,10 +158,10 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   targetText: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: "600",
     marginBottom: 16,
-    color: "#333",
+    color: colors.secondary,
   },
   scoreContainer: {
     flexDirection: "row",
@@ -135,6 +203,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#bdbdbd",
     marginTop: 2,
   },
+
   // Status Styles
   correct: {
     color: colors.secondary5,

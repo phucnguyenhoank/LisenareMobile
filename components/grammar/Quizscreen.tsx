@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { C, isMultiChoice, normalize } from "../../theme/grammar_constants";
 import { S } from "../../theme/grammar_styles";
 import { Exercise, Question } from "../../types/grammar";
@@ -113,9 +113,9 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
         style={{ flex: 1 }}
         contentContainerStyle={S.scrollContent}
         keyboardShouldPersistTaps="handled"
-        extraScrollHeight={100}
-        enableOnAndroid={true}
-        enableAutomaticScroll={true}
+        // extraScrollHeight={100}
+        // enableOnAndroid={true}
+        // enableAutomaticScroll={true}
       >
         {/* Result bar */}
         {submitted && (

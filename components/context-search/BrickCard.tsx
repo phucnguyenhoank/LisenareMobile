@@ -1,30 +1,31 @@
 import colors from "@/theme/colors";
 import spacing from "@/theme/spacing";
 import { BrickContextSearchResult } from "@/types/context-search";
+import { useRouter } from "expo-router";
 import React from "react";
-import {
-  StyleSheet,
-  Text,
-  View
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function BrickCard({
   item,
 }: {
   item: BrickContextSearchResult;
 }) {
+  const router = useRouter();
+  const handlePress = () => {
+    // Navigate to your detail screen, passing the brick_id
+    router.push({
+      pathname: "/brick-details",
+      params: { id: item.brick_id },
+    });
+  };
+
   return (
-    <View style={styles.card}>
+    <Pressable style={styles.card} onPress={handlePress}>
       <View style={styles.info}>
         <Text style={styles.quote}>{item.target_text}</Text>
-
         <Text style={styles.nativeText}>{item.native_text}</Text>
-
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{item.cefr_level}</Text>
-        </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

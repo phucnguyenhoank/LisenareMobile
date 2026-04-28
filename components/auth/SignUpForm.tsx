@@ -6,7 +6,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import TextButton from "../TextButton";
@@ -99,7 +99,7 @@ export default function SignUpForm({ onSwitchToSignin }: Props) {
       </View>
 
       <TextInput
-        placeholder="Email (khuyến nghị)"
+        placeholder="Email (bảo vệ tài khoản)"
         style={styles.input}
         value={email}
         onChangeText={setEmail}
@@ -115,10 +115,7 @@ export default function SignUpForm({ onSwitchToSignin }: Props) {
           <View style={styles.spacing} />
           <Text style={styles.smallText}>Hoặc</Text>
           <View style={styles.spacing} />
-          <TextButton
-            title="Đã có tài khoản? Đăng nhập"
-            onPress={onSwitchToSignin}
-          />
+          <TextButton title="Đăng nhập" onPress={onSwitchToSignin} />
         </>
       )}
     </KeyboardAwareScrollView>

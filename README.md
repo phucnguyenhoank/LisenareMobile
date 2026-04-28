@@ -1,3 +1,7 @@
+# TODO
+
+1. Add a global way to handle exceptions by refactor all to tanstack query
+
 # Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
@@ -14,6 +18,11 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
    ```bash
    npx expo start
+   ```
+
+3. Development build
+   ```bash
+   npx expo run:android --device
    ```
 
 In the output, you'll find options to open the app in a
