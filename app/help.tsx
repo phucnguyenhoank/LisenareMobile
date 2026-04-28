@@ -45,15 +45,15 @@ export default function HelpScreen() {
             </Text>
 
             <Text style={styles.paragraph}>
-              Và nhiệm vụ của bạn là xây dựng một kho các câu bạn cần nói, có
-              liên quan đến cuộc sống của bạn, và luyện tập nó hằng ngày.
+              Nhiệm vụ của bạn là sưu tập một kho các câu bạn cần nói, có liên
+              quan đến cuộc sống của bạn, và luyện tập nó hằng ngày.
             </Text>
 
             <View style={styles.divider} />
 
             <Text style={styles.paragraph}>
-              Bạn phải luyện tập hằng ngày bởi vì một giấc mơ rằng khi bạn học
-              dồn 3000 từ, 1000 mẫu ngữ pháp trong vòng 10 ngày và sau đó{" "}
+              Bạn phải luyện tập hằng ngày; bởi vì giấc mơ học dồn 3000 từ, 1000
+              mẫu ngữ pháp trong vòng ít ngày rồi{" "}
               <Text style={styles.bold}>đột nhiên</Text> nói chuyện lưu loát sẽ{" "}
               <Text style={styles.bold}>không bao giờ</Text> xảy ra.
             </Text>
