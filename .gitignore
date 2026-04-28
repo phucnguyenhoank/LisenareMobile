@@ -52,3 +52,4 @@ app-example
 # Secret
 gen-lang-client*.json
 google-services.json
+.env
