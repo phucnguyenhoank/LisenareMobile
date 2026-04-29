@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { C } from "../../theme/grammar_constants";
 import { S } from "../../theme/grammar_styles";
@@ -7,18 +7,20 @@ import { QuestionText } from "./QuestionText";
 interface Props {
   question: Question;
   index: number;
-  onAnswer: (i: number, v: string) => void;
+  onAnswer: (i: number, v: string, timeSeconds: number) => void;
   submitted: boolean;
 }
 
 export const MultiQuestion = memo(({ question, index, onAnswer, submitted }: Props) => {
   const [selected, setSelected] = useState<string | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
   const correct = question.correct_answer;
 
   const handleSelect = (opt: string) => {
     if (submitted) return;
     setSelected(opt);
-    onAnswer(index, opt);
+    const elapsed = Math.round((Date.now() - startTimeRef.current) / 1000); 
+    onAnswer(index, opt, elapsed); 
   };
 
   const getStyle = (opt: string) => {

@@ -12,8 +12,8 @@ import { S } from "../../theme/grammar_styles";
 import { Screen, Topic } from "../../types/grammar";
 
 export default function GrammarStudying() {
-  const { token, isTokenLoading } = useAuth(); // ← thêm
-  const router = useRouter();                  // ← thêm (dùng nếu muốn redirect)
+  const { token, isTokenLoading } = useAuth(); 
+  const router = useRouter();                 
 
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(false); // ← đổi thành false

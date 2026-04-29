@@ -1,5 +1,5 @@
 import { request } from "@/api/client";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"; // ← thêm useRef
 import {
   ActivityIndicator,
   Text,
@@ -18,13 +18,20 @@ interface Props {
   onBack: () => void;
 }
 
+type AnswerRecord = {
+  question_id: number;
+  user_answer: string;
+  time_seconds: number;
+};
+
 export const QuizScreen = memo(({ exercise, onBack }: Props) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [answers, setAnswers] = useState<Record<number, AnswerRecord>>({}); // ← đổi kiểu
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
+  const questionStartTimes = useRef<Record<number, number>>({}); // ← thêm: lưu thời điểm bắt đầu mỗi câu
 
   const fetchQuestions = useCallback(async () => {
     setLoading(true);
@@ -32,9 +39,14 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
     setAnswers({});
     setSubmitted(false);
     setScore(0);
+    questionStartTimes.current = {}; // ← reset thời gian
     try {
       const data = await request<Question[]>(`/grammar/questions/${exercise.id}`);
       setQuestions(data);
+      // Ghi nhận thời điểm bắt đầu cho từng câu
+      data.forEach((_, i) => {
+        questionStartTimes.current[i] = Date.now();
+      });
     } catch (e: any) {
       setError(e?.message ?? "Không tải được câu hỏi");
     } finally {
@@ -46,32 +58,63 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
     fetchQuestions();
   }, [fetchQuestions]);
 
+  // ← cập nhật handleAnswer để lưu AnswerRecord
   const handleAnswer = useCallback((index: number, value: string) => {
-    setAnswers((prev) => ({ ...prev, [index]: value }));
-  }, []);
+    const startTime = questionStartTimes.current[index] ?? Date.now();
+    const timeSeconds = Math.round((Date.now() - startTime) / 1000);
+    setAnswers((prev) => ({
+      ...prev,
+      [index]: {
+        question_id: questions[index]?.question_id,
+        user_answer: value,
+        time_seconds: timeSeconds,
+      },
+    }));
+  }, [questions]);
 
-  const handleSubmit = () => {
+  // ← cập nhật handleSubmit để gửi API
+  const handleSubmit = async () => {
     let correct = 0;
     questions.forEach((q, i) => {
+      const userAnswer = answers[i]?.user_answer ?? "";
       if (isMultiChoice(q)) {
-        if (answers[i] === q.correct_answer) correct++;
+        if (userAnswer === q.correct_answer) correct++;
       } else {
-        if (normalize(answers[i] ?? "") === normalize(q.correct_answer)) correct++;
+        if (normalize(userAnswer) === normalize(q.correct_answer)) correct++;
       }
     });
     setScore(correct);
     setSubmitted(true);
+
+    try {
+      const user = await request<{ id: number }>("/learners/me");
+      const payload = {
+        user_id: user.id,
+        exercise_id: exercise.id,
+        submitted_at: new Date().toISOString(),
+        answers: Object.values(answers),
+      };
+      await request("/grammar/submit", {
+        method: "POST",
+        body: payload,
+      });
+    } catch (e) {
+      console.error("Submit failed:", e);
+    }
   };
 
+  // ← cập nhật allAnswered và unanswered vì answers đổi kiểu
   const allAnswered = useMemo(
-    () => questions.every((_, i) => answers[i] !== undefined && answers[i] !== ""),
+    () => questions.every((_, i) => answers[i]?.user_answer !== undefined && answers[i]?.user_answer !== ""),
     [questions, answers]
   );
 
   const unanswered = useMemo(
-    () => questions.filter((_, i) => !answers[i] || answers[i] === "").length,
+    () => questions.filter((_, i) => !answers[i]?.user_answer || answers[i]?.user_answer === "").length,
     [questions, answers]
   );
+
+  // ... phần render giữ nguyên hoàn toàn
   const pct = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
   const msg =
     pct >= 80 ? "Xuất sắc! 🎉" : pct >= 50 ? "Khá tốt! Cố lên nhé 💪" : "Cần ôn thêm rồi! 📚";

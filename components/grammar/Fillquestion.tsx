@@ -8,12 +8,13 @@ import { QuestionText } from "./QuestionText";
 interface Props {
   question: Question;
   index: number;
-  onAnswer: (i: number, v: string) => void;
+  onAnswer: (i: number, v: string, timeSeconds: number) => void;
   submitted: boolean;
 }
 
 export function FillQuestion({ question, index, onAnswer, submitted }: Props) {
   const [value, setValue] = useState("");
+  const startTimeRef = useRef<number>(Date.now());
   const correct = question.correct_answer;
   const isCorrect = submitted && normalize(value) === normalize(correct);
   const isWrong = submitted && !isCorrect;
@@ -23,9 +24,7 @@ export function FillQuestion({ question, index, onAnswer, submitted }: Props) {
   const textColor = !submitted ? C.text : isCorrect ? "#15803D" : "#DC2626";
   const cardRef = useRef<View>(null);
   return (
-    <View 
-    ref={cardRef}
-    style={S.qCard}>
+    <View ref={cardRef} style={S.qCard}>
       <View style={S.qTop}>
         <View style={S.qNum}>
           <Text style={S.qNumText}>{index + 1}</Text>
@@ -44,7 +43,8 @@ export function FillQuestion({ question, index, onAnswer, submitted }: Props) {
           onChangeText={(v) => {
             if (!submitted) {
               setValue(v);
-              onAnswer(index, v);
+              const elapsed = Math.round((Date.now() - startTimeRef.current) / 1000);
+              onAnswer(index, v, elapsed);
             }
           }}
           placeholder="Nhập đáp án..."
