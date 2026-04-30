@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "@/config/env";
+import { GCS_BASE_URL } from "@/config/env";
 
 export const resolveAudioUrl = (relativePath: string) =>
-  `${API_BASE_URL}/${relativePath}`;
+  `${GCS_BASE_URL}/${relativePath}`;

@@ -3,6 +3,7 @@ import EmptyCollectionOnboarding from "@/components/collections/EmptyCollectionO
 import FilterSortModal from "@/components/collections/FilterSortModal";
 import FloatingActionMenu from "@/components/FloatingActionMenu";
 import { CollectionRow } from "@/components/practice-bricks/CollectionRow";
+import TextButton from "@/components/TextButton";
 import { PAGINATION_LIMIT } from "@/constants/api";
 import { SORT_OPTIONS, STATUS_OPTIONS } from "@/constants/collections";
 import { useAuth } from "@/context/AuthContext";
@@ -10,11 +11,12 @@ import colors from "@/theme/colors";
 import type { Collection, GroupStats } from "@/types/collection";
 import { Ionicons } from "@expo/vector-icons";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -23,6 +25,7 @@ import {
 } from "react-native";
 
 export default function PendingCollectionsScreen() {
+  const router = useRouter();
   const { token, isTokenLoading } = useAuth();
 
   const [isFilterVisible, setIsFilterVisible] = useState(false);
@@ -114,10 +117,8 @@ export default function PendingCollectionsScreen() {
   if (!token) {
     return (
       <View style={styles.centered}>
-        <Link href="/setting" style={styles.signinLink}>
-          Đăng nhập
-        </Link>
-        <Text>để xem bộ sưu tập</Text>
+        <TextButton title="Đăng nhập" onPress={() => router.push("/setting")} />
+        <Text style={styles.subtitle}>để xem bộ sưu tập</Text>
       </View>
     );
   }
@@ -229,6 +230,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
   signinLink: {
     marginTop: 8,
     fontSize: 16,
@@ -247,5 +249,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#999",
     textAlign: "center",
+  },
+
+  subtitle: {
+    marginTop: 10,
+    fontSize: 14,
+    color: "#666",
   },
 });

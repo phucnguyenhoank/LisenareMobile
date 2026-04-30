@@ -3,6 +3,7 @@ import ChartCard from "@/components/learning-statistic/ChartCard";
 import HistorySummaryCard from "@/components/learning-statistic/HistorySummaryCard";
 import MemoryQualityCard from "@/components/learning-statistic/MemoryQualityCard";
 import TodayOverviewCard from "@/components/learning-statistic/TodayOverviewCard";
+import TextButton from "@/components/TextButton";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
 import {
@@ -119,16 +120,7 @@ export default function LearnerStatisticScreen() {
   if (!token) {
     return (
       <View style={styles.center}>
-        <Pressable
-          onPress={() => router.push("/setting")}
-          style={({ pressed }) => [
-            styles.signinButton,
-            pressed && styles.signinButtonPressed,
-          ]}
-        >
-          <Text style={styles.signinButtonText}>Đăng nhập</Text>
-        </Pressable>
-
+        <TextButton title="Đăng nhập" onPress={() => router.push("/setting")} />
         <Text style={styles.subtitle}>để theo dõi tiến độ học tập</Text>
       </View>
     );
@@ -245,23 +237,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  signinButton: {
-    backgroundColor: colors.secondary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    minWidth: 140,
-  },
-  signinButtonPressed: {
-    opacity: 0.8,
-  },
-  signinButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
   subtitle: {
     marginTop: 10,
     fontSize: 14,

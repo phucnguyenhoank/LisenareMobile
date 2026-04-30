@@ -21,7 +21,7 @@ export const getCachedAudioUri = async (
     console.log("Downloaded and cached: ", output.uri);
     return output.uri;
   } catch (error) {
-    console.log("Audio caching failed: ", filename, error);
+    console.log("Audio caching failed: ", filename, remoteUrl, error);
     return remoteUrl;
   }
 };
