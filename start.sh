@@ -10,7 +10,7 @@ fi
 
 echo "Detected IP: $IP"
 
-FILE="config/env.ts"
+FILE=".env"
 
 if [ ! -f "$FILE" ]; then
   echo "File $FILE not found!"

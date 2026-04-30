@@ -34,7 +34,7 @@ export default function VideoCard({
       />
 
       <View style={styles.info}>
-        <Text style={styles.quote}>{item.text}</Text>
+        <Text style={styles.quote}>{item.transcript}</Text>
 
         <View style={styles.row}>
           <View style={styles.badge}>

@@ -2,9 +2,9 @@ import { Snippet } from "./snippet";
 
 export interface VideoContextSearchResult {
   ytb_video_id: string;
-  text: string;
   start: number;
   duration: number;
+  transcript: string;
 }
 
 export interface BrickContextSearchResult {

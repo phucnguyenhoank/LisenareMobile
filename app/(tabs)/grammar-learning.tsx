@@ -10,10 +10,11 @@ import { QuizScreen } from "../../components/grammar/Quizscreen";
 import { TopicListScreen } from "../../components/grammar/Topiclistscreen";
 import { S } from "../../theme/grammar_styles";
 import { Screen, Topic } from "../../types/grammar";
+import TextButton from "@/components/TextButton";
 
 export default function GrammarStudying() {
   const { token, isTokenLoading } = useAuth(); // ← thêm
-  const router = useRouter();                  // ← thêm (dùng nếu muốn redirect)
+  const router = useRouter(); // ← thêm (dùng nếu muốn redirect)
 
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(false); // ← đổi thành false
@@ -42,24 +43,28 @@ export default function GrammarStudying() {
     screen.type === "lessons"
       ? () => setScreen({ type: "topics" })
       : screen.type === "exercises"
-      ? () => setScreen({ type: "lessons", topic: screen.topic })
-      : screen.type === "quiz"
-      ? () => {
-          const parentTopic = topics.find((t) =>
-            t.lessons.some((l) =>
-              l.exercises.some((e) => e.id === screen.exercise.id)
-            )
-          );
-          const parentLesson = parentTopic?.lessons.find((l) =>
-            l.exercises.some((e) => e.id === screen.exercise.id)
-          );
-          if (parentTopic && parentLesson) {
-            setScreen({ type: "exercises", lesson: parentLesson, topic: parentTopic });
-          } else {
-            setScreen({ type: "topics" });
-          }
-        }
-      : null;
+        ? () => setScreen({ type: "lessons", topic: screen.topic })
+        : screen.type === "quiz"
+          ? () => {
+              const parentTopic = topics.find((t) =>
+                t.lessons.some((l) =>
+                  l.exercises.some((e) => e.id === screen.exercise.id),
+                ),
+              );
+              const parentLesson = parentTopic?.lessons.find((l) =>
+                l.exercises.some((e) => e.id === screen.exercise.id),
+              );
+              if (parentTopic && parentLesson) {
+                setScreen({
+                  type: "exercises",
+                  lesson: parentLesson,
+                  topic: parentTopic,
+                });
+              } else {
+                setScreen({ type: "topics" });
+              }
+            }
+          : null;
 
   useEffect(() => {
     if (!onBack) return;
@@ -73,7 +78,9 @@ export default function GrammarStudying() {
   // ── Guard 1: Đang load token ──────────────────────────────
   if (isTokenLoading) {
     return (
-      <View style={[S.fill, { justifyContent: "center", alignItems: "center" }]}>
+      <View
+        style={[S.fill, { justifyContent: "center", alignItems: "center" }]}
+      >
         <ActivityIndicator size="large" color={colors.secondary} />
       </View>
     );
@@ -82,11 +89,18 @@ export default function GrammarStudying() {
   // ── Guard 2: Chưa đăng nhập ───────────────────────────────
   if (!token) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", gap: 6 }}>
-        <Link href="/setting" style={{ fontSize: 16, fontWeight: "bold", color: colors.secondary }}>
-          Đăng nhập
-        </Link>
-        <Text style={{ fontSize: 15, color: "#444" }}>để học ngữ pháp</Text>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 6,
+        }}
+      >
+        <TextButton title="Đăng nhập" onPress={() => router.push("/setting")} />
+        <Text style={{ marginTop: 10, fontSize: 16, color: "#444" }}>
+          để học ngữ pháp
+        </Text>
       </View>
     );
   }
@@ -108,7 +122,9 @@ export default function GrammarStudying() {
       return (
         <LessonListScreen
           topic={screen.topic}
-          onSelect={(l) => setScreen({ type: "exercises", lesson: l, topic: screen.topic })}
+          onSelect={(l) =>
+            setScreen({ type: "exercises", lesson: l, topic: screen.topic })
+          }
           onBack={onBack!}
         />
       );
