@@ -1,27 +1,33 @@
 #!/bin/bash
 
-# 1. Get first IP address
-IP=$(hostname -I | awk '{print $1}')
+# 1. Lấy địa chỉ IP (dùng hostname -I cho Linux hoặc ipconfig cho Mac)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  IP=$(ipconfig getifaddr en0) # Cho Mac
+else
+  IP=$(hostname -I | awk '{print $1}') # Cho Linux/WSL
+fi
 
 if [ -z "$IP" ]; then
-  echo "Could not determine IP address."
+  echo "❌ Không tìm thấy địa chỉ IP."
   exit 1
 fi
 
-echo "Detected IP: $IP"
+echo "✅ Detected IP: $IP"
 
 FILE=".env"
 
 if [ ! -f "$FILE" ]; then
-  echo "File $FILE not found!"
+  echo "❌ File $FILE không tồn tại!"
   exit 1
 fi
 
-# 2. Replace the IP inside the URL (keep protocol and port)
-# This assumes format: export const API_BASE_URL = "http://<ip>:<port>";
-sed -i -E "s#(http://)[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(:[0-9]+)#\1${IP}\2#" "$FILE"
+# 2. Thay thế IP trong biến EXPO_PUBLIC_API_BASE_URL
+# -E: dùng regex mở rộng
+# s/old/new/g
+# Tìm mẫu: http:// + dãy số IP + : + số port
+sed -i -E "s|(EXPO_PUBLIC_API_BASE_URL=http://)[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(:[0-9]+)|\1${IP}\2|" "$FILE"
 
-echo "Updated API_BASE_URL in $FILE"
+echo "🚀 Updated API_BASE_URL to http://${IP} in $FILE"
 
-# 3. Start Expo
-npx expo start
+# 3. Khởi động Expo và xóa cache để đảm bảo nhận biến môi trường mới
+npx expo start -c

@@ -88,26 +88,53 @@ export default function EditBrickScreen() {
   }, [brickId]);
 
   const handleSave = async () => {
+    if (!brick) return;
+
     try {
+      const updateData: any = {};
+
+      // 1. So sánh các trường cơ bản
+      if (nativeText !== brick.native_text) updateData.native_text = nativeText;
+      if (targetText !== brick.target_text) updateData.target_text = targetText;
+      if (isPublic !== brick.is_public) updateData.is_public = isPublic;
+      if (collectionId !== brick.collection_id)
+        updateData.collection_id = collectionId;
+
+      // 2. So sánh Metadata (Chỉ so sánh các giá trị thay đổi được)
+      const currentGPs = metadata.selectedGrammarPoints.sort();
+      const originalGPs = (
+        brick.brick_metadata.grammar_points?.map((gp) => gp.grammar_point) || []
+      ).sort();
+      const hasMetadataChanged =
+        metadata.unitType !== brick.brick_metadata.unit_type ||
+        metadata.structure !== brick.brick_metadata.structure ||
+        metadata.func !== brick.brick_metadata.function ||
+        JSON.stringify(currentGPs) !== JSON.stringify(originalGPs);
+
+      if (hasMetadataChanged) {
+        updateData.brick_metadata = {
+          unit_type: metadata.unitType,
+          structure: metadata.structure,
+          function: metadata.func,
+          grammar_points: metadata.selectedGrammarPoints.map((p) => ({
+            grammar_point: p,
+          })),
+        };
+      }
+
+      // 3. Gửi request
+      if (Object.keys(updateData).length === 0) {
+        Alert.alert("Thông báo", "Bạn chưa thay đổi gì");
+        return;
+      }
+
       await request(`/bricks/${brickId}`, {
         method: "PATCH",
-        body: {
-          native_text: nativeText,
-          target_text: targetText,
-          is_public: isPublic,
-          collection_id: collectionId,
-          brick_metadata: {
-            unit_type: metadata.unitType,
-            structure: metadata.structure,
-            function: metadata.func,
-            grammar_points: metadata.selectedGrammarPoints.map((p) => ({
-              grammar_point: p,
-            })),
-          },
-        },
+        body: updateData,
       });
+
       Alert.alert("Thành công", "Đã lưu chỉnh sửa");
-    } catch {
+    } catch (error) {
       Alert.alert("Error", "Failed to save");
     }
   };

@@ -1,12 +1,15 @@
 # This is not for running, just reading
 
-# Compile a Development Build, need server to run
+# Compile a Development Build, STILL NEED A SERVER to run
 rm -rf android & npx expo prebuild --clean # optional
 npx expo run:android --device
 
-# Compile a Development Build, need server to run
+# Compile a Development Build, STILL NEED A SERVER to run
 # produce an result apk file
 eas build --profile development --local
+
+# Compile a preview build
+eas build --profile preview --local
 
 # install apk file to the phone
 adb install build-1777088305842.apk
@@ -15,4 +18,4 @@ adb install build-1777088305842.apk
 adb shell pm uninstall com.anonymous.LisenareMobile
 
 # Compile a Production Build, standalone to run
-eas build --local --profile production
+eas build --profile production --local
