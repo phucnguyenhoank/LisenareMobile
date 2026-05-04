@@ -91,3 +91,16 @@ export type Brick = {
 
 /** Simple version for lists/previews */
 export type SimpleBrick = Pick<Brick, "id" | "target_text">;
+
+export type BrickAudioData = {
+  audio_path: string;
+  target_text: string;
+  native_text: string;
+};
+
+export type BrickAudioPage = {
+  items: BrickAudioData[];
+  offset: number;
+  limit: number;
+  total: number;
+};

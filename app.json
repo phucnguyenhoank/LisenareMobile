@@ -50,7 +50,8 @@
         "expo-audio",
         {
           "recordAudioAndroid": true,
-          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone.",
+          "enableBackgroundPlayback": true
         }
       ],
       [
