@@ -8,36 +8,28 @@ import { useAuth } from "@/context/AuthContext";
 import { Learner } from "@/types/learnner";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useQuery } from "@tanstack/react-query";
+import EditableName from "@/components/setting-screen/EditableName";
 
 type AuthMode = "signin" | "signup" | "forgot";
 
 export default function SettingScreen() {
   const { token, signout, isTokenLoading } = useAuth();
-  const [user, setUser] = useState<Learner | null>(null);
-  const [isLoadingUser, setIsLoadingUser] = useState(false);
   const [mode, setMode] = useState<AuthMode>("signin");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // Fetch user info when authenticated
+  const {
+    data: user,
+    isLoading: isLoadingUser,
+    error,
+  } = useQuery<Learner>({
+    queryKey: ["me"],
+    queryFn: () => request<Learner>("/learners/me"),
+    enabled: !!token, // only run when token exists
+  });
+
   useEffect(() => {
     setIsChangingPassword(false);
-    const fetchUser = async () => {
-      if (!token) {
-        setUser(null);
-        return;
-      }
-      try {
-        setIsLoadingUser(true);
-        const data = await request<Learner>("/learners/me");
-        setUser(data);
-      } catch (error) {
-        console.log("Fetch user error:", error);
-      } finally {
-        setIsLoadingUser(false);
-      }
-    };
-
-    fetchUser();
   }, [token]);
 
   if (isTokenLoading) {
@@ -65,21 +57,25 @@ export default function SettingScreen() {
           <ChangePasswordForm onCancel={() => setIsChangingPassword(false)} />
         ) : (
           <>
-            <Text style={styles.title}>
-              Hello, {user ? user.full_name : "expired_token"}
-            </Text>
-            <Text style={styles.subtitle}>Mã người học: {user?.id}</Text>
-            <View style={styles.spacing} />
-            <TextButton
-              title="Đổi mật khẩu"
-              onPress={() => setIsChangingPassword(true)}
-            />
-            <View style={styles.spacingSmall} />
-            <TextButton
-              title="Đăng xuất"
-              onPress={signout}
-              variant={"outline"}
-            />
+            {/* Profile Card */}
+            <View style={styles.card}>
+              {user && <EditableName fullName={user.full_name} />}
+              <Text style={styles.subtitle}>Mã người học: {user?.id}</Text>
+            </View>
+
+            {/* Actions */}
+            <View style={styles.actions}>
+              <TextButton
+                title="Đổi mật khẩu"
+                onPress={() => setIsChangingPassword(true)}
+              />
+
+              <TextButton
+                title="Đăng xuất"
+                onPress={signout}
+                variant={"outline"}
+              />
+            </View>
           </>
         )}
       </View>
@@ -109,39 +105,38 @@ export default function SettingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    backgroundColor: "#f8f9fb",
   },
+
   centerContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 24,
-    textAlign: "center",
+
+  card: {
+    backgroundColor: "#fff",
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    alignItems: "center",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
+
   subtitle: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
+    fontSize: 13,
+    color: "#888",
+    marginTop: 6,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  spacing: {
-    height: 16,
-  },
-  spacingSmall: {
-    height: 8,
-  },
-  smallText: {
-    textAlign: "center",
+
+  actions: {
+    marginTop: 24,
+    gap: 12,
   },
 });

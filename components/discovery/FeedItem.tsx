@@ -7,7 +7,7 @@ import { useSession } from "@/context/SessionContext";
 import { useCachedAudio } from "@/hooks/useCachedAudio";
 import { WordSegmentSecond } from "@/types/forced-alignment";
 import { SentenceTranslateResponse } from "@/types/sentence";
-import { Snippet } from "@/types/snippet";
+import { Reaction, Snippet } from "@/types/snippet";
 import { showAlert } from "@/utils/alerts";
 import { InteractionType, logInteraction } from "@/utils/log-interaction";
 import { useQuery } from "@tanstack/react-query";
@@ -31,7 +31,7 @@ export default function FeedItem({ item }: FeedItemProps) {
   const { audioPath, isAudioLoading } = useCachedAudio(item.audio_path);
   const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
 
-  const [isHelpful, setIsHelpful] = useState(item.is_liked);
+  const [reaction, setReaction] = useState<Reaction>(item.reaction);
   const [isAdding, setIsAdding] = useState(false);
 
   const [hasClickedAdd, setHasClickedAdd] = useState(false);
@@ -55,7 +55,7 @@ export default function FeedItem({ item }: FeedItemProps) {
     });
   };
 
-  const handleToggleHelpful = () => {
+  const handleReact = (nextReaction: Reaction) => {
     if (!token) {
       showAlert({
         title: "Thông báo",
@@ -67,13 +67,22 @@ export default function FeedItem({ item }: FeedItemProps) {
       return;
     }
 
-    const next = !isHelpful;
-    setIsHelpful(next);
+    setReaction(nextReaction);
+
+    let interactionType: InteractionType;
+
+    if (nextReaction === "LIKE") {
+      interactionType = InteractionType.LIKE;
+    } else if (nextReaction === "DISLIKE") {
+      interactionType = InteractionType.DISLIKE;
+    } else {
+      interactionType = InteractionType.REMOVE_REACTION;
+    }
 
     logInteraction({
       sessionId,
       snippetId: item.id,
-      type: next ? InteractionType.LIKE : InteractionType.UNLIKE,
+      type: interactionType,
     });
   };
 
@@ -148,8 +157,8 @@ export default function FeedItem({ item }: FeedItemProps) {
       <TranslationSection item={item} />
 
       <FeedFooter
-        isHelpful={isHelpful}
-        onToggleHelpful={handleToggleHelpful}
+        reaction={reaction}
+        onReact={handleReact}
         onAdd={handleAddBrick}
         isAdding={isAdding}
       />

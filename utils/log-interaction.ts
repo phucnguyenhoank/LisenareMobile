@@ -4,7 +4,8 @@ import { request } from "@/api/client";
 export enum InteractionType {
   LISTEN = "LISTEN",
   LIKE = "LIKE",
-  UNLIKE = "UNLIKE",
+  DISLIKE = "DISLIKE",
+  REMOVE_REACTION = "REMOVE_REACTION",
   ADD = "ADD",
   TIME_SPENT = "TIME_SPENT",
 }

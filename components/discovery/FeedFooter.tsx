@@ -9,48 +9,85 @@ import {
 } from "react-native";
 
 import colors from "@/theme/colors";
+import { Reaction } from "@/types/snippet";
 
 export default function FeedFooter({
-  isHelpful,
-  onToggleHelpful,
+  reaction,
+  onReact,
   onAdd,
   isAdding,
 }: {
-  isHelpful: boolean;
-  onToggleHelpful: () => void;
+  reaction: Reaction;
+  onReact: (r: Reaction) => void;
   onAdd: () => void;
   isAdding: boolean;
 }) {
   return (
     <View style={styles.footer}>
-      <TouchableOpacity style={styles.footerAction} onPress={onToggleHelpful}>
-        <FontAwesome
-          name={isHelpful ? "thumbs-up" : "thumbs-o-up"}
-          size={20}
-          color={isHelpful ? colors.secondary : "#777"}
-        />
-        <Text
-          style={[styles.actionText, isHelpful && styles.helpfulTextActive]}
+      {/* REACTIONS */}
+      <View style={styles.reactionGroup}>
+        {/* LIKE */}
+        <TouchableOpacity
+          style={[
+            styles.reactionButton,
+            reaction === "LIKE" && styles.likeActive,
+          ]}
+          onPress={() => onReact(reaction === "LIKE" ? null : "LIKE")}
+          activeOpacity={0.7}
         >
-          Useful
-        </Text>
-      </TouchableOpacity>
+          <FontAwesome
+            name={reaction === "LIKE" ? "thumbs-up" : "thumbs-o-up"}
+            size={20}
+            color={reaction === "LIKE" ? colors.secondary : "#555"}
+          />
+          <Text
+            style={[
+              styles.reactionText,
+              reaction === "LIKE" && styles.activeText,
+            ]}
+          >
+            Like
+          </Text>
+        </TouchableOpacity>
 
+        {/* DISLIKE */}
+        <TouchableOpacity
+          style={[
+            styles.reactionButton,
+            reaction === "DISLIKE" && styles.dislikeActive,
+          ]}
+          onPress={() => onReact(reaction === "DISLIKE" ? null : "DISLIKE")}
+          activeOpacity={0.7}
+        >
+          <FontAwesome
+            name={reaction === "DISLIKE" ? "thumbs-down" : "thumbs-o-down"}
+            size={20}
+            color={reaction === "DISLIKE" ? "#e74c3c" : "#555"}
+          />
+          <Text
+            style={[
+              styles.reactionText,
+              reaction === "DISLIKE" && styles.dislikeText,
+            ]}
+          >
+            Dislike
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ADD BUTTON */}
       <TouchableOpacity
-        style={[
-          styles.footerAction,
-          styles.primaryButton,
-          isAdding && styles.disabledButton,
-        ]}
+        style={[styles.addButton, isAdding && styles.disabledButton]}
         onPress={onAdd}
         disabled={isAdding}
+        activeOpacity={0.8}
       >
         {isAdding ? (
           <ActivityIndicator size="small" color="#fff" />
         ) : (
           <>
             <FontAwesome6 name="add" size={16} color="#fff" />
-            <Text style={styles.primaryText}>Add</Text>
+            <Text style={styles.addText}>Add</Text>
           </>
         )}
       </TouchableOpacity>
@@ -62,42 +99,66 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: "row",
     marginTop: 12,
-    gap: 8,
+    alignItems: "center",
   },
 
-  footerAction: {
+  reactionGroup: {
+    flexDirection: "row",
+    gap: 8,
     flex: 1,
+  },
+
+  likeActive: {
+    backgroundColor: "#e8f5e9",
+  },
+
+  dislikeActive: {
+    backgroundColor: "#fdecea",
+  },
+  reactionButton: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
     backgroundColor: "#f3f3f3",
+    borderWidth: 1,
+    borderColor: "#eee",
   },
-
-  helpfulTextActive: {
+  reactionText: {
+    marginLeft: 6,
+    fontSize: 13,
+    color: "#555",
+  },
+  activeText: {
     color: colors.secondary,
     fontWeight: "600",
   },
 
-  actionText: {
-    marginLeft: 6,
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#777",
+  dislikeText: {
+    color: "#e74c3c",
+    fontWeight: "600",
   },
 
-  primaryButton: {
+  addButton: {
+    paddingHorizontal: 16,
+    marginLeft: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.secondary,
+    borderRadius: 12,
+    paddingVertical: 8,
+  },
+
+  addText: {
+    marginLeft: 6,
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14,
   },
 
   disabledButton: {
     opacity: 0.6,
-  },
-
-  primaryText: {
-    marginLeft: 6,
-    color: "#fff",
-    fontWeight: "600",
   },
 });

@@ -7,10 +7,12 @@ export interface Snippet {
   created_at: string;
   translation: string;
   creator: Learner;
-  is_liked: boolean;
+  reaction: Reaction;
 }
 
 export interface SnippetPage {
   items: Snippet[];
   total: number;
 }
+
+export type Reaction = "LIKE" | "DISLIKE" | null;
