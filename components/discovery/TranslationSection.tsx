@@ -4,16 +4,19 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 
 import { request } from "@/api/client";
 import { SentenceTranslateResponse } from "@/types/sentence";
 import { Snippet } from "@/types/snippet";
 import { useQuery } from "@tanstack/react-query";
+import { InteractionType, logInteraction } from "@/utils/log-interaction";
+import { useSession } from "@/context/SessionContext";
 
 export default function TranslationSection({ item }: { item: Snippet }) {
   const [show, setShow] = useState(false);
+  const { sessionId } = useSession();
 
   const { data: fetchedTranslation, isLoading } = useQuery({
     queryKey: ["translation", item.content],
@@ -36,7 +39,18 @@ export default function TranslationSection({ item }: { item: Snippet }) {
   return (
     <>
       <TouchableOpacity
-        onPress={() => setShow(!show)}
+        onPress={() => {
+          setShow((prev) => {
+            if (!prev) {
+              logInteraction({
+                sessionId,
+                snippetId: item.id,
+                type: InteractionType.VIEW_TRANSLATION,
+              }).catch(console.error);
+            }
+            return !prev;
+          });
+        }}
         style={styles.translationToggle}
       >
         <Text style={styles.translationToggleText}>

@@ -1,7 +1,5 @@
 import { request } from "@/api/client";
 import FeedItem from "@/components/discovery/FeedItem";
-import FloatingActionMenu from "@/components/FloatingActionMenu";
-import { useAuth } from "@/context/AuthContext";
 import { useSession } from "@/context/SessionContext";
 import { useAttentionTracking } from "@/hooks/useAttentionTracking";
 import { SnippetPage } from "@/types/snippet";
@@ -19,7 +17,6 @@ export default function DiscoveryScreen() {
     mode: "snippets",
   });
 
-  const { token } = useAuth();
   const flatListRef = useRef<FlatList<any>>(null);
   const scrollOffset = useRef(0);
 
@@ -32,7 +29,7 @@ export default function DiscoveryScreen() {
     refetch,
     isRefetching,
   } = useInfiniteQuery({
-    queryKey: ["discovery-snippets", token], // token included so it refetches if auth changes
+    queryKey: ["discovery-snippets"],
     queryFn: async ({ pageParam }) => {
       const data = await request<SnippetPage>(
         `/snippets/recommended/${sessionId}`,

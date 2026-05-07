@@ -10,10 +10,13 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import EditableName from "@/components/setting-screen/EditableName";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
 type AuthMode = "signin" | "signup" | "forgot";
 
 export default function SettingScreen() {
+  const params = useLocalSearchParams();
+  const router = useRouter();
   const { token, signout, isTokenLoading } = useAuth();
   const [mode, setMode] = useState<AuthMode>("signin");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -29,6 +32,10 @@ export default function SettingScreen() {
   });
 
   useEffect(() => {
+    if (token && params.from === "auth_required") {
+      router.back();
+    }
+
     setIsChangingPassword(false);
   }, [token]);
 

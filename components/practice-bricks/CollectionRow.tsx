@@ -110,20 +110,22 @@ export function CollectionRow({ item }: Props) {
         onPress={toggleExpand}
       >
         <View style={styles.content}>
-          <Entypo
-            name={expanded ? "chevron-down" : "chevron-right"}
-            size={20}
-            color="#CCC"
-          />
+          <View style={styles.leftSection}>
+            <Entypo
+              name={expanded ? "chevron-down" : "chevron-right"}
+              size={18}
+              color="#999"
+            />
 
-          <View style={styles.textGroup}>
-            <Text style={styles.title} numberOfLines={1}>
-              {item.name.trim().replace(/\.$/, "")}
-            </Text>
-            <Text style={styles.subtitle}>
-              {item.learned_count} / {item.brick_count}{" "}
-              {item.brick_count === 1 ? "brick" : "bricks"}
-            </Text>
+            <View style={styles.textGroup}>
+              <Text style={styles.title} numberOfLines={1}>
+                {item.name.trim().replace(/\.$/, "")}
+              </Text>
+              <Text style={styles.subtitle}>
+                {item.learned_count} / {item.brick_count}{" "}
+                {item.brick_count === 1 ? "brick" : "bricks"}
+              </Text>
+            </View>
           </View>
 
           <TouchableOpacity style={styles.learnBtn} onPress={goToLearn}>
@@ -139,7 +141,7 @@ export function CollectionRow({ item }: Props) {
       {expanded && (
         <BrickListDropdown
           bricks={pendingBricks}
-          isLoading={isLoading} // Pass the intuitive name
+          isLoading={isLoading}
           onEdit={handleEditBrick}
           onDelete={handleDeleteBrick}
         />
@@ -151,47 +153,73 @@ export function CollectionRow({ item }: Props) {
 const styles = StyleSheet.create({
   listItem: {
     flexDirection: "row",
-    backgroundColor: "#fff",
     marginHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: 16,
+    backgroundColor: "#FAFAFA", // softer than white
     overflow: "hidden",
+
+    // softer shadow
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
   },
+
   indicator: {
-    width: 6,
+    width: 5,
     height: "100%",
   },
+
   content: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 16,
+    paddingVertical: 18, // more breathing space
     paddingHorizontal: 16,
+    gap: 12,
   },
+
+  leftSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+
   textGroup: {
     flex: 1,
   },
+
   title: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#1A1A1A",
+    fontWeight: "700", // stronger
+    color: "#111",
+    letterSpacing: 0.2,
   },
+
   subtitle: {
-    fontSize: 13,
-    color: "#8E8E93",
+    marginTop: 2,
+    fontSize: 12.5,
+    color: "#888", // softer
   },
+
   learnBtn: {
     backgroundColor: colors.secondary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+
+    // subtle depth
+    shadowColor: colors.secondary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
+
   learnText: {
     color: "white",
     fontWeight: "600",
+    fontSize: 13,
   },
 });

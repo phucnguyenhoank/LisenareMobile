@@ -3,6 +3,7 @@ import { request } from "@/api/client";
 
 export enum InteractionType {
   LISTEN = "LISTEN",
+  VIEW_TRANSLATION = "VIEW_TRANSLATION",
   LIKE = "LIKE",
   DISLIKE = "DISLIKE",
   REMOVE_REACTION = "REMOVE_REACTION",
@@ -21,7 +22,10 @@ export async function logInteraction({
   type: InteractionType;
   duration?: number;
 }) {
-  console.log(`snippetId:${snippetId} | type:${type} duration ${duration}`);
+  console.log(
+    `snippetId:${snippetId} | type:${type}` +
+      (duration != null ? ` | duration:${duration}` : ""),
+  );
   await request("/snippet-interactions", {
     method: "POST",
     body: {

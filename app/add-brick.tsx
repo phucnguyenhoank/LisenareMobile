@@ -63,7 +63,7 @@ export default function AddBrickScreen() {
 
   // Metadata Fields
   const [metadata, setMetadata] = useState({
-    unitType: UnitType.word,
+    unitType: UnitType.sentence,
     structure: null as SentenceStructure | null,
     func: null as SentenceFunction | null,
     selectedGrammarPoints: [] as GrammarPoint[],

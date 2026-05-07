@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
-
 import { request } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { useSession } from "@/context/SessionContext";
@@ -61,7 +60,11 @@ export default function FeedItem({ item }: FeedItemProps) {
         title: "Thông báo",
         message: "Bạn hãy đăng nhập trước nhé",
         confirmText: "Đăng nhập",
-        onConfirm: () => router.push("/setting"),
+        onConfirm: () =>
+          router.push({
+            pathname: "/setting",
+            params: { from: "auth_required" },
+          }),
         onCancel: () => {},
       });
       return;
@@ -105,7 +108,11 @@ export default function FeedItem({ item }: FeedItemProps) {
         title: "Thông báo",
         message: "Bạn hãy đăng nhập trước nhé",
         confirmText: "Đăng nhập",
-        onConfirm: () => router.push("/setting"),
+        onConfirm: () =>
+          router.push({
+            pathname: "/setting",
+            params: { from: "auth_required" },
+          }),
         onCancel: () => {},
       });
       return;

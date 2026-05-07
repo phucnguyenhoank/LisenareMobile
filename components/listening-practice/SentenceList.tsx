@@ -59,15 +59,15 @@ export default function SentenceList({
                 <Text
                   style={[styles.indexText, active && styles.indexTextActive]}
                 >
-                  {index + 1}
+                  {index + 1 > 99 ? "99+" : index + 1}
                 </Text>
               </View>
 
               <View style={styles.sentenceBody}>
-                <Text style={styles.sentenceText} numberOfLines={2}>
+                <Text style={styles.sentenceText} numberOfLines={3}>
                   {item.target_text}
                 </Text>
-                <Text style={styles.sentenceNative} numberOfLines={2}>
+                <Text style={styles.sentenceNative} numberOfLines={3}>
                   {item.native_text}
                 </Text>
               </View>
@@ -145,6 +145,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     color: "#666",
+    fontVariant: ["tabular-nums"],
   },
   indexTextActive: {
     color: colors.secondary,

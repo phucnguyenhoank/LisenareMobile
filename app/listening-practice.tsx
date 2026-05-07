@@ -128,7 +128,6 @@ export default function ListeningPracticeScreen() {
   const handleGroupChange = (isAll: boolean, newSelected: string[]) => {
     setIsAllSelected(isAll);
     setSelectedGroups(newSelected);
-    setCurrentIndex(0);
   };
 
   useEffect(() => {
