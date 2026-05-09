@@ -2,10 +2,17 @@ import { request } from "@/api/client";
 import FeedItem from "@/components/discovery/FeedItem";
 import { useSession } from "@/context/SessionContext";
 import { useAttentionTracking } from "@/hooks/useAttentionTracking";
+import colors from "@/theme/colors";
 import { SnippetPage } from "@/types/snippet";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import React, { useEffect, useRef } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { BackHandler } from "react-native";
 
 export default function DiscoveryScreen() {
@@ -108,18 +115,28 @@ export default function DiscoveryScreen() {
         refreshing={isRefetching}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5} // 0.5 = 50% from bottom
-        ListEmptyComponent={
-          isLoading ? (
-            <View
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <ActivityIndicator size="large" />
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <View style={{ paddingVertical: 20 }}>
+              <ActivityIndicator size="small" color={colors.secondary} />
             </View>
           ) : null
+        }
+        ListEmptyComponent={
+          isLoading ? (
+            // State 1: Still loading the very first page
+            <View style={styles.centered}>
+              <ActivityIndicator size="large" color={colors.secondary} />
+            </View>
+          ) : (
+            // State 2: Done loading, but items array is empty
+            <View style={styles.centered}>
+              <Text style={styles.emptyTitle}>Oops! Trống trơn.</Text>
+              <Text style={styles.emptySubtitle}>
+                Hãy thử làm mới trang hoặc quay lại sau.
+              </Text>
+            </View>
+          )
         }
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
@@ -135,5 +152,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f0f2f5",
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: 100,
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
   },
 });

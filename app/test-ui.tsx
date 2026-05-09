@@ -1,4 +1,4 @@
-import { View, Button } from "react-native";
+import { View, Button, Text } from "react-native";
 import { useAudioPlayer, setAudioModeAsync } from "expo-audio";
 import { useEffect } from "react";
 
@@ -21,10 +21,11 @@ export default function AudioPlayerScreen() {
       title: "My Audio Title",
       artist: "Artist Name",
       albumTitle: "Album Name",
-      artworkUrl: "https://example.com/artwork.jpg", // optional
+      artworkUrl: "https://picsum.photos/200/300",
     });
 
     // Start playback - this will continue in the background
+    player.seekTo(0);
     player.play();
   };
 
@@ -36,6 +37,7 @@ export default function AudioPlayerScreen() {
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text>This sound can play off-screen</Text>
       <Button title="Play" onPress={handlePlay} />
       <Button title="Stop" onPress={handleStop} />
     </View>

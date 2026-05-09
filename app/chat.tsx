@@ -1,7 +1,7 @@
 import { streamChat } from "@/api/stream-client";
 import colors from "@/theme/colors";
 import { Feather } from "@expo/vector-icons";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import {
   KeyboardAwareScrollView,
@@ -9,6 +9,7 @@ import {
 } from "react-native-keyboard-controller";
 import Markdown from "react-native-markdown-display";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Crypto from "expo-crypto";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -17,19 +18,23 @@ export default function ChatScreen() {
   const [userQuestion, setUserQuestion] = useState("");
   const insets = useSafeAreaInsets();
 
+  // Create a unique ID that lives as long as this screen is open
+  const chatSessionId = useMemo(() => Crypto.randomUUID(), []);
+
   const sendMessage = async () => {
     if (!userQuestion.trim()) return;
 
+    const currentQuestion = userQuestion;
     setUserQuestion("");
 
     setMessages((prev) => [
       ...prev,
-      { role: "user", content: userQuestion },
+      { role: "user", content: currentQuestion },
       { role: "assistant", content: "" },
     ]);
 
     try {
-      await streamChat(userQuestion, (chunk) => {
+      await streamChat(chatSessionId, currentQuestion, (chunk) => {
         setMessages((prev) => {
           const last = prev[prev.length - 1];
           return [
@@ -148,8 +153,8 @@ const styles = StyleSheet.create({
   questionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
-    backgroundColor: "#F0F4F8",
+    marginBottom: 4,
+    backgroundColor: colors.buttonBackground,
     padding: 8,
     borderRadius: 6,
     alignSelf: "flex-start",

@@ -42,6 +42,21 @@ export default function FloatingActionMenu() {
             style={styles.miniFabWithLabel}
             onPress={() => {
               setIsOpen(false);
+              router.push("/explanation");
+            }}
+          >
+            <MaterialCommunityIcons
+              name="notebook-outline"
+              size={28}
+              color="white"
+            />
+            <Text style={styles.miniFabText}>Tra cứu</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.miniFabWithLabel}
+            onPress={() => {
+              setIsOpen(false);
               router.push("/chat");
             }}
           >

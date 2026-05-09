@@ -4,17 +4,21 @@ import { getToken } from "@/utils/auth-storage";
 import { fetch } from "expo/fetch";
 
 export const streamChat = async (
-  userQuestion: string,
+  chatSessionId: string,
+  question: string,
   onChunk: (chunk: string) => void,
 ) => {
-  console.log(`userQuestion:${userQuestion}`);
+  console.log(`userQuestion:${question}`);
   const response = await fetch(`${API_BASE_URL}/chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${await getToken()}`,
     },
-    body: JSON.stringify({ learner_question: userQuestion }),
+    body: JSON.stringify({
+      chat_session_id: chatSessionId,
+      learner_question: question,
+    }),
   });
 
   if (!response.ok) throw new Error("Streaming failed");

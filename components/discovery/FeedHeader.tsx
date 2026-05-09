@@ -1,4 +1,4 @@
-import { formatDistanceToNow } from "date-fns";
+import { parseISO, formatDistanceToNow } from "date-fns";
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
@@ -23,10 +23,7 @@ export default function FeedHeader({
         <Text style={styles.author}>{creator.full_name}</Text>
         <Text style={styles.timestamp}>
           {created_at
-            ? formatDistanceToNow(
-                new Date(created_at.replace(" ", "T") + "Z"),
-                { addSuffix: true },
-              )
+            ? formatDistanceToNow(parseISO(created_at), { addSuffix: true })
             : ""}
         </Text>
       </View>
