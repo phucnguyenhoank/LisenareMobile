@@ -136,7 +136,7 @@ export default function PendingCollectionsScreen() {
         <Ionicons name="options-outline" size={18} color={colors.primary} />
         <Text style={styles.filterText}>Lọc</Text>
 
-        <Text style={styles.filterSummary} numberOfLines={1}>
+        <Text style={styles.filterSummary} numberOfLines={4}>
           • {selectedGroupName} • {currentStatusLabel} • {currentSort}
         </Text>
       </TouchableOpacity>

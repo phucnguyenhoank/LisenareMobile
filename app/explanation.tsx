@@ -105,7 +105,7 @@ export default function ExplanationScreen() {
 
       <TextInput
         style={styles.input}
-        placeholder="Type a word or phrase..."
+        placeholder="Type a word (e.g., 'elated') or a phrase..."
         placeholderTextColor="#9CA3AF"
         value={inputText}
         onChangeText={(text) => {
@@ -123,7 +123,7 @@ export default function ExplanationScreen() {
         {loading ? (
           <ActivityIndicator color="#FFF" />
         ) : (
-          <Text style={styles.buttonText}>Explain</Text>
+          <Text style={styles.buttonText}>Explain for me</Text>
         )}
       </TouchableOpacity>
 

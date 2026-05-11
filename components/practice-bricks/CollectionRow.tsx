@@ -78,7 +78,7 @@ export function CollectionRow({ item }: Props) {
       console.log("Brick deleted successfully");
     } catch (err: any) {
       Alert.alert("Không thể xóa", err.message);
-      console.error(err);
+      console.log(err);
     }
   };
 
@@ -118,7 +118,7 @@ export function CollectionRow({ item }: Props) {
             />
 
             <View style={styles.textGroup}>
-              <Text style={styles.title} numberOfLines={1}>
+              <Text style={styles.title} numberOfLines={4}>
                 {item.name.trim().replace(/\.$/, "")}
               </Text>
               <Text style={styles.subtitle}>
@@ -157,13 +157,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: "#FAFAFA", // softer than white
     overflow: "hidden",
-
-    // softer shadow
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 3,
+    elevation: 1,
   },
 
   indicator: {

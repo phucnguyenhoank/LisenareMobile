@@ -64,10 +64,10 @@ export default function SentenceList({
               </View>
 
               <View style={styles.sentenceBody}>
-                <Text style={styles.sentenceText} numberOfLines={3}>
+                <Text style={styles.sentenceText} numberOfLines={4}>
                   {item.target_text}
                 </Text>
-                <Text style={styles.sentenceNative} numberOfLines={3}>
+                <Text style={styles.sentenceNative} numberOfLines={4}>
                   {item.native_text}
                 </Text>
               </View>

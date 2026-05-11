@@ -1,6 +1,5 @@
-import { request } from "@/api/client";
+import { ApiError, request } from "@/api/client";
 import { BrickMetadataSelector } from "@/components/brick-form/BrickMetadataSelector";
-import { FormField } from "@/components/FormField";
 import colors from "@/theme/colors";
 import {
   GrammarPoint,
@@ -9,7 +8,7 @@ import {
   UnitType,
 } from "@/types/brick";
 import { cleanText } from "@/utils/brick-preprocessing";
-import { Feather, FontAwesome } from "@expo/vector-icons";
+import { Feather, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import {
   AudioModule,
   RecordingPresets,
@@ -34,6 +33,7 @@ import {
   KeyboardAwareScrollView,
   KeyboardToolbar,
 } from "react-native-keyboard-controller";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AddBrickScreen() {
   const params = useLocalSearchParams<{
@@ -42,26 +42,32 @@ export default function AddBrickScreen() {
     audio_path?: string;
   }>();
 
+  const insets = useSafeAreaInsets();
+
   const [form, setForm] = useState({
     native: params.native || "",
     target: params.target || "",
-    coll: "my collection",
-    group: "my group",
+    coll: "My Daily Expressions",
+    group: "Essential",
     public: true,
   });
+
   const [loading, setLoading] = useState(false);
+
   const [audioPath, setAudioPath] = useState<string | null>(
     params.audio_path ?? null,
   );
 
-  const [isTargetTextUnique, setIsTargetTextUnique] = useState(false);
+  const [isTargetTextUnique, setIsTargetTextUnique] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
 
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+
   const { isRecording } = useAudioRecorderState(recorder);
+
   const player = useAudioPlayer(null);
 
-  // Metadata Fields
+  // metadata
   const [metadata, setMetadata] = useState({
     unitType: UnitType.sentence,
     structure: null as SentenceStructure | null,
@@ -69,81 +75,64 @@ export default function AddBrickScreen() {
     selectedGrammarPoints: [] as GrammarPoint[],
   });
 
+  useEffect(() => {
+    if (audioPath) {
+      player.replace({ uri: audioPath });
+    }
+  }, [audioPath, player]);
+
+  useEffect(() => {
+    if (!form.target.trim()) {
+      setIsTargetTextUnique(true);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      setIsChecking(true);
+
+      try {
+        const res = await request<{ exists: boolean }>(
+          `/bricks/check-exists?target_text=${encodeURIComponent(form.target)}`,
+        );
+
+        setIsTargetTextUnique(!res.exists);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsChecking(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [form.target]);
+
   const toggleRecord = async () => {
     if (isRecording) {
       await recorder.stop();
+
       if (recorder.uri) {
         setAudioPath(recorder.uri);
-        player.replace({ uri: recorder.uri });
       }
-    } else {
-      if (!(await AudioModule.requestRecordingPermissionsAsync()).granted)
-        return Alert.alert("Thông báo", "Cần quyền micro");
-      await recorder.prepareToRecordAsync();
-      recorder.record();
+
+      return;
     }
-  };
 
-  const onSubmit = async () => {
-    if (!audioPath) return Alert.alert("Thông báo", "Hãy thêm ghi âm");
-    if (!form.native || !form.target)
-      return Alert.alert(
-        "Thông báo",
-        "Thiếu đầy đủ câu tiếng Việt và tiếng Anh",
-      );
+    const permission = await AudioModule.requestRecordingPermissionsAsync();
 
-    setLoading(true);
-    const data = new FormData();
-
-    // 1. Append the audio file as usual
-    data.append("audio_file", {
-      uri: audioPath,
-      name: `rec.m4a`,
-      type: "audio/m4a",
-    } as any);
-
-    // 2. Prepare the structured JSON object matching BrickCreateRequest
-    const brickRequestData = {
-      native_text: form.native,
-      target_text: form.target,
-      collection_name: form.coll,
-      group_name: form.group,
-      is_public: form.public,
-      brick_metadata: {
-        unit_type: metadata.unitType,
-        structure: metadata.structure,
-        function: metadata.func,
-        grammar_points: metadata.selectedGrammarPoints.map(
-          (selectedGrammarPoint) => ({
-            grammar_point: selectedGrammarPoint,
-          }),
-        ),
-      },
-    };
-
-    // 3. Append as a serialized string
-    data.append("brick_data", JSON.stringify(brickRequestData));
-
-    try {
-      await request("/bricks", {
-        method: "POST",
-        body: data,
-      });
-
-      Alert.alert("Thành công", "Đã tạo Brick!", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
-    } catch (e) {
-      Alert.alert("Lỗi", "Kiểm tra kết nối.");
-    } finally {
-      setLoading(false);
+    if (!permission.granted) {
+      Alert.alert("Permission needed", "Please allow microphone access.");
+      return;
     }
+
+    await recorder.prepareToRecordAsync();
+
+    recorder.record();
   };
 
   const pickAudioFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "audio/*", // Limit to audio files
+        type: "audio/*",
         copyToCacheDirectory: true,
       });
 
@@ -151,282 +140,576 @@ export default function AddBrickScreen() {
         const asset = result.assets[0];
 
         setAudioPath(asset.uri);
-        player.replace({ uri: asset.uri });
 
-        Alert.alert("Thành công", "Đã chọn file: " + asset.name);
+        Alert.alert("Success", `Selected: ${asset.name}`);
       }
     } catch (err) {
-      Alert.alert("Lỗi", "Không thể chọn file");
+      Alert.alert("Error", "Could not select audio file.");
     }
   };
 
-  useEffect(() => {
-    if (audioPath) {
-      player.replace({ uri: audioPath });
+  const handlePlayAudio = () => {
+    if (!audioPath) return;
+
+    if (player.playing) {
+      player.pause();
+    } else {
+      player.seekTo(0);
+      player.play();
     }
-  }, [audioPath]);
+  };
 
-  useEffect(() => {
-    if (!form.target) {
-      setIsTargetTextUnique(true); // true is just for sensible UI
-      return;
+  const onSubmit = async () => {
+    if (!audioPath) {
+      return Alert.alert("Missing audio", "Please add audio.");
     }
 
-    const delayDebounceFn = setTimeout(async () => {
-      setIsChecking(true);
-      try {
-        const res = await request<{ exists: boolean }>(
-          `/bricks/check-exists?target_text=${encodeURIComponent(form.target)}`,
-        );
-        setIsTargetTextUnique(!res.exists);
-      } catch (err) {
-        console.error("Check failed", err);
-      } finally {
-        setIsChecking(false);
-      }
-    }, 500); // Wait 500ms after user stops typing
+    if (!form.native || !form.target) {
+      return Alert.alert(
+        "Missing fields",
+        "Please complete Vietnamese and English text.",
+      );
+    }
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [form.target]);
+    setLoading(true);
+
+    try {
+      const data = new FormData();
+
+      data.append("audio_file", {
+        uri: audioPath,
+        name: "recording.m4a",
+        type: "audio/m4a",
+      } as any);
+
+      const brickRequestData = {
+        native_text: form.native,
+        target_text: form.target,
+        collection_name: form.coll,
+        group_name: form.group,
+        is_public: form.public,
+        brick_metadata: {
+          unit_type: metadata.unitType,
+          structure: metadata.structure,
+          function: metadata.func,
+          grammar_points: metadata.selectedGrammarPoints.map((g) => ({
+            grammar_point: g,
+          })),
+        },
+      };
+
+      // Have to use json_data key
+      data.append("json_data", JSON.stringify(brickRequestData));
+
+      await request("/bricks", {
+        method: "POST",
+        body: data,
+      });
+
+      Alert.alert("Success", "Brick created successfully!", [
+        {
+          text: "OK",
+          onPress: () => router.back(),
+        },
+      ]);
+    } catch (err) {
+      Alert.alert("Error", "Please check your connection.");
+      console.log((err as any).data);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.screen}>
       <KeyboardAwareScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled" // Giúp nhấn nút submit mượt hơn khi bàn phím đang mở
+        contentContainerStyle={[
+          styles.container,
+          { paddingBottom: insets.bottom + 40 },
+        ]}
+        keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.card}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 20 }}>
-            {/* Record Button */}
-            <TouchableOpacity
-              onPress={toggleRecord}
-              style={[
-                styles.mic,
-                isRecording && { backgroundColor: "#FF3B30" },
-              ]}
-            >
-              <FontAwesome
-                name={isRecording ? "stop" : "microphone"}
-                size={30}
-                color="#fff"
-              />
-            </TouchableOpacity>
+        {/* HEADER */}
+        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={28} color="#333" />
+          </TouchableOpacity>
 
-            {/* Upload Button */}
-            {!isRecording && (
-              <TouchableOpacity
-                onPress={pickAudioFile}
-                style={[styles.mic, { backgroundColor: colors.secondary }]} // Or any color you like
-              >
-                <FontAwesome name="upload" size={25} color="#fff" />
-              </TouchableOpacity>
+          <Text style={styles.headerTitle}>Create Brick</Text>
+
+          <View style={{ width: 28 }} />
+        </View>
+
+        {/* AUDIO SECTION */}
+        <View style={styles.audioCard}>
+          <View style={styles.audioTop}>
+            <View>
+              <Text style={styles.sectionTitle}>Audio</Text>
+
+              <Text style={styles.sectionSubtitle}>
+                Record or upload pronunciation
+              </Text>
+            </View>
+
+            {audioPath && (
+              <View style={styles.audioBadge}>
+                <Feather name="check" size={14} color="#fff" />
+              </View>
             )}
           </View>
 
-          <Text style={styles.status}>
-            {isRecording ? "Đang ghi âm..." : "Ghi âm hoặc Tải lên file audio"}
-          </Text>
+          <TouchableOpacity
+            style={[
+              styles.recordButton,
+              isRecording && styles.recordButtonActive,
+            ]}
+            onPress={toggleRecord}
+          >
+            <FontAwesome5
+              name={isRecording ? "stop" : "microphone"}
+              size={22}
+              color="#fff"
+            />
+
+            <Text style={styles.recordButtonText}>
+              {isRecording ? "Stop Recording" : "Tap to Record"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.uploadButton} onPress={pickAudioFile}>
+            <Feather name="upload" size={18} color={colors.secondary2} />
+
+            <Text style={styles.uploadText}>Upload Audio File</Text>
+          </TouchableOpacity>
+
           {audioPath && !isRecording && (
             <TouchableOpacity
-              onPress={() => {
-                if (!audioPath) return;
-                player.seekTo(0);
-                player.play();
-              }}
-              style={styles.play}
+              style={[
+                styles.previewButton,
+                player.playing && styles.previewButtonPlaying,
+              ]}
+              onPress={handlePlayAudio}
             >
-              <Feather name="play" size={18} color={colors.secondary} />
-              <Text style={{ color: colors.secondary, fontWeight: "600" }}>
-                Nghe thử bản ghi
+              <Ionicons
+                name={player.playing ? "pause" : "play"}
+                size={18}
+                color={player.playing ? "#fff" : colors.secondary2}
+              />
+
+              <Text
+                style={[
+                  styles.previewText,
+                  player.playing && styles.previewTextPlaying,
+                ]}
+              >
+                {player.playing ? "Playing..." : "Preview Audio"}
               </Text>
             </TouchableOpacity>
           )}
         </View>
 
-        <View style={styles.form}>
-          <FormField label="Tiếng Việt">
-            <TextInput
-              style={styles.input}
-              value={form.native}
-              onChangeText={(t: string) =>
-                setForm((f) => ({ ...f, native: cleanText(t) }))
-              }
-              multiline
-              placeholder="Xin chào"
-            />
-          </FormField>
+        {/* TRANSLATION SECTION */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Translation</Text>
 
-          <FormField label="Tiếng Anh">
-            <TextInput
-              style={styles.input}
-              value={form.target}
-              onChangeText={(t: string) =>
-                setForm((f) => ({ ...f, target: cleanText(t) }))
-              }
-              multiline
-              placeholder="Hello"
-            />
-            {isChecking && (
-              <ActivityIndicator size="small" style={styles.checkLoader} />
-            )}
-            {!isTargetTextUnique && (
-              <Text style={styles.warningText}>Câu này đã được sở hữu.</Text>
-            )}
-          </FormField>
+          {/* Vietnamese */}
+          <View style={styles.fieldWrapper}>
+            <Text style={styles.fieldLabel}>🇻🇳 Vietnamese</Text>
 
-          <FormField label="Bộ sưu tập">
-            <TextInput
-              style={styles.input}
-              value={form.coll}
-              onChangeText={(t: string) => setForm((f) => ({ ...f, coll: t }))}
-            />
-          </FormField>
-
-          <FormField label="Tên nhóm">
-            <TextInput
-              style={styles.input}
-              value={form.group}
-              onChangeText={(t: string) => setForm((f) => ({ ...f, group: t }))}
-            />
-          </FormField>
-
-          <View style={styles.switchCard}>
-            <View>
-              <Text style={styles.switchLabel}>Chế độ công khai</Text>
-              <Text style={styles.switchSubLabel}>
-                Mọi người có thể thấy câu này
-              </Text>
+            <View style={styles.inputCard}>
+              <TextInput
+                style={styles.input}
+                multiline
+                placeholder="Xin chào"
+                value={form.native}
+                onChangeText={(t) =>
+                  setForm((f) => ({
+                    ...f,
+                    native: cleanText(t),
+                  }))
+                }
+              />
             </View>
-            <Switch
-              value={form.public}
-              onValueChange={(v) => setForm((f) => ({ ...f, public: v }))}
-              trackColor={{ true: colors.secondary }}
-            />
+          </View>
+
+          {/* English */}
+          <View style={styles.fieldWrapper}>
+            <View style={styles.labelRow}>
+              <Text style={styles.fieldLabel}>🇺🇸 English</Text>
+
+              {isChecking && (
+                <ActivityIndicator size="small" color={colors.secondary2} />
+              )}
+            </View>
+
+            <View style={styles.inputCard}>
+              <TextInput
+                style={styles.input}
+                multiline
+                placeholder="Hello"
+                value={form.target}
+                onChangeText={(t) =>
+                  setForm((f) => ({
+                    ...f,
+                    target: cleanText(t),
+                  }))
+                }
+              />
+            </View>
+
+            {!isTargetTextUnique && (
+              <Text style={styles.warningText}>
+                Someone already created this.
+              </Text>
+            )}
           </View>
         </View>
 
-        <BrickMetadataSelector
-          state={metadata}
-          onChange={(patch) => setMetadata((prev) => ({ ...prev, ...patch }))}
-        />
+        {/* ORGANIZATION */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Organization</Text>
 
+          <View style={styles.fieldWrapper}>
+            <Text style={styles.fieldLabel}>Collection</Text>
+
+            <View style={styles.inputCard}>
+              <TextInput
+                style={styles.singleInput}
+                value={form.coll}
+                onChangeText={(t) =>
+                  setForm((f) => ({
+                    ...f,
+                    coll: t,
+                  }))
+                }
+              />
+            </View>
+          </View>
+
+          <View style={styles.fieldWrapper}>
+            <Text style={styles.fieldLabel}>Group</Text>
+
+            <View style={styles.inputCard}>
+              <TextInput
+                style={styles.singleInput}
+                value={form.group}
+                onChangeText={(t) =>
+                  setForm((f) => ({
+                    ...f,
+                    group: t,
+                  }))
+                }
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* VISIBILITY */}
+        <View style={styles.switchCard}>
+          <View>
+            <Text style={styles.switchTitle}>Public Brick</Text>
+
+            <Text style={styles.switchSubtitle}>
+              Other learners can discover this sentence
+            </Text>
+          </View>
+
+          <Switch
+            value={form.public}
+            onValueChange={(v) =>
+              setForm((f) => ({
+                ...f,
+                public: v,
+              }))
+            }
+            trackColor={{
+              true: colors.secondary2,
+            }}
+          />
+        </View>
+
+        {/* METADATA */}
+        <View style={styles.metadataSection}>
+          <BrickMetadataSelector
+            state={metadata}
+            onChange={(patch) =>
+              setMetadata((prev) => ({
+                ...prev,
+                ...patch,
+              }))
+            }
+          />
+        </View>
+
+        {/* SUBMIT */}
         <TouchableOpacity
           style={[
-            styles.btn,
-            (loading || isRecording || !isTargetTextUnique) && { opacity: 0.5 },
+            styles.submitButton,
+            (loading || isRecording || !isTargetTextUnique) && {
+              opacity: 0.5,
+            },
           ]}
-          onPress={onSubmit}
           disabled={loading || isRecording || !isTargetTextUnique}
+          onPress={onSubmit}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.btnText}>Hoàn tất & Tạo</Text>
+            <>
+              <Feather name="check-circle" size={20} color="#fff" />
+
+              <Text style={styles.submitText}>Create Brick</Text>
+            </>
           )}
         </TouchableOpacity>
       </KeyboardAwareScrollView>
+
       <KeyboardToolbar />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F8F9FA" },
-  container: { padding: 20, paddingBottom: 40 },
-  card: {
-    backgroundColor: "#fff",
-    padding: 25,
-    borderRadius: 20,
-    alignItems: "center",
-    marginBottom: 20,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+  screen: {
+    flex: 1,
+    backgroundColor: "#FCFCFC",
   },
-  mic: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.secondary,
+
+  container: {
+    paddingHorizontal: 20,
+  },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 28,
+  },
+
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#222",
+  },
+
+  section: {
+    marginTop: 30,
+  },
+
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#222",
+    marginBottom: 18,
+  },
+
+  sectionSubtitle: {
+    marginTop: 4,
+    color: "#777",
+    fontSize: 13,
+  },
+
+  // AUDIO
+
+  audioCard: {
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    padding: 24,
+    elevation: 1,
+  },
+
+  audioTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  audioBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#22C55E",
     justifyContent: "center",
     alignItems: "center",
   },
-  status: { marginTop: 12, color: "#444", fontWeight: "600" },
-  play: {
+
+  recordButton: {
+    height: 58,
+    borderRadius: 18,
+    backgroundColor: colors.secondary2,
+    marginTop: 24,
+
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 15,
-    gap: 6,
-    padding: 8,
-    backgroundColor: "#F0F7FF",
-    borderRadius: 8,
+    justifyContent: "center",
+    gap: 10,
   },
-  form: { gap: 16 },
+
+  recordButtonActive: {
+    backgroundColor: "#EF4444",
+  },
+
+  recordButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  uploadButton: {
+    marginTop: 14,
+    height: 54,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#ECECEC",
+
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  uploadText: {
+    color: colors.secondary2,
+    fontWeight: "600",
+  },
+
+  previewButton: {
+    marginTop: 16,
+    backgroundColor: colors.buttonBackground,
+    borderRadius: 14,
+    paddingVertical: 12,
+
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+
+  previewButtonPlaying: {
+    backgroundColor: colors.secondary2,
+  },
+
+  previewText: {
+    color: colors.secondary2,
+    fontWeight: "700",
+  },
+
+  previewTextPlaying: {
+    color: "#fff",
+  },
+
+  // FIELDS
+
+  fieldWrapper: {
+    marginBottom: 22,
+  },
+
+  fieldLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#555",
+    marginBottom: 10,
+  },
+
+  labelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  inputCard: {
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#ECECEC",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
 
   input: {
     fontSize: 16,
-    color: "#333",
-    minHeight: 40,
-    paddingTop: 8,
+    color: "#222",
+    textAlignVertical: "top",
+    lineHeight: 24,
   },
 
-  btn: {
-    backgroundColor: colors.secondary,
-    height: 56,
-    borderRadius: 15,
+  singleInput: {
+    fontSize: 16,
+    color: "#222",
+  },
+
+  warningText: {
+    marginTop: 8,
+    marginLeft: 4,
+    color: "#EF4444",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+
+  // SWITCH
+
+  switchCard: {
+    marginTop: 10,
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 18,
+
+    borderWidth: 1,
+    borderColor: "#ECECEC",
+
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  switchTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#222",
+  },
+
+  switchSubtitle: {
+    marginTop: 4,
+    color: "#777",
+    fontSize: 13,
+    maxWidth: 240,
+  },
+
+  // METADATA
+
+  metadataSection: {
+    marginTop: 30,
+  },
+
+  // SUBMIT
+
+  submitButton: {
+    height: 60,
+    borderRadius: 20,
+    backgroundColor: colors.secondary2,
+
+    marginTop: 36,
+
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 30,
-    elevation: 2,
+    gap: 10,
+
+    shadowColor: colors.secondary2,
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    shadowOffset: {
+      width: 0,
+      height: 7,
+    },
+
+    elevation: 6,
   },
 
-  btnText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
-
-  // metadata
-  metadataToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    marginTop: 8,
-  },
-  metadataToggleText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#888",
-  },
-  metadataContainer: {
-    gap: 12,
-  },
-
-  //
-  switchCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#FFF",
-    padding: 16,
-    borderRadius: 16,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  switchLabel: { fontSize: 15, fontWeight: "600", color: "#333" },
-  switchSubLabel: { fontSize: 12, color: "#888", marginTop: 2 },
-
-  //
-  checkLoader: {
-    position: "absolute",
-    right: 12,
-    top: 15, // Adjust based on your input's padding
-  },
-  warningText: {
-    color: colors.secondary2, // System red
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
-    fontWeight: "500",
+  submitText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "800",
   },
 });

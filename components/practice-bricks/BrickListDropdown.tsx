@@ -41,7 +41,7 @@ export function BrickListDropdown({
     <View style={styles.dropdown}>
       {bricks.map((b) => (
         <View key={b.id} style={styles.brickRow}>
-          <Text style={styles.brickText} numberOfLines={3}>
+          <Text style={styles.brickText} numberOfLines={4}>
             {b.target_text}
           </Text>
 

@@ -239,6 +239,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingHorizontal: 20,
     elevation: 12,
+    maxHeight: "80%",
   },
   sheetFooter: {
     alignItems: "flex-end",

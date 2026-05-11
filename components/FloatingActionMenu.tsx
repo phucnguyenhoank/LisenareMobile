@@ -27,15 +27,15 @@ export default function FloatingActionMenu() {
             style={styles.miniFabWithLabel}
             onPress={() => {
               setIsOpen(false);
-              router.push("/add-brick");
+              router.push("/chat");
             }}
           >
             <MaterialCommunityIcons
-              name="toy-brick-plus-outline"
+              name="robot-happy-outline"
               size={28}
               color="white"
             />
-            <Text style={styles.miniFabText}>Thêm câu</Text>
+            <Text style={styles.miniFabText}>Tutor</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -57,15 +57,15 @@ export default function FloatingActionMenu() {
             style={styles.miniFabWithLabel}
             onPress={() => {
               setIsOpen(false);
-              router.push("/chat");
+              router.push("/add-brick");
             }}
           >
             <MaterialCommunityIcons
-              name="robot-happy-outline"
+              name="toy-brick-plus-outline"
               size={28}
               color="white"
             />
-            <Text style={styles.miniFabText}>Tutor</Text>
+            <Text style={styles.miniFabText}>Thêm câu</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

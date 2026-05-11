@@ -67,14 +67,6 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" />
 
               <Stack.Screen
-                name="add-brick"
-                options={{
-                  title: "Thêm câu",
-                  headerShown: true,
-                }}
-              />
-
-              <Stack.Screen
                 name="setting"
                 options={{
                   title: "Cài đặt",

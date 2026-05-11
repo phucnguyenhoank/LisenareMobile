@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { request } from "@/api/client";
 
@@ -63,7 +63,7 @@ export default function EditableName({ fullName }: Props) {
       <Text style={styles.name}>Hello, {fullName}</Text>
 
       <TouchableOpacity onPress={() => setIsEditing(true)}>
-        <Ionicons name="pencil" size={18} style={styles.icon} />
+        <Feather name="edit-3" size={24} style={styles.icon} />
       </TouchableOpacity>
     </View>
   );

@@ -1,8 +1,10 @@
 import { request } from "@/api/client";
+import { AudioInput } from "@/components/AudioInput";
 import { BrickMetadataSelector } from "@/components/brick-form/BrickMetadataSelector";
 import { FormField } from "@/components/FormField";
 import TextButton from "@/components/TextButton";
 import { useAuth } from "@/context/AuthContext";
+import { useCachedAudio } from "@/hooks/useCachedAudio";
 import colors from "@/theme/colors";
 import type { Brick, GrammarPoint } from "@/types/brick";
 import { SentenceFunction, SentenceStructure, UnitType } from "@/types/brick";
@@ -11,6 +13,7 @@ import { Learner } from "@/types/learnner";
 import { cleanText } from "@/utils/brick-preprocessing";
 import { Picker } from "@react-native-picker/picker";
 import { useQuery } from "@tanstack/react-query";
+import { useAudioPlayer } from "expo-audio";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -41,6 +44,11 @@ export default function EditBrickScreen() {
   const [targetText, setTargetText] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [collectionId, setCollectionId] = useState<number>(1);
+  const { audioPath: cachedUri } = useCachedAudio(
+    brick?.target_audio_path ?? null,
+  );
+
+  const [newAudioPath, setNewAudioPath] = useState<string | null>(null);
 
   const [metadata, setMetadata] = useState({
     unitType: UnitType.word,
@@ -48,6 +56,7 @@ export default function EditBrickScreen() {
     func: null as SentenceFunction | null,
     selectedGrammarPoints: [] as GrammarPoint[],
   });
+  const [isSaving, setIsSaving] = useState(false);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: [token],
@@ -87,9 +96,18 @@ export default function EditBrickScreen() {
     })();
   }, [brickId]);
 
-  const handleSave = async () => {
-    if (!brick) return;
+  useEffect(() => {
+    if (cachedUri && !newAudioPath) {
+      setNewAudioPath(cachedUri);
+    }
+  }, [cachedUri]);
 
+  const handleSave = async () => {
+    if (!brick || isSaving) return; // Prevent double-clicks
+
+    setIsSaving(true); // Disable button
+
+    // Only the field we want to change are sent
     try {
       const updateData: any = {};
 
@@ -122,20 +140,36 @@ export default function EditBrickScreen() {
         };
       }
 
-      // 3. Gửi request
-      if (Object.keys(updateData).length === 0) {
+      const formData = new FormData();
+      const hasTextChanged = Object.keys(updateData).length > 0;
+
+      if (!hasTextChanged && !newAudioPath) {
         Alert.alert("Thông báo", "Bạn chưa thay đổi gì");
         return;
       }
 
+      formData.append("json_data", JSON.stringify(updateData));
+
+      if (newAudioPath) {
+        formData.append("audio_file", {
+          uri: newAudioPath,
+          name: "recording.m4a",
+          type: "audio/m4a",
+        } as any);
+      }
+
+      // Send Request (FormData body)
       await request(`/bricks/${brickId}`, {
         method: "PATCH",
-        body: updateData,
+        body: formData,
       });
 
       Alert.alert("Thành công", "Đã lưu chỉnh sửa");
+      router.back();
     } catch (error) {
       Alert.alert("Error", "Failed to save");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -180,14 +214,14 @@ export default function EditBrickScreen() {
           <View></View>
         )}
 
-        <View style={styles.audioRow}>
-          <Text style={styles.audioLabel}>Audio:</Text>
-          <Pressable onPress={() => alert("Change coming soon")}>
-            <Text style={styles.audioFile}>
-              {brick?.target_audio_path?.split("/").pop()}
+        <FormField label="Audio">
+          <AudioInput audioPath={newAudioPath} onChange={setNewAudioPath} />
+          {!isCreator && (
+            <Text style={styles.switchSubLabel}>
+              Ghi âm lại câu này để tạo bản ghi đè cá nhân của bạn.
             </Text>
-          </Pressable>
-        </View>
+          )}
+        </FormField>
 
         <FormField label="Tiếng Việt">
           <TextInput
@@ -199,14 +233,15 @@ export default function EditBrickScreen() {
           />
         </FormField>
 
+        {/* do not let user edit the target text for now */}
         <FormField label="Tiếng Anh">
-          <View style={{ opacity: isCreator ? 1 : 0.6 }}>
+          <View style={{ opacity: isCreator ? 0.6 : 0.6 }}>
             <TextInput
               style={[styles.input, styles.targetText]}
               value={targetText}
               onChangeText={(t) => setTargetText(cleanText(t))}
               multiline
-              readOnly={true} // do not let user edit the target text for now
+              readOnly={true}
             />
             {!isCreator && (
               <Text style={styles.warningText}>Câu này đã được sở hữu.</Text>
@@ -244,9 +279,10 @@ export default function EditBrickScreen() {
             style={styles.flex1}
           />
           <TextButton
-            title="Lưu thay đổi"
+            title={isSaving ? "Đang lưu..." : "Lưu thay đổi"}
             onPress={handleSave}
-            style={styles.flex1}
+            disabled={isSaving}
+            style={[styles.flex1, isSaving && { opacity: 0.7 }]}
           />
         </View>
       </KeyboardAwareScrollView>
@@ -305,18 +341,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000",
   },
-  audioRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 4,
-  },
-  audioLabel: { fontSize: 13, color: "#888" },
-  audioFile: {
-    fontSize: 13,
-    color: colors.secondary2,
-    textDecorationLine: "underline",
-  },
+
   switchCard: {
     flexDirection: "row",
     justifyContent: "space-between",

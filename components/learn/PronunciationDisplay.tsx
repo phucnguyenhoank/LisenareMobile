@@ -8,7 +8,13 @@ import type {
 import { Ionicons } from "@expo/vector-icons";
 import { useAudioPlayer } from "expo-audio";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface PronunciationDisplayProps {
   targetText: string;
@@ -60,68 +66,73 @@ function PronunciationDisplay({
   };
 
   return (
-    <View style={styles.container}>
-      {/* 1. TARGET TEXT */}
-      <Text style={styles.targetText}>{targetText}</Text>
+    <ScrollView
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.container}>
+        {/* 1. TARGET TEXT */}
+        <Text style={styles.targetText}>{targetText}</Text>
 
-      {/* 2. ACCURACY */}
-      <View style={styles.scoreContainer}>
-        <Text style={styles.scoreLabel}>Accuracy:</Text>
-        <Text
-          style={[
-            styles.scoreValue,
-            { color: getScoreColor(data.accuracy_score) },
-          ]}
-        >
-          {(data.accuracy_score * 100).toFixed(0)}%
-        </Text>
+        {/* 2. ACCURACY */}
+        <View style={styles.scoreContainer}>
+          <Text style={styles.scoreLabel}>Accuracy:</Text>
+          <Text
+            style={[
+              styles.scoreValue,
+              { color: getScoreColor(data.accuracy_score) },
+            ]}
+          >
+            {(data.accuracy_score * 100).toFixed(0)}%
+          </Text>
+        </View>
+
+        {/* 3. ORIGINAL AUDIO + IPA */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.label}>Teacher Pronunciation</Text>
+          <TouchableOpacity onPress={playOriginal}>
+            <Ionicons name="volume-high" size={22} color={colors.secondary3} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.phonemeList}>
+          {data.analysis.map((item, index) => (
+            <PhonemeItem key={index} item={item} />
+          ))}
+        </View>
+
+        {/* 4. LEARNER AUDIO + IPA */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.label}>Yours</Text>
+          <TouchableOpacity onPress={playRecorded} disabled={!recordedAudioUri}>
+            <Ionicons
+              name="volume-high"
+              size={22}
+              color={recordedAudioUri ? "#333" : "#ccc"}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.phonemeList}>
+          {data.learner_phonemes.map((phoneme, index) => (
+            <View key={index} style={styles.phonemeBox}>
+              <Text style={styles.phonemeText}>{phoneme}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* 5. NEXT BUTTON */}
+        {onNext && (
+          <TouchableOpacity style={styles.nextButton} onPress={onNext}>
+            <Ionicons
+              name="arrow-forward-circle"
+              size={40}
+              color={colors.secondary}
+            />
+          </TouchableOpacity>
+        )}
       </View>
-
-      {/* 3. ORIGINAL AUDIO + IPA */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.label}>Teacher Pronunciation</Text>
-        <TouchableOpacity onPress={playOriginal}>
-          <Ionicons name="volume-high" size={22} color="#333" />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.phonemeList}>
-        {data.analysis.map((item, index) => (
-          <PhonemeItem key={index} item={item} />
-        ))}
-      </View>
-
-      {/* 4. LEARNER AUDIO + IPA */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.label}>Yours</Text>
-        <TouchableOpacity onPress={playRecorded} disabled={!recordedAudioUri}>
-          <Ionicons
-            name="mic"
-            size={22}
-            color={recordedAudioUri ? "#333" : "#ccc"}
-          />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.phonemeList}>
-        {data.learner_phonemes.map((phoneme, index) => (
-          <View key={index} style={styles.phonemeBox}>
-            <Text style={styles.phonemeText}>{phoneme}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* 5. NEXT BUTTON */}
-      {onNext && (
-        <TouchableOpacity style={styles.nextButton} onPress={onNext}>
-          <Ionicons
-            name="arrow-forward-circle"
-            size={40}
-            color={colors.secondary}
-          />
-        </TouchableOpacity>
-      )}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -140,13 +151,19 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 6,
   },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  outerContainer: {
+    flex: 1,
+  },
   container: {
     padding: 16,
     backgroundColor: "#fff",
     borderRadius: 12,
     margin: 10,
-    elevation: 3, // Shadow for Android
-    shadowColor: "#000", // Shadow for iOS
+    elevation: 3,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
   },

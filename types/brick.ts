@@ -1,5 +1,7 @@
 // --- Enums ---
 
+import { Learner } from "./learnner";
+
 export enum UnitType {
   word = "word",
   phrase = "phrase",
@@ -85,8 +87,9 @@ export type Brick = {
   creator_id: number;
   collection_id: number | null;
   brick_metadata_id: number;
-  last_edit_at: string; // ISO Date String
+  last_edit_at: string;
   brick_metadata: BrickMetadata;
+  creator: Learner;
 };
 
 /** Simple version for lists/previews */
