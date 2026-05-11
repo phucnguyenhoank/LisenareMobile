@@ -1,11 +1,23 @@
 import { request } from "@/api/client";
+import ChartCard from "@/components/learning-statistic/ChartCard";
+import HistorySummaryCard from "@/components/learning-statistic/HistorySummaryCard";
+import MemoryQualityCard from "@/components/learning-statistic/MemoryQualityCard";
+import TodayOverviewCard from "@/components/learning-statistic/TodayOverviewCard";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
-import { showAlert } from "@/utils/alerts";
-import { Link, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import {
+  LearningCardStats,
+  LearningTimeSeries,
+  Metric,
+  TimeRange,
+} from "@/types/learner-statistic";
+import { Learner } from "@/types/learnner";
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -13,70 +25,90 @@ import {
   View,
 } from "react-native";
 
-interface LearnerStats {
-  learner_id: number;
-  total_learning: number;
-  due_count: number;
-}
+const RANGE_TO_DAYS: Record<TimeRange, number | null> = {
+  "30d": 30,
+  "90d": 90,
+  "365d": 365,
+  all: null,
+};
 
-interface LearnerMe {
-  id: number;
-  full_name: string;
-}
-
-export default function LearnerState() {
+export default function LearnerStatisticScreen() {
   const router = useRouter();
-  const { token, isTokenLoading } = useAuth();
+  const { token, isTokenLoading: authLoading } = useAuth();
+  const [selectedRange, setSelectedRange] = useState<TimeRange>("30d");
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const [stats, setStats] = useState<LearnerStats | null>(null);
-  const [user, setUser] = useState<LearnerMe | null>(null);
+  const [selectedMetric, setSelectedMetric] =
+    useState<Metric>("total_learning");
 
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const {
+    data: user,
+    isLoading: userLoading,
+    refetch: refetchUser,
+  } = useQuery({
+    queryKey: ["learnerMe"],
+    queryFn: () => request<Learner>("/learners/me"),
+    enabled: !!token,
+  });
 
-  const fetchData = async () => {
-    if (!token) return;
+  const {
+    data: todayStats,
+    isLoading: todayLoading,
+    refetch: refetchToday,
+  } = useQuery({
+    queryKey: ["learnerStats", "today", timezone],
+    queryFn: () =>
+      request<LearningCardStats>(
+        `/learning-cards/stats?days=0&timezone=${timezone}`,
+      ),
+    enabled: !!token,
+  });
 
-    try {
-      const [statsData, userData] = await Promise.all([
-        request<LearnerStats>("/learning-cards/stats"),
-        request<LearnerMe>("/learners/me"),
-      ]);
+  const {
+    data: allTimeStats,
+    isLoading: allTimeLoading,
+    refetch: refetchAllTime,
+  } = useQuery({
+    queryKey: ["learnerStats", "all", timezone],
+    queryFn: () =>
+      request<LearningCardStats>(`/learning-cards/stats?timezone=${timezone}`),
+    enabled: !!token,
+  });
 
-      setStats(statsData);
-      setUser(userData);
-    } catch (err: any) {
-      if (err.status == 401) {
-        showAlert({
-          title: "Phiên đăng nhập hết hạn",
-          message: "Hãy đăng nhập lại",
-          confirmText: "Đăng nhập",
-          onConfirm: () => {
-            router.push("/setting");
-          },
-          showCancel: false,
-          cancelable: false,
-        });
-      } else {
-        console.error("Failed to fetch learner data:", err);
-      }
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+  const days = RANGE_TO_DAYS[selectedRange];
+
+  const {
+    data: chartStats,
+    isLoading: chartLoading,
+    refetch: refetchChart,
+  } = useQuery({
+    queryKey: ["chart", selectedMetric, selectedRange, timezone],
+    queryFn: () => {
+      const base = `/learning-cards/stats/timeseries?metric=${selectedMetric}`;
+
+      const query =
+        days === null
+          ? `${base}&timezone=${timezone}`
+          : `${base}&days=${days}&timezone=${timezone}`;
+
+      return request<LearningTimeSeries>(query);
+    },
+    enabled: !!token,
+  });
+
+  const onRefresh = async () => {
+    await Promise.all([
+      refetchToday(),
+      refetchAllTime(),
+      refetchChart(),
+      refetchUser(),
+    ]);
   };
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchData();
-  }, []);
+  const pageLoading =
+    (todayLoading || allTimeLoading || userLoading) && !!token;
 
-  useEffect(() => {
-    if (!token) return;
-    fetchData();
-  }, [token]);
-
-  if (loading || isTokenLoading) {
+  if (authLoading || pageLoading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.secondary} />
@@ -87,102 +119,152 @@ export default function LearnerState() {
   if (!token) {
     return (
       <View style={styles.center}>
-        <Link href="/setting" style={styles.signinLink}>
-          Đăng nhập
-        </Link>
-        <Text>để theo dõi tiến độ học tập</Text>
+        <Pressable
+          onPress={() => router.push("/setting")}
+          style={({ pressed }) => [
+            styles.signinButton,
+            pressed && styles.signinButtonPressed,
+          ]}
+        >
+          <Text style={styles.signinButtonText}>Đăng nhập</Text>
+        </Pressable>
+
+        <Text style={styles.subtitle}>để theo dõi tiến độ học tập</Text>
       </View>
     );
   }
 
-  const total = stats?.total_learning ?? 0;
-  const due = stats?.due_count ?? 0;
-  const mastered = total - due;
+  // TODAY
+  const todayTotal = todayStats?.total_learning ?? 0;
+  const todayDue = todayStats?.due_count ?? 0;
+  const todayMastered = todayTotal - todayDue;
+
+  const todayRetention = formatRetention(todayStats?.true_retention);
+  const todayStability = formatDays(todayStats?.average_stability);
+
+  // ALL TIME
+  const allTimeTotal = allTimeStats?.total_learning ?? 0;
+  const allTimeDue = allTimeStats?.due_count ?? 0;
+  const allTimeMastered = allTimeTotal - allTimeDue;
+
+  const allTimeRetention = formatRetention(allTimeStats?.true_retention);
+  const allTimeStability = formatDays(allTimeStats?.average_stability);
 
   return (
     <ScrollView
+      style={styles.screen}
       contentContainerStyle={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl refreshing={pageLoading} onRefresh={onRefresh} />
       }
     >
-      {/* User Info */}
-      <Text style={styles.name}>{user?.full_name}</Text>
-      <Text style={styles.id}>Mã người học: {user?.id}</Text>
+      <Text style={styles.pageTitle}>Xin chào, {user?.full_name ?? "bạn"}</Text>
+      <Text style={styles.pageSubtitle}>Dữ liệu học tập của bạn</Text>
 
-      {/* Stats */}
-      <View style={styles.card}>
-        <Stat
-          label="Đã học"
-          value={`${total} câu & từ`}
-          color={colors.primary}
-        />
-        <Stat label="Thành thạo" value={mastered} />
-        <Stat label="Cần luyện lại" value={due} color="#FF3B30" />
-      </View>
+      <Text style={styles.sectionTitle}>Dữ liệu của hôm nay</Text>
+
+      <TodayOverviewCard
+        total={todayTotal}
+        mastered={todayMastered}
+        due={todayDue}
+      />
+
+      <MemoryQualityCard
+        retention={todayRetention}
+        stability={todayStability}
+        scope="Hôm nay"
+      />
+
+      <HistorySummaryCard
+        total={allTimeTotal}
+        mastered={allTimeMastered}
+        due={allTimeDue}
+        retention={allTimeRetention}
+        stability={allTimeStability}
+      />
+
+      <ChartCard
+        selectedRange={selectedRange}
+        setSelectedRange={setSelectedRange}
+        selectedMetric={selectedMetric}
+        setSelectedMetric={setSelectedMetric}
+        title="Biểu đồ học tập"
+        data={chartStats?.data ?? []}
+        loading={chartLoading}
+      />
     </ScrollView>
   );
 }
 
-function Stat({ label, value, color }: any) {
-  return (
-    <View style={styles.row}>
-      <Text style={styles.label}>{label}</Text>
-      <Text style={[styles.value, color && { color }]}>{value}</Text>
-    </View>
-  );
+function formatRetention(value?: number) {
+  if (value == null || Number.isNaN(value)) return "0.0%";
+  const percent = value <= 1 ? value * 100 : value;
+  return `${percent.toFixed(1)}%`;
+}
+
+function formatDays(value?: number) {
+  if (value == null || Number.isNaN(value)) return "0.0 ngày";
+  return `${value.toFixed(1)} ngày`;
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#F2F2F7",
+  },
   container: {
     padding: 20,
-    backgroundColor: "#F2F2F7",
-    flexGrow: 1,
+    paddingBottom: 120,
   },
 
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#F2F2F7",
+    padding: 20,
   },
 
-  name: {
-    fontSize: 22,
+  pageTitle: {
+    fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 2,
+    color: "#111",
   },
-
-  id: {
+  pageSubtitle: {
+    marginTop: 6,
+    marginBottom: 18,
+    fontSize: 14,
     color: "#666",
-    marginBottom: 20,
   },
 
-  card: {
-    backgroundColor: "white",
-    padding: 18,
-    borderRadius: 12,
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#222",
+    marginTop: 8,
+    marginBottom: 10,
   },
 
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  signinButton: {
+    backgroundColor: colors.secondary,
     paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 140,
   },
-
-  label: {
-    fontSize: 16,
-    color: "#444",
+  signinButtonPressed: {
+    opacity: 0.8,
   },
-
-  value: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: colors.secondary2,
-  },
-
-  signinLink: {
+  signinButtonText: {
+    color: "white",
     fontSize: 16,
     fontWeight: "bold",
-    color: colors.secondary,
+  },
+  subtitle: {
+    marginTop: 10,
+    fontSize: 14,
+    color: "#666",
   },
 });

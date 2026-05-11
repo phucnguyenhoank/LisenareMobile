@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "LisenareMobile",
-    "slug": "LisenareMobile",
+    "name": "Lisenare",
+    "slug": "lisenaremobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -16,12 +16,17 @@
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#E6F4FE"
       },
+
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET"
       ],
-      "package": "com.anonymous.LisenareMobile"
+      "package": "com.anonymous.LisenareMobile",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -61,11 +66,25 @@
           "supportsOpeningDocumentsInPlace": true,
           "enableFileSharing": true
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#E6F4FE"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8a9fd20a-48a1-4864-83d9-fe280c4385c8"
+      }
+    },
+    "owner": "phucnguyeho"
   }
 }

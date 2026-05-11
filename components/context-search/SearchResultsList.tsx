@@ -1,11 +1,20 @@
+import { useSession } from "@/context/SessionContext";
+import { useAttentionTracking } from "@/hooks/useAttentionTracking";
 import spacing from "@/theme/spacing";
 import {
   BrickContextSearchResult,
-  ContextSearchResult,
-  VideoContextSearchResult,
+  VideoContextSearchResult
 } from "@/types/context-search";
+import { Snippet } from "@/types/snippet";
 import React from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import FeedItem from "../discovery/FeedItem";
 import BrickCard from "./BrickCard";
 import VideoCard from "./VideoCard";
 
@@ -21,41 +30,60 @@ function EmptyState({ query, label }: { query: string; label: string }) {
   );
 }
 
-type Props = {
-  mode: string;
-  results: ContextSearchResult[];
-  loading: boolean;
-  query: string;
-  onScroll: any;
-};
+type Props =
+  | {
+      mode: "snippets";
+      results: Snippet[];
+      loading: boolean;
+      query: string;
+    }
+  | {
+      mode: "videos";
+      results: VideoContextSearchResult[];
+      loading: boolean;
+      query: string;
+    }
+  | {
+      mode: "bricks";
+      results: BrickContextSearchResult[];
+      loading: boolean;
+      query: string;
+    };
 
 export default function SearchResultsList({
   mode,
   results,
   loading,
   query,
-  onScroll,
 }: Props) {
-  if (loading) return null;
+  const { sessionId } = useSession();
 
-  if (!results.length) {
-    return <EmptyState query={query} label={mode} />;
-  }
+  const { onViewableItemsChanged, viewabilityConfig } = useAttentionTracking({
+    sessionId,
+    mode,
+  });
+
+  if (loading) return <ActivityIndicator style={{ marginTop: 20 }} />;
 
   return (
-    <Animated.FlatList // 1. Must use Animated version
+    <FlatList
       data={results}
-      onScroll={onScroll} // 2. Use the prop from parent
-      scrollEventThrottle={16} // 3. Updates at 60fps
       keyExtractor={(_, i) => i.toString()}
-      contentContainerStyle={styles.listContent} // 4. Add padding for header
-      renderItem={({ item }) =>
-        mode === "videos" ? (
-          <VideoCard item={item as VideoContextSearchResult} />
-        ) : (
-          <BrickCard item={item as BrickContextSearchResult} />
-        )
-      }
+      ListEmptyComponent={<EmptyState query={query} label={mode} />}
+      renderItem={({ item }) => {
+        switch (mode) {
+          case "snippets":
+            return <FeedItem item={item} />;
+
+          case "videos":
+            return <VideoCard item={item} />;
+
+          case "bricks":
+            return <BrickCard item={item} />;
+        }
+      }}
+      onViewableItemsChanged={onViewableItemsChanged}
+      viewabilityConfig={viewabilityConfig}
     />
   );
 }
@@ -73,7 +101,7 @@ const styles = StyleSheet.create({
   },
 
   listContent: {
-    paddingTop: 110, // Matches your header height (SearchBar + Tabs)
+    paddingTop: 110,
     paddingBottom: 20,
   },
 });

@@ -30,6 +30,7 @@ export default function LearnScreen() {
   const [currentIndex, setCurrentIndex] = useState(1);
   const [totalBricks, setTotalBricks] = useState(0);
   const [currentBrick, setCurrentBrick] = useState<Brick | null>(null);
+  const [recordedUri, setRecordedUri] = useState<string | null>(null);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
 
@@ -131,14 +132,14 @@ export default function LearnScreen() {
 
       {step === 1 && currentBrick && (
         <StepListenSpeak
-          audioUri={currentBrick.target_audio_uri} // brick-audios/GUksrGBeln0_sentence_254.wav
+          audioUri={currentBrick.target_audio_path}
           changeStep={goNext}
         />
       )}
 
       {step === 2 && currentBrick && (
         <StepReadSpeak
-          audioUri={currentBrick.target_audio_uri}
+          audioUri={currentBrick.target_audio_path}
           target_text={currentBrick.target_text}
           native_text={currentBrick.native_text}
           changeStep={goNext}
@@ -148,10 +149,11 @@ export default function LearnScreen() {
       {step === 3 && currentBrick && (
         <StepUnderstandSpeak
           brick_id={currentBrick.id}
-          audioUri={currentBrick.target_audio_uri}
+          audioUri={currentBrick.target_audio_path}
           target_text={currentBrick.target_text}
           native_text={currentBrick.native_text}
           setResult={setPronunciationResult}
+          setRecordedUri={setRecordedUri}
         />
       )}
 
@@ -176,6 +178,8 @@ export default function LearnScreen() {
           <PronunciationDisplay
             targetText={currentBrick.target_text}
             data={pronunciationResult}
+            originalAudioUri={currentBrick.target_audio_path}
+            recordedAudioUri={recordedUri}
             onNext={
               pronunciationResult.accuracy_score >= 0.7
                 ? () => {

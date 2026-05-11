@@ -18,6 +18,10 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Builds
+*.apk
+*.aab
+
 # Metro
 .metro-health-check*
 
@@ -41,5 +45,12 @@ app-example
 # generated native folders
 /ios
 /android
+gen-lang-client*.json
+google-services.json
+
+# Code editor
+.vscode/
+
+# Secret
 gen-lang-client*.json
 google-services.json

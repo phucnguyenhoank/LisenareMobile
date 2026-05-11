@@ -2,7 +2,7 @@ export type AudioTranscription = {
   transcript: string;
 };
 
-interface PhonemeAnalysis {
+export interface PhonemeAnalysis {
   phoneme: string;
   status: "correct" | "mispronounced" | "missing" | "extra";
   heard?: string | null;
@@ -11,4 +11,5 @@ interface PhonemeAnalysis {
 export interface PronunciationAnalysisResponse {
   accuracy_score: number;
   analysis: PhonemeAnalysis[];
+  learner_phonemes: string[];
 }

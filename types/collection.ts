@@ -3,8 +3,8 @@ export type Collection = {
   name: string;
   creator_id: number;
   created_at: string;
-  brick_count: number;
-  learned_count: number;
+  brick_count: number | null;
+  learned_count: number | null;
 };
 
 export type GroupStats = {

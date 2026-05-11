@@ -1,9 +1,16 @@
 import { request } from "@/api/client";
+import { BrickMetadataSelector } from "@/components/brick-form/BrickMetadataSelector";
+import { FormField } from "@/components/FormField";
 import TextButton from "@/components/TextButton";
+import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
-import type { Brick } from "@/types/brick";
+import type { Brick, GrammarPoint } from "@/types/brick";
+import { SentenceFunction, SentenceStructure, UnitType } from "@/types/brick";
 import type { Collection } from "@/types/collection";
+import { Learner } from "@/types/learnner";
+import { cleanText } from "@/utils/brick-preprocessing";
 import { Picker } from "@react-native-picker/picker";
+import { useQuery } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -19,23 +26,9 @@ import {
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={styles.fieldCard}>
-      <Text style={styles.label}>{label}</Text>
-      {children}
-    </View>
-  );
-}
-const cleanText = (text: string) => text.replace(/\n/g, " ");
-
 export default function EditBrickScreen() {
+  const { token, isTokenLoading } = useAuth();
+
   const { brick_id } = useLocalSearchParams();
   const brickId = Number(brick_id);
 
@@ -43,10 +36,26 @@ export default function EditBrickScreen() {
   const [brick, setBrick] = useState<Brick | null>(null);
   const [collections, setCollections] = useState<Collection[]>([]);
 
+  const [creatorId, setCreatorId] = useState(1);
   const [nativeText, setNativeText] = useState("");
   const [targetText, setTargetText] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [collectionId, setCollectionId] = useState<number>(1);
+
+  const [metadata, setMetadata] = useState({
+    unitType: UnitType.word,
+    structure: null as SentenceStructure | null,
+    func: null as SentenceFunction | null,
+    selectedGrammarPoints: [] as GrammarPoint[],
+  });
+
+  const { data: user, isLoading: userLoading } = useQuery({
+    queryKey: [token],
+    queryFn: () => request<Learner>("/learners/me"),
+    enabled: !!token,
+  });
+
+  const isCreator = user?.id === creatorId;
 
   useEffect(() => {
     (async () => {
@@ -56,9 +65,21 @@ export default function EditBrickScreen() {
           request<Collection[]>("/collections"),
         ]);
         setBrick(b);
+        setCreatorId(b.creator_id);
         setNativeText(b.native_text);
         setTargetText(b.target_text);
         setIsPublic(b.is_public);
+        setCollectionId(b.collection_id || 1);
+
+        setMetadata({
+          unitType: b.brick_metadata.unit_type,
+          structure: b.brick_metadata.structure,
+          func: b.brick_metadata.function,
+          selectedGrammarPoints:
+            b.brick_metadata.grammar_points?.map((gp) => gp.grammar_point) ||
+            [],
+        });
+
         setCollections(c);
       } finally {
         setLoading(false);
@@ -75,48 +96,73 @@ export default function EditBrickScreen() {
           target_text: targetText,
           is_public: isPublic,
           collection_id: collectionId,
+          brick_metadata: {
+            unit_type: metadata.unitType,
+            structure: metadata.structure,
+            function: metadata.func,
+            grammar_points: metadata.selectedGrammarPoints.map((p) => ({
+              grammar_point: p,
+            })),
+          },
         },
       });
-      Alert.alert("Đã lưu");
+      Alert.alert("Thành công", "Đã lưu chỉnh sửa");
     } catch {
       Alert.alert("Error", "Failed to save");
     }
   };
 
-  if (loading)
-    return <ActivityIndicator style={{ flex: 1 }} color={colors.secondary2} />;
+  if (isTokenLoading || userLoading || loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.secondary} />
+        <Text style={styles.loadingText}>
+          {isTokenLoading
+            ? "Đang tải token..."
+            : userLoading
+              ? "Đang tải thông tin người học..."
+              : "Đang tải brick..."}
+        </Text>
+      </View>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.screen} edges={["top"]}>
+    <SafeAreaView style={styles.screen}>
       <KeyboardAwareScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Chỉnh sửa Brick</Text>
           <Text style={styles.idBadge}>#{brick?.id}</Text>
         </View>
 
-        <Field label="Bộ sưu tập">
-          <View>
-            <Picker
-              selectedValue={collectionId}
-              onValueChange={setCollectionId}
-            >
-              {collections.map((c) => (
-                <Picker.Item key={c.id} label={c.name} value={c.id} />
-              ))}
-            </Picker>
-          </View>
-        </Field>
+        {collections.length > 0 && isCreator ? (
+          <FormField label="Bộ sưu tập">
+            <View>
+              <Picker
+                selectedValue={collectionId}
+                onValueChange={setCollectionId}
+                enabled={isCreator}
+              >
+                {collections.map((c) => (
+                  <Picker.Item key={c.id} label={c.name} value={c.id} />
+                ))}
+              </Picker>
+            </View>
+          </FormField>
+        ) : (
+          <View></View>
+        )}
 
         <View style={styles.audioRow}>
           <Text style={styles.audioLabel}>Audio:</Text>
           <Pressable onPress={() => alert("Change coming soon")}>
             <Text style={styles.audioFile}>
-              {brick?.target_audio_uri?.split("/").pop()}
+              {brick?.target_audio_path?.split("/").pop()}
             </Text>
           </Pressable>
         </View>
 
-        <Field label="Tiếng Việt">
+        <FormField label="Tiếng Việt">
           <TextInput
             style={styles.input}
             value={nativeText}
@@ -124,17 +170,22 @@ export default function EditBrickScreen() {
             multiline
             placeholder="Nhập nghĩa tiếng Việt..."
           />
-        </Field>
+        </FormField>
 
-        <Field label="Tiếng Anh">
-          <TextInput
-            style={[styles.input, styles.targetText]}
-            value={targetText}
-            onChangeText={(t) => setTargetText(cleanText(t))}
-            multiline
-            placeholder="Enter English text..."
-          />
-        </Field>
+        <FormField label="Tiếng Anh">
+          <View style={{ opacity: isCreator ? 1 : 0.6 }}>
+            <TextInput
+              style={[styles.input, styles.targetText]}
+              value={targetText}
+              onChangeText={(t) => setTargetText(cleanText(t))}
+              multiline
+              readOnly={true} // do not let user edit the target text for now
+            />
+            {!isCreator && (
+              <Text style={styles.warningText}>Câu này đã được sở hữu.</Text>
+            )}
+          </View>
+        </FormField>
 
         <View style={styles.switchCard}>
           <View>
@@ -146,13 +197,21 @@ export default function EditBrickScreen() {
           <Switch
             value={isPublic}
             onValueChange={setIsPublic}
+            disabled={!isCreator}
             trackColor={{ true: colors.secondary2 }}
+            style={{ opacity: isCreator ? 1 : 0.5 }}
           />
         </View>
 
+        <BrickMetadataSelector
+          state={metadata}
+          onChange={(patch) => setMetadata((prev) => ({ ...prev, ...patch }))}
+          readOnly={!isCreator}
+        />
+
         <View style={styles.actionRow}>
           <TextButton
-            title="Hủy bỏ"
+            title="Thoát"
             variant="outline"
             onPress={() => router.back()}
             style={styles.flex1}
@@ -171,11 +230,23 @@ export default function EditBrickScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F2F4F7", // Soft grey background makes cards "pop"
+    backgroundColor: "#F2F4F7",
   },
   container: {
     padding: 20,
     gap: 16,
+  },
+  checkLoader: {
+    position: "absolute",
+    right: 12,
+    top: 15, // Adjust based on your input's padding
+  },
+  warningText: {
+    color: colors.secondary2, // System red
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: "500",
   },
   header: {
     flexDirection: "row",
@@ -196,21 +267,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     overflow: "hidden",
-  },
-  fieldCard: {
-    backgroundColor: "#FFF",
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#EAEAEF",
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.secondary2,
-    marginBottom: 4,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
   },
   input: {
     fontSize: 16,
@@ -252,4 +308,15 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   flex1: { flex: 1 },
+  centered: {
+    flex: 1, // Fill the whole screen
+    justifyContent: "center", // Center vertically
+    alignItems: "center", // Center horizontally
+    backgroundColor: "#fff", // Optional: match your background color
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#666",
+    fontSize: 14,
+  },
 });

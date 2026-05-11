@@ -64,7 +64,7 @@ export function LearnMenu({
               reportBrokenFile();
             }}
           >
-            <Text>Báo cáo lỗi</Text>
+            <Text>Báo cáo</Text>
           </Pressable>
         </View>
       )}

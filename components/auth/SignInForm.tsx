@@ -6,11 +6,12 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import TextButton from "../TextButton";
@@ -110,7 +111,19 @@ export default function SignInForm({
       <View style={styles.spacing} />
       <TextButton title="Đăng ký" onPress={handleSignUp} />
       <View style={styles.spacingSmall} />
-      <TextButton title="Đăng ký với Google" onPress={handleGoogleSignIn} />
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleGoogleSignIn}
+        activeOpacity={0.7}
+      >
+        <View style={styles.content}>
+          <Image
+            source={require("@/assets/images/google-color.png")}
+            style={styles.icon}
+          />
+          <Text style={styles.text}>Đăng ký với Google</Text>
+        </View>
+      </TouchableOpacity>
     </KeyboardAwareScrollView>
   );
 }
@@ -157,5 +170,37 @@ const styles = StyleSheet.create({
     color: colors.secondary,
     fontSize: 13,
     fontWeight: "500",
+  },
+  // google login button
+  button: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#DDD",
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+
+    // subtle shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  icon: {
+    width: 24,
+    height: 24,
+    resizeMode: "contain",
+  },
+  content: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  text: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#333",
   },
 });

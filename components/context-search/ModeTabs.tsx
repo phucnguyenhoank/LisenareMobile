@@ -9,20 +9,27 @@ type Props = {
   setMode: (v: SearchMode) => void;
 };
 
+const MODES: SearchMode[] = ["snippets", "videos", "bricks"];
+
 export default function ModeTabs({ mode, setMode }: Props) {
   return (
     <View style={styles.tabs}>
-      {(["videos", "bricks"] as SearchMode[]).map((m) => (
-        <TouchableOpacity
-          key={m}
-          onPress={() => setMode(m)}
-          style={[styles.tab, mode === m && styles.tabActive]}
-        >
-          <Text style={mode === m ? styles.tabTextActive : styles.tabText}>
-            {m === "videos" ? "Videos" : "Bricks"}
-          </Text>
-        </TouchableOpacity>
-      ))}
+      {MODES.map((m) => {
+        const isActive = mode === m;
+
+        return (
+          <TouchableOpacity
+            key={m}
+            onPress={() => setMode(m)}
+            activeOpacity={0.7}
+            style={[styles.tab, isActive && styles.tabActive]}
+          >
+            <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+              {m.charAt(0).toUpperCase() + m.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }

@@ -8,7 +8,7 @@ import {
   useAudioRecorder,
   useAudioRecorderState,
 } from "expo-audio";
-import { Dispatch, SetStateAction, useState } from "react";
+import { useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import PlaySoundButton from "../PlaySoundButton";
 import { BrickDisplay } from "../practice/BrickDisplay";
@@ -19,7 +19,8 @@ interface Props {
   audioUri: string;
   target_text: string;
   native_text: string;
-  setResult: Dispatch<SetStateAction<PronunciationAnalysisResponse | null>>;
+  setResult: (pronunciationResult: PronunciationAnalysisResponse) => void;
+  setRecordedUri: (uri: string | null) => void;
 }
 
 export default function StepUnderstandSpeak({
@@ -28,6 +29,7 @@ export default function StepUnderstandSpeak({
   target_text,
   native_text,
   setResult,
+  setRecordedUri,
 }: Props) {
   const { audioPath, isAudioLoading } = useCachedAudio(audioUri);
   const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
@@ -66,6 +68,7 @@ export default function StepUnderstandSpeak({
 
   const stopRecordingAndEvaluateAudio = async (): Promise<any | null> => {
     await audioRecorder.stop();
+    setRecordedUri(audioRecorder.uri);
     setStatusMessage("Đang đánh giá phát âm...");
 
     const formData = new FormData();

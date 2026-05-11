@@ -7,7 +7,7 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 
 type Props = {
@@ -27,7 +27,7 @@ export default function SearchBar({
     <View style={styles.searchContainer}>
       <TextInput
         style={styles.input}
-        placeholder="jump off..."
+        placeholder="hang out..."
         value={query}
         onChangeText={setQuery}
         onSubmitEditing={onSearch}

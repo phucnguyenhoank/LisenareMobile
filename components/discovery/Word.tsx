@@ -7,18 +7,13 @@ interface WordProps {
     start_sec: number;
     end_sec: number;
   };
-  player: any;
+  onPlay: (startTime?: number) => void;
 }
 
-export default function Word({ word, segment, player }: WordProps) {
-  const handlePress = async () => {
+export default function Word({ word, segment, onPlay }: WordProps) {
+  const handlePress = () => {
     if (!segment) return;
-
-    console.log("Play:", word, segment);
-
-    // Seek to start
-    await player.seekTo(segment.start_sec);
-    player.play();
+    onPlay(segment.start_sec);
   };
 
   return (
@@ -29,5 +24,5 @@ export default function Word({ word, segment, player }: WordProps) {
 }
 
 const styles = StyleSheet.create({
-  word: { fontSize: 18, lineHeight: 28, color: "#1c1e21" },
+  word: { fontSize: 20, lineHeight: 28, color: "#1c1e21" },
 });
