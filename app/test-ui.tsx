@@ -1,45 +1,26 @@
-import { View, Button, Text } from "react-native";
-import { useAudioPlayer, setAudioModeAsync } from "expo-audio";
-import { useEffect } from "react";
+import { View, Button } from "react-native";
+import { useAudioPlayer } from "expo-audio";
+import { Buffer } from "buffer";
+import { API_BASE_URL } from "@/config/env";
 
 export default function AudioPlayerScreen() {
-  const audioSource = require("../assets/audio.mp3");
-  const player = useAudioPlayer(audioSource);
+  const text = "hello world";
 
-  useEffect(() => {
-    // Configure audio session for background playback
-    setAudioModeAsync({
-      playsInSilentMode: true,
-      shouldPlayInBackground: true,
-      interruptionMode: "doNotMix",
-    });
-  }, []);
+  // 1. Construct your streaming URL
+  const payload = JSON.stringify({ text });
+  const encodedData = Buffer.from(payload).toString("base64");
+  const streamUrl = `${API_BASE_URL}/text/tts-stream?data=${encodedData}`;
 
-  const handlePlay = () => {
-    // Enable lock screen controls with metadata
-    player.setActiveForLockScreen(true, {
-      title: "My Audio Title",
-      artist: "Artist Name",
-      albumTitle: "Album Name",
-      artworkUrl: "https://picsum.photos/200/300",
-    });
+  // 2. Use the hook (this handles the player state automatically)
+  const player = useAudioPlayer(streamUrl);
 
-    // Start playback - this will continue in the background
+  const play = () => {
     player.seekTo(0);
     player.play();
   };
-
-  const handleStop = () => {
-    player.pause();
-    // Optionally disable lock screen controls when done
-    player.setActiveForLockScreen(false);
-  };
-
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>This sound can play off-screen</Text>
-      <Button title="Play" onPress={handlePlay} />
-      <Button title="Stop" onPress={handleStop} />
+    <View style={{ flex: 1, justifyContent: "center" }}>
+      <Button title={player.playing ? "Pause" : "Play Audio"} onPress={play} />
     </View>
   );
 }

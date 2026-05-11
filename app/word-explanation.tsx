@@ -1,5 +1,6 @@
 import { request } from "@/api/client";
 import SentenceItem from "@/components/explanation/SentenceItem";
+import StreamListenButton from "@/components/explanation/StreamListenButton";
 import colors from "@/theme/colors";
 import { SentenceTranslateResponse } from "@/types/sentence";
 import React, { useState } from "react";
@@ -19,7 +20,7 @@ interface ExplanationResponse {
   examples: string[];
 }
 
-export default function ExplanationScreen() {
+export default function WordExplanationScreen() {
   const [inputText, setInputText] = useState("");
   const [data, setData] = useState<ExplanationResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,23 +28,23 @@ export default function ExplanationScreen() {
   const [explanationTranslation, setExplanationTranslation] = useState<
     string | null
   >(null);
-
   const [translationLoading, setTranslationLoading] = useState(false);
 
   const handleExplain = async () => {
     if (!inputText.trim()) return;
 
     setLoading(true);
-    setError(null); // Reset error
-    setData(null); // Clear previous data
+    setError(null);
+    setData(null);
+    setExplanationTranslation(null);
 
     try {
       const result = await request<ExplanationResponse>("/explanations", {
         method: "POST",
         body: { target_term: inputText },
       });
-      // Check if the backend returned data but it's empty
-      if (!result || !result.explanation) {
+
+      if (!result?.explanation) {
         setError(
           "I couldn't find an explanation for that word. Try another one!",
         );
@@ -52,7 +53,6 @@ export default function ExplanationScreen() {
       }
     } catch (err) {
       console.error("Failed to fetch explanation:", err);
-      // Handle your 422 or other network errors
       setError("Sorry, I don't have information on that term right now.");
     } finally {
       setLoading(false);
@@ -62,7 +62,6 @@ export default function ExplanationScreen() {
   const handleTranslateExplanation = async () => {
     if (!data?.explanation) return;
 
-    // Toggle hide
     if (explanationTranslation) {
       setExplanationTranslation(null);
       return;
@@ -75,9 +74,7 @@ export default function ExplanationScreen() {
         "/text/translations",
         {
           method: "POST",
-          body: {
-            text: data.explanation,
-          },
+          body: { text: data.explanation },
         },
       );
 
@@ -110,7 +107,7 @@ export default function ExplanationScreen() {
         value={inputText}
         onChangeText={(text) => {
           setInputText(text);
-          if (error) setError(null); // Clear error when user types again
+          if (error) setError(null);
         }}
         multiline
       />
@@ -127,43 +124,57 @@ export default function ExplanationScreen() {
         )}
       </TouchableOpacity>
 
-      {/* No Data / Error State */}
       {error && !loading && (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyText}>🤔 {error}</Text>
         </View>
       )}
 
-      {/* Success State */}
       {data && (
         <View style={styles.resultCard}>
           <Text style={styles.targetLabel}>{data.target_term}</Text>
-          <View>
-            <Text style={styles.explanationText}>{data.explanation}</Text>
 
-            <TouchableOpacity
-              onPress={handleTranslateExplanation}
-              style={styles.translateButton}
-            >
-              {translationLoading ? (
-                <ActivityIndicator size="small" color={colors.secondary} />
-              ) : (
-                <Text style={styles.translateButtonText}>
-                  {explanationTranslation ? "Hide" : "Translate"}
-                </Text>
-              )}
-            </TouchableOpacity>
+          {/* Explanation */}
+          <View style={styles.row}>
+            <Text style={styles.sectionLabel}>Explanation</Text>
 
-            {explanationTranslation && (
-              <Text style={styles.translationText}>
-                {explanationTranslation}
+            <StreamListenButton text={data.explanation} />
+          </View>
+
+          <Text style={styles.explanationText}>{data.explanation}</Text>
+
+          <TouchableOpacity
+            onPress={handleTranslateExplanation}
+            style={styles.translateButton}
+          >
+            {translationLoading ? (
+              <ActivityIndicator size="small" color={colors.secondary} />
+            ) : (
+              <Text style={styles.translateButtonText}>
+                {explanationTranslation ? "Hide" : "Translate"}
               </Text>
             )}
-          </View>
+          </TouchableOpacity>
+
+          {explanationTranslation && (
+            <Text style={styles.translationText}>{explanationTranslation}</Text>
+          )}
+
           <View style={styles.divider} />
-          <Text style={styles.exampleHeader}>Examples</Text>
+
+          {/* Examples */}
+          <Text style={styles.sectionLabel}>Examples</Text>
+
           {data.examples.map((ex, index) => (
-            <SentenceItem key={index} text={ex} />
+            <View key={index} style={styles.exampleItem}>
+              <View style={styles.row}>
+                <View style={{ flex: 1 }}>
+                  <SentenceItem text={ex} />
+                </View>
+
+                <StreamListenButton text={ex} />
+              </View>
+            </View>
           ))}
         </View>
       )}
@@ -172,22 +183,74 @@ export default function ExplanationScreen() {
 }
 
 const styles = StyleSheet.create({
+  resultCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  headerSection: { marginBottom: 24 },
+  targetLabel: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: colors.text,
+    marginBottom: 20,
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 20,
+  },
+
+  translateButton: {
+    alignSelf: "flex-start",
+    marginTop: 4,
+  },
+
+  translateButtonText: {
+    fontSize: 13,
+    color: colors.secondary,
+    fontWeight: "600",
+  },
+
+  translationText: {
+    fontSize: 14,
+    color: colors.text,
+    marginTop: 8,
+    lineHeight: 22,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.secondary,
+    marginBottom: 8,
+  },
+
+  exampleItem: {
+    marginBottom: 14,
+  },
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 24, paddingTop: 60 },
-  headerSection: {
-    marginBottom: 24,
-  },
+
   title: {
-    fontSize: 28, // Made it a bit bigger
+    fontSize: 28,
     fontWeight: "800",
     color: colors.primary,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: "#6B7280", // Softer gray
+    color: "#6B7280",
     lineHeight: 20,
-    fontWeight: "400",
   },
 
   input: {
@@ -202,34 +265,32 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
     marginBottom: 16,
   },
+
   button: {
-    backgroundColor: colors.secondary, // Deep Forest
+    backgroundColor: colors.secondary,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
     marginBottom: 30,
   },
   buttonText: { color: "#FFF", fontSize: 16, fontWeight: "600" },
-  resultCard: {
-    backgroundColor: colors.buttonBackground, // Light Mint tint
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
+
+  block: { marginBottom: 8 },
+
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.secondary4,
+    textTransform: "uppercase",
   },
-  targetLabel: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: colors.secondary2,
-    marginBottom: 8,
-  },
+
   explanationText: {
     fontSize: 16,
     color: colors.text,
     lineHeight: 24,
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  divider: { height: 1, backgroundColor: colors.border, marginVertical: 16 },
+
   exampleHeader: {
     fontSize: 14,
     fontWeight: "700",
@@ -237,10 +298,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textTransform: "uppercase",
   },
+
   emptyCard: {
     padding: 30,
     alignItems: "center",
-    backgroundColor: "#F9FAFB",
+    backgroundColor: "#fafbf9",
     borderRadius: 16,
     borderStyle: "dashed",
     borderWidth: 1,
@@ -251,26 +313,5 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     textAlign: "center",
     lineHeight: 22,
-  },
-
-  //
-  translateButton: {
-    marginLeft: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    backgroundColor: "#F3F4F6",
-    borderRadius: 6,
-  },
-  translateButtonText: {
-    fontSize: 12,
-    color: colors.secondary,
-    fontWeight: "600",
-  },
-  translationText: {
-    fontSize: 14,
-    color: colors.secondary3, // A softer color for the translation
-    marginLeft: 20,
-    marginTop: 4,
-    fontWeight: "500",
   },
 });
