@@ -28,9 +28,9 @@ export default function DiscoveryScreen() {
       let data;
 
       if (token) {
-        data = await request<PostPage>(`/posts/recommended`);
+        data = await request<PostPage>(`/snippets/recommended`);
       } else {
-        data = await request<PostPage>(`/posts/random`);
+        data = await request<PostPage>(`/snippets/random`);
       }
 
       setFeed((prev) => (refresh ? data.items : [...prev, ...data.items]));

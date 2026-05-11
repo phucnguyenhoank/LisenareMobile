@@ -3,7 +3,9 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { C } from "../../theme/grammar_constants";
 import { S } from "../../theme/grammar_styles";
 import { Question } from "../../types/grammar";
+import { HintBox } from "./HintBox";
 import { QuestionText } from "./QuestionText";
+
 interface Props {
   question: Question;
   index: number;
@@ -19,8 +21,8 @@ export const MultiQuestion = memo(({ question, index, onAnswer, submitted }: Pro
   const handleSelect = (opt: string) => {
     if (submitted) return;
     setSelected(opt);
-    const elapsed = Math.round((Date.now() - startTimeRef.current) / 1000); 
-    onAnswer(index, opt, elapsed); 
+    const elapsed = Math.round((Date.now() - startTimeRef.current) / 1000);
+    onAnswer(index, opt, elapsed);
   };
 
   const getStyle = (opt: string) => {
@@ -38,13 +40,17 @@ export const MultiQuestion = memo(({ question, index, onAnswer, submitted }: Pro
 
   return (
     <View style={S.qCard}>
-      <View style={S.qTop}>
-        <View style={S.qNum}>
-          <Text style={S.qNumText}>{index + 1}</Text>
+      <View style={[S.qTop, { justifyContent: "space-between" }]}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={S.qNum}>
+            <Text style={S.qNumText}>{index + 1}</Text>
+          </View>
+          <View style={[S.badge, { backgroundColor: C.primaryLight }]}>
+            <Text style={[S.badgeText, { color: C.primary }]}>Trắc nghiệm</Text>
+          </View>
         </View>
-        <View style={[S.badge, { backgroundColor: C.primaryLight }]}>
-          <Text style={[S.badgeText, { color: C.primary }]}>Trắc nghiệm</Text>
-        </View>
+
+        <HintBox question_hinted={question} />
       </View>
 
       <QuestionText text={question.question} />

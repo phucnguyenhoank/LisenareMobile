@@ -1,5 +1,5 @@
 import { request } from "@/api/client";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"; // ← thêm useRef
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Text,
@@ -7,9 +7,11 @@ import {
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { QuizContext } from "../../context/QuizContext";
 import { C, isMultiChoice, normalize } from "../../theme/grammar_constants";
 import { S } from "../../theme/grammar_styles";
 import { Exercise, Question } from "../../types/grammar";
+import { ChatButton } from "./ChatBot";
 import { FillQuestion } from "./Fillquestion";
 import { MultiQuestion } from "./Multiquestion";
 
@@ -28,10 +30,10 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [answers, setAnswers] = useState<Record<number, AnswerRecord>>({}); // ← đổi kiểu
+  const [answers, setAnswers] = useState<Record<number, AnswerRecord>>({});
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
-  const questionStartTimes = useRef<Record<number, number>>({}); // ← thêm: lưu thời điểm bắt đầu mỗi câu
+  const questionStartTimes = useRef<Record<number, number>>({});
 
   const fetchQuestions = useCallback(async () => {
     setLoading(true);
@@ -39,11 +41,10 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
     setAnswers({});
     setSubmitted(false);
     setScore(0);
-    questionStartTimes.current = {}; // ← reset thời gian
+    questionStartTimes.current = {};
     try {
       const data = await request<Question[]>(`/grammar/questions/${exercise.id}`);
       setQuestions(data);
-      // Ghi nhận thời điểm bắt đầu cho từng câu
       data.forEach((_, i) => {
         questionStartTimes.current[i] = Date.now();
       });
@@ -58,7 +59,6 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
     fetchQuestions();
   }, [fetchQuestions]);
 
-  // ← cập nhật handleAnswer để lưu AnswerRecord
   const handleAnswer = useCallback((index: number, value: string) => {
     const startTime = questionStartTimes.current[index] ?? Date.now();
     const timeSeconds = Math.round((Date.now() - startTime) / 1000);
@@ -72,7 +72,6 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
     }));
   }, [questions]);
 
-  // ← cập nhật handleSubmit để gửi API
   const handleSubmit = async () => {
     let correct = 0;
     questions.forEach((q, i) => {
@@ -103,7 +102,6 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
     }
   };
 
-  // ← cập nhật allAnswered và unanswered vì answers đổi kiểu
   const allAnswered = useMemo(
     () => questions.every((_, i) => answers[i]?.user_answer !== undefined && answers[i]?.user_answer !== ""),
     [questions, answers]
@@ -114,7 +112,6 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
     [questions, answers]
   );
 
-  // ... phần render giữ nguyên hoàn toàn
   const pct = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
   const msg =
     pct >= 80 ? "Xuất sắc! 🎉" : pct >= 50 ? "Khá tốt! Cố lên nhé 💪" : "Cần ôn thêm rồi! 📚";
@@ -141,87 +138,94 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
   }
 
   return (
-    <View style={S.fill}>
-      {/* Header */}
-      <View style={S.header}>
-        <View style={{ flex: 1, marginLeft: 10 }}>
-          <Text style={S.headerTitle} numberOfLines={1}>
-            {exercise.name}
-          </Text>
-          <Text style={S.headerSub}>{questions.length} câu hỏi</Text>
+    <QuizContext.Provider value={{ exercise, questions, answers }}>
+      <View style={S.fill}>
+        {/* Header */}
+        <View style={S.header}>
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={S.headerTitle} numberOfLines={1}>
+              {exercise.name}
+            </Text>
+            <Text style={S.headerSub}>{questions.length} câu hỏi</Text>
+          </View>
         </View>
-      </View>
 
-      <KeyboardAwareScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={S.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        extraScrollHeight={100}
-        enableOnAndroid={true}
-        enableAutomaticScroll={true}
-      >
-        {/* Result bar */}
-        {submitted && (
-          <View style={S.resultBar}>
-            <View style={S.resultLeft}>
-              <Text style={S.resultScore}>
-                <Text style={S.resultNum}>{score}</Text>
-                <Text style={S.resultDenom}>/{questions.length}</Text>
-              </Text>
-              <View>
-                <Text style={S.resultMsg}>{msg}</Text>
-                <Text style={S.resultPct}>{pct}% chính xác</Text>
+        <KeyboardAwareScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={S.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          extraScrollHeight={100}
+          enableOnAndroid={true}
+          enableAutomaticScroll={true}
+        >
+          {submitted && (
+            <View style={S.resultBar}>
+              <View style={S.resultLeft}>
+                <Text style={S.resultScore}>
+                  <Text style={S.resultNum}>{score}</Text>
+                  <Text style={S.resultDenom}>/{questions.length}</Text>
+                </Text>
+                <View>
+                  <Text style={S.resultMsg}>{msg}</Text>
+                  <Text style={S.resultPct}>{pct}% chính xác</Text>
+                </View>
+              </View>
+              <View style={{ gap: 8 }}>
+                <TouchableOpacity style={S.btn} onPress={fetchQuestions}>
+                  <Text style={S.btnText}>Làm lại</Text>
+                </TouchableOpacity>
               </View>
             </View>
-            <View style={{ gap: 8 }}>
-              <TouchableOpacity style={S.btn} onPress={fetchQuestions}>
-                <Text style={S.btnText}>Làm lại</Text>
+          )}
+
+          {/* Questions */}
+          <View style={{ gap: 14 }}>
+            {questions.map((q, i) =>
+              isMultiChoice(q) ? (
+                <MultiQuestion
+                  key={i}
+                  question={q}
+                  index={i}
+                  onAnswer={handleAnswer}
+                  submitted={submitted}
+                />
+              ) : (
+                <FillQuestion
+                  key={i}
+                  question={q}
+                  index={i}
+                  onAnswer={handleAnswer}
+                  submitted={submitted}
+                />
+              )
+            )}
+          </View>
+
+          {/* Submit */}
+          {!submitted && questions.length > 0 && (
+            <View style={S.submitWrap}>
+              <Text style={S.submitHint}>
+                {allAnswered
+                  ? "Đã trả lời tất cả. Sẵn sàng nộp bài!"
+                  : `Còn ${unanswered} câu chưa trả lời`}
+              </Text>
+              <TouchableOpacity
+                style={[S.submitBtn, !allAnswered && { opacity: 0.45 }]}
+                onPress={handleSubmit}
+                disabled={!allAnswered}
+              >
+                <Text style={S.submitBtnText}>Nộp bài</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        )}
-
-        {/* Questions */}
-        <View style={{ gap: 14 }}>
-          {questions.map((q, i) =>
-            isMultiChoice(q) ? (
-              <MultiQuestion
-                key={i}
-                question={q}
-                index={i}
-                onAnswer={handleAnswer}
-                submitted={submitted}
-              />
-            ) : (
-              <FillQuestion
-                key={i}
-                question={q}
-                index={i}
-                onAnswer={handleAnswer}
-                submitted={submitted}
-              />
-            )
           )}
-        </View>
+        </KeyboardAwareScrollView>
 
-        {/* Submit */}
-        {!submitted && questions.length > 0 && (
-          <View style={S.submitWrap}>
-            <Text style={S.submitHint}>
-              {allAnswered
-                ? "Đã trả lời tất cả. Sẵn sàng nộp bài!"
-                : `Còn ${unanswered} câu chưa trả lời`}
-            </Text>
-            <TouchableOpacity
-              style={[S.submitBtn, !allAnswered && { opacity: 0.45 }]}
-              onPress={handleSubmit}
-              disabled={!allAnswered}
-            >
-              <Text style={S.submitBtnText}>Nộp bài</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </KeyboardAwareScrollView>
-    </View>
+        <ChatButton
+          exercise={exercise}
+          questions={questions}
+          answers={answers}
+        />
+      </View>
+    </QuizContext.Provider>
   );
 });

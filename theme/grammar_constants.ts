@@ -19,6 +19,7 @@ export const C = {
   border: "#E5E7EB",
   badge: "#FEF3C7",
   badgeText: "#92400E",
+  muted: "#5f992c"
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
