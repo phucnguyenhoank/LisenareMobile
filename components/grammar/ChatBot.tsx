@@ -15,6 +15,7 @@ import {
   View,
 } from "react-native";
 import { Exercise, Question } from "../../types/grammar";
+import colors from "@/theme/colors";
 
 interface Props {
   exercise: Exercise;
@@ -267,7 +268,7 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
             />
 
             {loading && (
-              <ActivityIndicator style={{ marginBottom: 8 }} color="#6C63FF" />
+              <ActivityIndicator style={{ marginBottom: 8 }} color={colors.secondary2} />
             )}
 
             <View style={styles.inputRow}>
@@ -298,7 +299,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: "#6C63FF",
+    backgroundColor: colors.secondary2,
     justifyContent: "center",
     alignItems: "center",
     elevation: 6,
@@ -314,7 +315,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.3)",
   },
   chatBox: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.background,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     height: "70%",
@@ -327,9 +328,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: colors.border,
   },
-  headerText: { fontSize: 16, fontWeight: "600", color: "#333" },
+  headerText: { fontSize: 16, fontWeight: "600", color: colors.text },
   closeBtn: { fontSize: 18, color: "#999" },
   messageList: { flex: 1, marginVertical: 8 },
   bubble: {
@@ -338,10 +339,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginVertical: 4,
   },
-  aiBubble: { backgroundColor: "#F0EEFF", alignSelf: "flex-start" },
-  userBubble: { backgroundColor: "#6C63FF", alignSelf: "flex-end" },
+  aiBubble: { backgroundColor: colors.buttonBackground, alignSelf: "flex-start" },
+  userBubble: { backgroundColor: colors.secondary2, alignSelf: "flex-end" },
   aiText: {
-    color: "#333",
+    color: colors.text,
     fontSize: 14,
     lineHeight: 21,
   },
@@ -351,7 +352,7 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   aiHeading: {
-    color: "#333",
+    color: colors.text,
     fontSize: 15,
     fontWeight: "700",
     marginTop: 8,
@@ -360,16 +361,16 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontWeight: "700",
-    color: "#222",
+    color: colors.text,
   },
   italicText: {
     fontStyle: "italic",
-    color: "#333",
+    color: colors.text,
   },
   inlineCode: {
     fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    backgroundColor: "#E5E1FF",
-    color: "#333",
+    backgroundColor: colors.border,
+    color: colors.text,
     paddingHorizontal: 4,
     borderRadius: 4,
   },
@@ -379,7 +380,7 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   bulletDot: {
-    color: "#333",
+    color: colors.text,
     marginRight: 6,
     lineHeight: 21,
   },
@@ -388,20 +389,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopColor: colors.border,
     paddingTop: 8,
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: colors.border,
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 8,
     fontSize: 14,
+    color: colors.text,
   },
   sendBtn: {
-    backgroundColor: "#6C63FF",
+    backgroundColor: colors.secondary2,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
