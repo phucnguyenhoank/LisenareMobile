@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "@/config/env";
 import { S } from "@/theme/grammar_styles";
-import { getToken } from "@/utils/authStorage";
+import { getToken } from "@/utils/auth-storage";
 import { fetch } from "expo/fetch";
 import { useState } from "react";
 import {

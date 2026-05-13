@@ -1,7 +1,7 @@
 import { API_BASE_URL } from "@/config/env";
-import { getToken } from "@/utils/authStorage";
+import { getToken } from "@/utils/auth-storage";
 import { fetch } from "expo/fetch";
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -12,8 +12,8 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
-} from 'react-native';
+  View,
+} from "react-native";
 import { Exercise, Question } from "../../types/grammar";
 
 interface Props {
@@ -22,40 +22,126 @@ interface Props {
   answers: Record<number, { question_id: number; user_answer: string }>;
 }
 
+const renderInlineMarkdown = (text: string) => {
+  const parts = text.split(/(\*\*.*?\*\*|`.*?`|\*.*?\*)/g);
+
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <Text key={index} style={styles.boldText}>
+          {part.slice(2, -2)}
+        </Text>
+      );
+    }
+
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <Text key={index} style={styles.inlineCode}>
+          {part.slice(1, -1)}
+        </Text>
+      );
+    }
+
+    if (part.startsWith("*") && part.endsWith("*")) {
+      return (
+        <Text key={index} style={styles.italicText}>
+          {part.slice(1, -1)}
+        </Text>
+      );
+    }
+
+    return part;
+  });
+};
+
+const renderFormattedText = (text: string, isUser: boolean) => {
+  if (isUser) {
+    return <Text style={styles.userText}>{text}</Text>;
+  }
+
+  const lines = text.split("\n");
+
+  return (
+    <View>
+      {lines.map((line, index) => {
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+          return <View key={index} style={{ height: 8 }} />;
+        }
+
+        if (trimmed.startsWith("###")) {
+          return (
+            <Text key={index} style={styles.aiHeading}>
+              {trimmed.replace(/^#+\s*/, "")}
+            </Text>
+          );
+        }
+
+        if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
+          return (
+            <View key={index} style={styles.bulletRow}>
+              <Text style={styles.bulletDot}>•</Text>
+              <Text style={styles.aiText}>
+                {renderInlineMarkdown(trimmed.replace(/^[-*]\s*/, ""))}
+              </Text>
+            </View>
+          );
+        }
+
+        return (
+          <Text key={index} style={styles.aiText}>
+            {renderInlineMarkdown(trimmed)}
+          </Text>
+        );
+      })}
+    </View>
+  );
+};
+
 const ChatButton = ({ exercise, questions, answers }: Props) => {
   const [visible, setVisible] = useState(false);
   const [messages, setMessages] = useState([
-    { id: '0', role: 'assistant', text: 'Xin chào! Bạn đang gặp khó khăn ở câu nào? Mình sẽ gợi ý nhé 😊' }
+    {
+      id: "0",
+      role: "assistant",
+      text: "Xin chào! Bạn đang gặp khó khăn ở câu nào? Mình sẽ gợi ý nhé 😊",
+    },
   ]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [currentQuestionId, setCurrentQuestionId] = useState<number | null>(null);
+  const [currentQuestionId, setCurrentQuestionId] = useState<number | null>(
+    null
+  );
   const flatListRef = useRef<FlatList>(null);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const userMsg = { id: Date.now().toString(), role: 'user', text: input };
+    const userMsg = { id: Date.now().toString(), role: "user", text: input };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
-    setInput('');
+    setInput("");
     setLoading(true);
 
     try {
       const token = await getToken();
 
-      const user = await fetch(`${API_BASE_URL}/learners/me`, {
+      const user = (await fetch(`${API_BASE_URL}/learners/me`, {
         headers: { Authorization: `Bearer ${token}` },
-      }).then(r => r.json()) as { id: number };
+      }).then((r) => r.json())) as { id: number };
 
       const response = await fetch(`${API_BASE_URL}/grammar/chat`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          messages: newMessages.map(m => ({ role: m.role, content: m.text })),
+          messages: newMessages.map((m) => ({
+            role: m.role,
+            content: m.text,
+          })),
           learner_id: user.id,
           context: {
             exercise_name: exercise.name,
@@ -71,45 +157,57 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
         }),
       });
 
-      if (!response.ok) throw new Error('Chat failed');
+      if (!response.ok) throw new Error("Chat failed");
 
-      // Thêm message rỗng của assistant trước
       const assistantId = Date.now().toString();
-      setMessages(prev => [...prev, { id: assistantId, role: 'assistant', text: '' }]);
+      setMessages((prev) => [
+        ...prev,
+        { id: assistantId, role: "assistant", text: "" },
+      ]);
       setLoading(false);
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      let buffer = '';
+      let buffer = "";
 
       const processLine = (line: string) => {
         line = line.trim();
         if (!line) return;
+
         try {
           const data = JSON.parse(line);
+
           if (data.answer) {
             setMessages((prev) => {
               const last = prev[prev.length - 1];
-              return [...prev.slice(0, -1), { ...last, text: last.text + data.answer }];
+              return [
+                ...prev.slice(0, -1),
+                { ...last, text: last.text + data.answer },
+              ];
             });
           }
-          if (data.current_question_id !== null && data.current_question_id !== undefined) {
+
+          if (
+            data.current_question_id !== null &&
+            data.current_question_id !== undefined
+          ) {
             setCurrentQuestionId(data.current_question_id);
           }
         } catch (e) {
-          console.error('Failed to parse JSON line:', line);
+          console.error("Failed to parse JSON line:", line);
         }
       };
 
       while (true) {
         const { done, value } = await reader!.read();
+
         if (done) {
-          if (buffer.trim()) processLine(buffer); // flush remaining buffer
+          if (buffer.trim()) processLine(buffer);
           break;
         }
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
+        const lines = buffer.split("\n");
         buffer = lines[lines.length - 1];
 
         for (let i = 0; i < lines.length - 1; i++) {
@@ -117,11 +215,14 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
         }
       }
     } catch {
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        role: 'assistant',
-        text: 'Có lỗi xảy ra, thử lại nhé!'
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: "assistant",
+          text: "Có lỗi xảy ra, thử lại nhé!",
+        },
+      ]);
     } finally {
       setLoading(false);
       flatListRef.current?.scrollToEnd();
@@ -137,7 +238,7 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
       <Modal visible={visible} animationType="slide" transparent>
         <KeyboardAvoidingView
           style={styles.overlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <View style={styles.chatBox}>
             <View style={styles.header}>
@@ -150,22 +251,24 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
             <FlatList
               ref={flatListRef}
               data={messages}
-              keyExtractor={item => item.id}
+              keyExtractor={(item) => item.id}
               onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
               style={styles.messageList}
               renderItem={({ item }) => (
-                <View style={[
-                  styles.bubble,
-                  item.role === 'user' ? styles.userBubble : styles.aiBubble
-                ]}>
-                  <Text style={item.role === 'user' ? styles.userText : styles.aiText}>
-                    {item.text}
-                  </Text>
+                <View
+                  style={[
+                    styles.bubble,
+                    item.role === "user" ? styles.userBubble : styles.aiBubble,
+                  ]}
+                >
+                  {renderFormattedText(item.text, item.role === "user")}
                 </View>
               )}
             />
 
-            {loading && <ActivityIndicator style={{ marginBottom: 8 }} color="#6C63FF" />}
+            {loading && (
+              <ActivityIndicator style={{ marginBottom: 8 }} color="#6C63FF" />
+            )}
 
             <View style={styles.inputRow}>
               <TextInput
@@ -189,17 +292,17 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
 
 const styles = StyleSheet.create({
   fab: {
-    position: 'absolute',
+    position: "absolute",
     right: 16,
     bottom: 24,
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#6C63FF',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#6C63FF",
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 6,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -207,63 +310,103 @@ const styles = StyleSheet.create({
   fabIcon: { fontSize: 22 },
   overlay: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.3)",
   },
   chatBox: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    height: '70%',
+    height: "70%",
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
-  headerText: { fontSize: 16, fontWeight: '600', color: '#333' },
-  closeBtn: { fontSize: 18, color: '#999' },
+  headerText: { fontSize: 16, fontWeight: "600", color: "#333" },
+  closeBtn: { fontSize: 18, color: "#999" },
   messageList: { flex: 1, marginVertical: 8 },
   bubble: {
-    maxWidth: '80%',
+    maxWidth: "85%",
     padding: 10,
     borderRadius: 12,
     marginVertical: 4,
   },
-  aiBubble: { backgroundColor: '#F0EEFF', alignSelf: 'flex-start' },
-  userBubble: { backgroundColor: '#6C63FF', alignSelf: 'flex-end' },
-  aiText: { color: '#333' },
-  userText: { color: '#fff' },
+  aiBubble: { backgroundColor: "#F0EEFF", alignSelf: "flex-start" },
+  userBubble: { backgroundColor: "#6C63FF", alignSelf: "flex-end" },
+  aiText: {
+    color: "#333",
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  userText: {
+    color: "#fff",
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  aiHeading: {
+    color: "#333",
+    fontSize: 15,
+    fontWeight: "700",
+    marginTop: 8,
+    marginBottom: 4,
+    lineHeight: 22,
+  },
+  boldText: {
+    fontWeight: "700",
+    color: "#222",
+  },
+  italicText: {
+    fontStyle: "italic",
+    color: "#333",
+  },
+  inlineCode: {
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    backgroundColor: "#E5E1FF",
+    color: "#333",
+    paddingHorizontal: 4,
+    borderRadius: 4,
+  },
+  bulletRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginVertical: 2,
+  },
+  bulletDot: {
+    color: "#333",
+    marginRight: 6,
+    lineHeight: 21,
+  },
   inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: "#eee",
     paddingTop: 8,
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 8,
     fontSize: 14,
   },
   sendBtn: {
-    backgroundColor: '#6C63FF',
+    backgroundColor: "#6C63FF",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
   },
-  sendText: { color: '#fff', fontWeight: '600' },
+  sendText: { color: "#fff", fontWeight: "600" },
 });
 
 export { ChatButton };
-
