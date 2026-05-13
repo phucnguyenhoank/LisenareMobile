@@ -25,18 +25,22 @@ async function createCacheKey(text: string) {
   );
 }
 
-export function useTTSPlayer(text: string) {
+export function useTTSPlayer(text: string | null) {
   const [audioUri, setAudioUri] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
     async function prepare() {
+      if (!text?.trim()) {
+        setAudioUri(null);
+        return;
+      }
+
       try {
         await ensureCacheDir();
 
         const hash = await createCacheKey(text);
-
         const audioFile = new File(AUDIO_CACHE_DIR, `${hash}.mp3`);
 
         // 1. Use cache if exists
@@ -49,9 +53,7 @@ export function useTTSPlayer(text: string) {
 
         // 2. Build API URL
         const payload = JSON.stringify({ text });
-
         const encodedData = Buffer.from(payload).toString("base64");
-
         const streamUrl = `${API_BASE_URL}/text/tts-stream?data=${encodedData}`;
 
         // 3. Download directly to cache

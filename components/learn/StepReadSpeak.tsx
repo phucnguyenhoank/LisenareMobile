@@ -45,7 +45,7 @@ export default function StepReadSpeak({
         native_text={native_text}
         showTarget={showTarget}
         showNative={showNative}
-        setShowTarget={setShowTarget}
+        handleShowTarget={() => setShowTarget(!showTarget)}
         setShowNative={setShowNative}
       />
       {isAudioLoading ? (

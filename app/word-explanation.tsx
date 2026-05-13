@@ -178,6 +178,9 @@ export default function WordExplanationScreen() {
           ))}
         </View>
       )}
+      <Text style={styles.aiWarningText}>
+        ⚠️ AI-generated, check important info
+      </Text>
     </ScrollView>
   );
 }
@@ -313,5 +316,10 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     textAlign: "center",
     lineHeight: 22,
+  },
+
+  aiWarningText: {
+    fontSize: 12,
+    color: "#9CA3AF",
   },
 });

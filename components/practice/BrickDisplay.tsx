@@ -6,7 +6,7 @@ type Props = {
   target_text: string;
   native_text: string;
   showTarget: boolean;
-  setShowTarget: (v: boolean) => void;
+  handleShowTarget: () => void;
   showNative: boolean;
   setShowNative: (v: boolean) => void;
 };
@@ -15,7 +15,7 @@ export function BrickDisplay({
   target_text,
   native_text,
   showTarget,
-  setShowTarget,
+  handleShowTarget,
   showNative,
   setShowNative,
 }: Props) {
@@ -24,7 +24,7 @@ export function BrickDisplay({
   return (
     <>
       {/* TARGET TEXT */}
-      <Pressable onPress={() => setShowTarget(!showTarget)}>
+      <Pressable onPress={() => handleShowTarget()}>
         <Text style={[styles.target_text, { color: colors.secondary2 }]}>
           {showTarget ? (
             target_text

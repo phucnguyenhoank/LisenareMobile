@@ -1,5 +1,6 @@
-import { ApiError, request } from "@/api/client";
+import { request } from "@/api/client";
 import { BrickMetadataSelector } from "@/components/brick-form/BrickMetadataSelector";
+import { useTTSPlayer } from "@/hooks/useTTSPlayer";
 import colors from "@/theme/colors";
 import {
   GrammarPoint,
@@ -7,6 +8,7 @@ import {
   SentenceStructure,
   UnitType,
 } from "@/types/brick";
+import { SentenceTranslateResponse } from "@/types/sentence";
 import { cleanText } from "@/utils/brick-preprocessing";
 import { Feather, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import {
@@ -22,6 +24,8 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Button,
+  Pressable,
   StyleSheet,
   Switch,
   Text,
@@ -52,21 +56,6 @@ export default function AddBrickScreen() {
     public: true,
   });
 
-  const [loading, setLoading] = useState(false);
-
-  const [audioPath, setAudioPath] = useState<string | null>(
-    params.audio_path ?? null,
-  );
-
-  const [isTargetTextUnique, setIsTargetTextUnique] = useState(true);
-  const [isChecking, setIsChecking] = useState(false);
-
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-
-  const { isRecording } = useAudioRecorderState(recorder);
-
-  const player = useAudioPlayer(null);
-
   // metadata
   const [metadata, setMetadata] = useState({
     unitType: UnitType.sentence,
@@ -75,11 +64,32 @@ export default function AddBrickScreen() {
     selectedGrammarPoints: [] as GrammarPoint[],
   });
 
+  const [loading, setLoading] = useState(false);
+  const [isTargetTextUnique, setIsTargetTextUnique] = useState(true);
+  const [isChecking, setIsChecking] = useState(false);
+
+  const [audioPath, setAudioPath] = useState<string | null>(
+    params.audio_path ?? null,
+  );
+  const player = useAudioPlayer(null);
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const { isRecording } = useAudioRecorderState(recorder);
+
+  const [ttsRequestText, setTtsRequestText] = useState<string | null>(null);
+  const { audioUri: generatedAudioUri } = useTTSPlayer(ttsRequestText);
+  const [isTranslating, setIsTranslating] = useState(false);
+
   useEffect(() => {
     if (audioPath) {
       player.replace({ uri: audioPath });
     }
   }, [audioPath, player]);
+
+  useEffect(() => {
+    console.log("generatedAudioUri:", generatedAudioUri);
+    if (!generatedAudioUri) return;
+    setAudioPath(generatedAudioUri);
+  }, [generatedAudioUri]);
 
   useEffect(() => {
     if (!form.target.trim()) {
@@ -106,26 +116,26 @@ export default function AddBrickScreen() {
     return () => clearTimeout(timeout);
   }, [form.target]);
 
+  const setManualAudio = (uri: string) => {
+    setAudioPath(uri);
+    setTtsRequestText(null);
+  };
+
   const toggleRecord = async () => {
     if (isRecording) {
       await recorder.stop();
-
       if (recorder.uri) {
-        setAudioPath(recorder.uri);
+        setManualAudio(recorder.uri);
       }
-
       return;
     }
 
     const permission = await AudioModule.requestRecordingPermissionsAsync();
-
     if (!permission.granted) {
       Alert.alert("Permission needed", "Please allow microphone access.");
       return;
     }
-
     await recorder.prepareToRecordAsync();
-
     recorder.record();
   };
 
@@ -138,9 +148,7 @@ export default function AddBrickScreen() {
 
       if (!result.canceled) {
         const asset = result.assets[0];
-
-        setAudioPath(asset.uri);
-
+        setManualAudio(asset.uri);
         Alert.alert("Success", `Selected: ${asset.name}`);
       }
     } catch (err) {
@@ -150,13 +158,8 @@ export default function AddBrickScreen() {
 
   const handlePlayAudio = () => {
     if (!audioPath) return;
-
-    if (player.playing) {
-      player.pause();
-    } else {
-      player.seekTo(0);
-      player.play();
-    }
+    player.seekTo(0);
+    player.play();
   };
 
   const onSubmit = async () => {
@@ -206,17 +209,55 @@ export default function AddBrickScreen() {
         body: data,
       });
 
-      Alert.alert("Success", "Brick created successfully!", [
-        {
-          text: "OK",
-          onPress: () => router.back(),
-        },
-      ]);
+      Alert.alert(
+        "Success",
+        "Brick created successfully!",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+            onPress: () => router.back(),
+          },
+          {
+            text: "OK",
+            onPress: () => {},
+          },
+        ],
+        { cancelable: false },
+      );
     } catch (err) {
       Alert.alert("Error", "Please check your connection.");
       console.log((err as any).data);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAutoTranslate = async () => {
+    if (!form.native.trim()) return;
+
+    try {
+      setIsTranslating(true);
+
+      const result = await request<SentenceTranslateResponse>(
+        "/text/translations",
+        {
+          method: "POST",
+          body: {
+            text: form.native,
+            target_lang: "en",
+          },
+        },
+      );
+
+      setForm((f) => ({
+        ...f,
+        target: result.text,
+      }));
+    } catch (err) {
+      console.error("Auto translate failed:", err);
+    } finally {
+      setIsTranslating(false);
     }
   };
 
@@ -245,7 +286,6 @@ export default function AddBrickScreen() {
           <View style={styles.audioTop}>
             <View>
               <Text style={styles.sectionTitle}>Audio</Text>
-
               <Text style={styles.sectionSubtitle}>
                 Record or upload pronunciation
               </Text>
@@ -278,32 +318,16 @@ export default function AddBrickScreen() {
 
           <TouchableOpacity style={styles.uploadButton} onPress={pickAudioFile}>
             <Feather name="upload" size={18} color={colors.secondary2} />
-
             <Text style={styles.uploadText}>Upload Audio File</Text>
           </TouchableOpacity>
 
           {audioPath && !isRecording && (
             <TouchableOpacity
-              style={[
-                styles.previewButton,
-                player.playing && styles.previewButtonPlaying,
-              ]}
+              style={styles.previewButton}
               onPress={handlePlayAudio}
             >
-              <Ionicons
-                name={player.playing ? "pause" : "play"}
-                size={18}
-                color={player.playing ? "#fff" : colors.secondary2}
-              />
-
-              <Text
-                style={[
-                  styles.previewText,
-                  player.playing && styles.previewTextPlaying,
-                ]}
-              >
-                {player.playing ? "Playing..." : "Preview Audio"}
-              </Text>
+              <Ionicons name={"play"} size={18} color={colors.secondary2} />
+              <Text style={styles.previewText}>Preview Audio</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -314,7 +338,20 @@ export default function AddBrickScreen() {
 
           {/* Vietnamese */}
           <View style={styles.fieldWrapper}>
-            <Text style={styles.fieldLabel}>🇻🇳 Vietnamese</Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.fieldLabel}>🇻🇳 Vietnamese</Text>
+
+              {form.native.trim().length > 0 && (
+                <TouchableOpacity
+                  onPress={handleAutoTranslate}
+                  disabled={isTranslating}
+                >
+                  <Text style={styles.autoTranslateText}>
+                    {isTranslating ? "Translating..." : "✨ Auto translate"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
 
             <View style={styles.inputCard}>
               <TextInput
@@ -339,6 +376,15 @@ export default function AddBrickScreen() {
 
               {isChecking && (
                 <ActivityIndicator size="small" color={colors.secondary2} />
+              )}
+
+              {form.target.trim().length > 0 && (
+                <TouchableOpacity
+                  onPress={() => setTtsRequestText(form.target)}
+                  disabled={isTranslating}
+                >
+                  <Text style={styles.autoTranslateText}>🔊 Get audio</Text>
+                </TouchableOpacity>
               )}
             </View>
 
@@ -457,7 +503,6 @@ export default function AddBrickScreen() {
           ) : (
             <>
               <Feather name="check-circle" size={20} color="#fff" />
-
               <Text style={styles.submitText}>Create Brick</Text>
             </>
           )}
@@ -585,17 +630,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 
-  previewButtonPlaying: {
-    backgroundColor: colors.secondary2,
-  },
-
   previewText: {
     color: colors.secondary2,
     fontWeight: "700",
-  },
-
-  previewTextPlaying: {
-    color: "#fff",
   },
 
   // FIELDS
@@ -645,6 +682,13 @@ const styles = StyleSheet.create({
     color: "#EF4444",
     fontSize: 13,
     fontWeight: "600",
+  },
+
+  autoTranslateText: {
+    marginTop: 8,
+    fontSize: 13,
+    color: colors.secondary2,
+    fontWeight: "500",
   },
 
   // SWITCH

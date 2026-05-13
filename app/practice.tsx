@@ -169,9 +169,9 @@ export default function PracticeScreen() {
   };
 
   const sendReport = async (description: string) => {
-    const cleanFilename = brick?.target_audio_path.split("/").pop();
+    const brickId = brick?.id;
     const response = await request<StatusResponse>(
-      `/bricks/report/${cleanFilename}?description=${encodeURIComponent(description)}`,
+      `/bricks/report/${brickId}?description=${encodeURIComponent(description)}`,
       { method: "POST" },
     );
     setToast(`${response.message}. Cảm ơn bạn!`);
@@ -322,6 +322,11 @@ export default function PracticeScreen() {
     }
   }, [compareResult]);
 
+  const handleShowTarget = () => {
+    setShowTarget(!showTarget);
+    setIsAnswerRevealed(true);
+  };
+
   return (
     <View style={styles.container}>
       <KeyboardAwareScrollView
@@ -336,8 +341,8 @@ export default function PracticeScreen() {
         />
 
         <CloseButton />
-        <Text style={styles.debugText}>
-          {isAnswerRevealed ? "REVEALED" : "Fresh"}
+        <Text style={styles.revealedStateText}>
+          {isAnswerRevealed ? "🐵" : "🙈"}
         </Text>
 
         {brick ? (
@@ -345,7 +350,7 @@ export default function PracticeScreen() {
             target_text={brick.target_text}
             native_text={brick.native_text}
             showTarget={showTarget}
-            setShowTarget={setShowTarget}
+            handleShowTarget={handleShowTarget}
             showNative={showNative}
             setShowNative={setShowNative}
           />
@@ -501,8 +506,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  debugText: {
-    fontSize: 10,
+  revealedStateText: {
+    fontSize: 12,
   },
 
   //
