@@ -13,8 +13,8 @@ import { Screen, Topic } from "../../types/grammar";
 import TextButton from "@/components/TextButton";
 
 export default function GrammarStudying() {
-  const { token, isTokenLoading } = useAuth(); // ← thêm
-  const router = useRouter(); // ← thêm (dùng nếu muốn redirect)
+  const { token, isTokenLoading } = useAuth();
+  const router = useRouter();
 
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(false); // ← đổi thành false
@@ -97,10 +97,13 @@ export default function GrammarStudying() {
           gap: 6,
         }}
       >
-        <TextButton title="Đăng nhập" onPress={() => router.push("/setting")} />
-        <Text style={{ marginTop: 10, fontSize: 16, color: "#444" }}>
-          để học ngữ pháp
-        </Text>
+        <Link
+          href="/setting"
+          style={{ fontSize: 16, fontWeight: "bold", color: colors.secondary }}
+        >
+          Đăng nhập
+        </Link>
+        <Text style={{ fontSize: 15, color: "#444" }}>để học ngữ pháp</Text>
       </View>
     );
   }

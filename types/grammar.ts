@@ -17,6 +17,7 @@ export interface Topic {
 
 export interface Question {
   question: string;
+  question_id: number;
   answer: string[];
   correct_answer: string;
 }
