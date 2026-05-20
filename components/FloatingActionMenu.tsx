@@ -2,8 +2,8 @@ import colors from "@/theme/colors";
 import {
   AntDesign,
   Feather,
+  Ionicons,
   MaterialCommunityIcons,
-  MaterialIcons,
 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -27,7 +27,7 @@ export default function FloatingActionMenu() {
             style={styles.miniFabWithLabel}
             onPress={() => {
               setIsOpen(false);
-              router.push("/chat");
+              router.push("/chat-tutor");
             }}
           >
             <MaterialCommunityIcons
@@ -42,7 +42,7 @@ export default function FloatingActionMenu() {
             style={styles.miniFabWithLabel}
             onPress={() => {
               setIsOpen(false);
-              router.push("/word-explanation");
+              router.push("/explain-word");
             }}
           >
             <MaterialCommunityIcons
@@ -50,7 +50,7 @@ export default function FloatingActionMenu() {
               size={28}
               color="white"
             />
-            <Text style={styles.miniFabText}>Tra cứu</Text>
+            <Text style={styles.miniFabText}>Look Up</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -65,29 +65,29 @@ export default function FloatingActionMenu() {
               size={28}
               color="white"
             />
-            <Text style={styles.miniFabText}>Thêm câu</Text>
+            <Text style={styles.miniFabText}>Add Brick</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.miniFabWithLabel}
             onPress={() => {
               setIsOpen(false);
-              router.push("/listening-practice");
+              router.push("/practice-listening");
             }}
           >
             <Feather name="headphones" size={28} color="white" />
-            <Text style={styles.miniFabText}>Luyện nghe</Text>
+            <Text style={styles.miniFabText}>Listening</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.miniFabWithLabel}
             onPress={() => {
               setIsOpen(false);
-              router.push("/practice");
+              router.push("/practice-speaking");
             }}
           >
-            <MaterialIcons name="fitness-center" size={28} color="white" />
-            <Text style={styles.miniFabText}>Luyện nói</Text>
+            <Ionicons name="barbell-outline" size={28} color="white" />
+            <Text style={styles.miniFabText}>Speaking</Text>
           </TouchableOpacity>
         </View>
       )}

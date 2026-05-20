@@ -1,9 +1,8 @@
-import { request } from "@/api/client";
+import { request } from "@/services/client";
 import ChartCard from "@/components/learning-statistic/ChartCard";
 import HistorySummaryCard from "@/components/learning-statistic/HistorySummaryCard";
 import MemoryQualityCard from "@/components/learning-statistic/MemoryQualityCard";
 import TodayOverviewCard from "@/components/learning-statistic/TodayOverviewCard";
-import TextButton from "@/components/TextButton";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
 import {
@@ -25,6 +24,7 @@ import {
   Text,
   View,
 } from "react-native";
+import Button from "@/components/Button";
 
 const RANGE_TO_DAYS: Record<TimeRange, number | null> = {
   "30d": 30,
@@ -120,7 +120,11 @@ export default function LearnerStatisticScreen() {
   if (!token) {
     return (
       <View style={styles.center}>
-        <TextButton title="Đăng nhập" onPress={() => router.push("/setting")} />
+        <Button
+          title="Đăng nhập"
+          onPress={() => router.push("/setting")}
+          style={{ alignSelf: "center" }}
+        />
         <Text style={styles.subtitle}>để theo dõi tiến độ học tập</Text>
       </View>
     );
@@ -150,10 +154,10 @@ export default function LearnerStatisticScreen() {
         <RefreshControl refreshing={pageLoading} onRefresh={onRefresh} />
       }
     >
-      <Text style={styles.pageTitle}>Xin chào, {user?.full_name ?? "bạn"}</Text>
-      <Text style={styles.pageSubtitle}>Dữ liệu học tập của bạn</Text>
+      <Text style={styles.pageTitle}>Thống kê học tập </Text>
+      <Text style={styles.pageSubtitle}>của {user?.full_name ?? "bạn"}</Text>
 
-      <Text style={styles.sectionTitle}>Dữ liệu của hôm nay</Text>
+      <Text style={styles.sectionTitle}>Số thẻ mới hôm nay</Text>
 
       <TodayOverviewCard
         total={todayTotal}

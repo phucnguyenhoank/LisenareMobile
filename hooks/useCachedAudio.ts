@@ -1,4 +1,4 @@
-import { resolveAudioUrl } from "@/api/endpoints";
+import { resolveAudioUrl } from "@/services/endpoints";
 import { getCachedAudioUri } from "@/utils/audio-cache";
 import { useEffect, useState } from "react";
 

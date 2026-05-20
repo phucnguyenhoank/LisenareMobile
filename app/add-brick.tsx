@@ -1,4 +1,4 @@
-import { request } from "@/api/client";
+import { request } from "@/services/client";
 import { BrickMetadataSelector } from "@/components/brick-form/BrickMetadataSelector";
 import { useTTSPlayer } from "@/hooks/useTTSPlayer";
 import colors from "@/theme/colors";
@@ -52,7 +52,6 @@ export default function AddBrickScreen() {
     native: params.native || "",
     target: params.target || "",
     coll: "My Daily Expressions",
-    group: "Essential",
     public: true,
   });
 
@@ -189,7 +188,6 @@ export default function AddBrickScreen() {
         native_text: form.native,
         target_text: form.target,
         collection_name: form.coll,
-        group_name: form.group,
         is_public: form.public,
         brick_metadata: {
           unit_type: metadata.unitType,
@@ -426,23 +424,6 @@ export default function AddBrickScreen() {
                   setForm((f) => ({
                     ...f,
                     coll: t,
-                  }))
-                }
-              />
-            </View>
-          </View>
-
-          <View style={styles.fieldWrapper}>
-            <Text style={styles.fieldLabel}>Group</Text>
-
-            <View style={styles.inputCard}>
-              <TextInput
-                style={styles.singleInput}
-                value={form.group}
-                onChangeText={(t) =>
-                  setForm((f) => ({
-                    ...f,
-                    group: t,
                   }))
                 }
               />

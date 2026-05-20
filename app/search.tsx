@@ -1,7 +1,7 @@
-import { request } from "@/api/client"; // Adjust path to your file structure
-import ModeTabs from "@/components/context-search/ModeTabs";
-import SearchBar from "@/components/context-search/SearchBar";
-import SearchResultsList from "@/components/context-search/SearchResultsList";
+import { request } from "@/services/client"; // Adjust path to your file structure
+import ModeTabs from "@/features/context-search/ModeTabs";
+import SearchBar from "@/features/context-search/SearchBar";
+import SearchResultsList from "@/features/context-search/SearchResultsList";
 import {
   BrickContextSearchResult,
   SearchMode,

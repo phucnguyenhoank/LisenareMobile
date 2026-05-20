@@ -1,4 +1,4 @@
-import { request } from "@/api/client";
+import { request } from "@/services/client";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
 import { Link, useRouter } from "expo-router";
@@ -10,7 +10,6 @@ import { QuizScreen } from "../../components/grammar/Quizscreen";
 import { TopicListScreen } from "../../components/grammar/Topiclistscreen";
 import { S } from "../../theme/grammar_styles";
 import { Screen, Topic } from "../../types/grammar";
-import TextButton from "@/components/TextButton";
 
 export default function GrammarStudying() {
   const { token, isTokenLoading } = useAuth();

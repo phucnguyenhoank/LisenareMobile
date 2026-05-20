@@ -1,8 +1,7 @@
-import { request } from "@/api/client";
+import { request } from "@/services/client";
 import { AudioInput } from "@/components/AudioInput";
 import { BrickMetadataSelector } from "@/components/brick-form/BrickMetadataSelector";
-import { FormField } from "@/components/FormField";
-import TextButton from "@/components/TextButton";
+import { FormField } from "@/features/edit-brick/FormField";
 import { useAuth } from "@/context/AuthContext";
 import { useCachedAudio } from "@/hooks/useCachedAudio";
 import colors from "@/theme/colors";
@@ -13,13 +12,11 @@ import { Learner } from "@/types/learnner";
 import { cleanText } from "@/utils/brick-preprocessing";
 import { Picker } from "@react-native-picker/picker";
 import { useQuery } from "@tanstack/react-query";
-import { useAudioPlayer } from "expo-audio";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Pressable,
   StyleSheet,
   Switch,
   Text,
@@ -28,6 +25,7 @@ import {
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Button from "@/components/Button";
 
 export default function EditBrickScreen() {
   const { token, isTokenLoading } = useAuth();
@@ -71,7 +69,7 @@ export default function EditBrickScreen() {
       try {
         const [b, c] = await Promise.all([
           request<Brick>(`/bricks/by-id/${brickId}`),
-          request<Collection[]>("/collections"),
+          request<Collection[]>("/collections/pending"),
         ]);
         setBrick(b);
         setCreatorId(b.creator_id);
@@ -272,13 +270,13 @@ export default function EditBrickScreen() {
         />
 
         <View style={styles.actionRow}>
-          <TextButton
+          <Button
             title="Thoát"
             variant="outline"
             onPress={() => router.back()}
             style={styles.flex1}
           />
-          <TextButton
+          <Button
             title={isSaving ? "Đang lưu..." : "Lưu thay đổi"}
             onPress={handleSave}
             disabled={isSaving}

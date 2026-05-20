@@ -1,4 +1,4 @@
-import { request } from "@/api/client";
+import { request } from "@/services/client";
 import colors from "@/theme/colors";
 import { Brick } from "@/types/brick";
 import { useQuery } from "@tanstack/react-query";

@@ -1,31 +1,40 @@
-import { request } from "@/api/client";
-import ChangePasswordForm from "@/components/auth/ChangePasswordForm";
-import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
-import SignInForm from "@/components/auth/SignInForm";
-import SignUpForm from "@/components/auth/SignUpForm";
-import TextButton from "@/components/TextButton";
+import { request } from "@/services/client";
+import ChangePasswordForm from "@/features/auth/ChangePasswordForm";
+import ForgotPasswordForm from "@/features/auth/ForgotPasswordForm";
+import SignInForm from "@/features/auth/SignInForm";
+import SignUpForm from "@/features/auth/SignUpForm";
 import { useAuth } from "@/context/AuthContext";
 import { Learner } from "@/types/learnner";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { useQuery } from "@tanstack/react-query";
-import EditableName from "@/components/setting-screen/EditableName";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import EditableName from "@/features/setting-screen/EditableName";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import Button from "@/components/Button";
 
 type AuthMode = "signin" | "signup" | "forgot";
 
 export default function SettingScreen() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (newName: string) =>
+      request("/learners/me", {
+        method: "PATCH",
+        body: { full_name: newName },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+  });
+
   const params = useLocalSearchParams();
   const router = useRouter();
-  const { token, signout, isTokenLoading } = useAuth();
+  const { token, clearPersistedAuth, isTokenLoading } = useAuth();
   const [mode, setMode] = useState<AuthMode>("signin");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const {
-    data: user,
-    isLoading: isLoadingUser,
-    error,
-  } = useQuery<Learner>({
+  const { data: user, isLoading: isLoadingUser } = useQuery<Learner>({
     queryKey: ["me"],
     queryFn: () => request<Learner>("/learners/me"),
     enabled: !!token, // only run when token exists
@@ -39,18 +48,9 @@ export default function SettingScreen() {
     setIsChangingPassword(false);
   }, [token]);
 
-  if (isTokenLoading) {
+  if (isTokenLoading || isLoadingUser) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator />
-        <Text>Loading token...</Text>
-      </View>
-    );
-  }
-
-  if (isLoadingUser) {
-    return (
-      <View style={styles.centerContainer}>
+      <View style={styles.container}>
         <ActivityIndicator />
         <Text>Loading user...</Text>
       </View>
@@ -70,19 +70,23 @@ export default function SettingScreen() {
               <Text style={styles.subtitle}>Mã người học: {user?.id}</Text>
             </View>
 
-            {/* Actions */}
-            <View style={styles.actions}>
-              <TextButton
-                title="Đổi mật khẩu"
-                onPress={() => setIsChangingPassword(true)}
-              />
+            <View style={styles.spacing} />
 
-              <TextButton
-                title="Đăng xuất"
-                onPress={signout}
-                variant={"outline"}
-              />
-            </View>
+            {/* Actions */}
+            <Button
+              title="Đổi mật khẩu"
+              onPress={() => setIsChangingPassword(true)}
+              style={{ alignSelf: "center" }}
+            />
+
+            <View style={styles.spacing} />
+
+            <Button
+              title="Đăng xuất"
+              onPress={clearPersistedAuth}
+              variant={"outline"}
+              style={{ alignSelf: "center" }}
+            />
           </>
         )}
       </View>
@@ -112,28 +116,18 @@ export default function SettingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    backgroundColor: "#f8f9fb",
-  },
-
-  centerContainer: {
-    flex: 1,
+    flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#f8fbf8",
   },
 
   card: {
     backgroundColor: "#fff",
-    paddingVertical: 18,
-    paddingHorizontal: 16,
+    padding: 16,
     borderRadius: 16,
-    alignItems: "center",
-
     shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    elevation: 1,
   },
 
   subtitle: {
@@ -142,8 +136,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
 
-  actions: {
-    marginTop: 24,
-    gap: 12,
+  spacing: {
+    height: 16,
   },
 });

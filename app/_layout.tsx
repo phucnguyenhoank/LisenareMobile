@@ -1,4 +1,4 @@
-import { ApiError } from "@/api/client";
+import { ApiError } from "@/services/client";
 import { AuthProvider } from "@/context/AuthContext";
 import { SessionProvider } from "@/context/SessionContext";
 import { showAlert } from "@/utils/alerts";
@@ -17,7 +17,7 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldPlaySound: true,
     shouldSetBadge: true,
-    shouldShowBanner: true, // Hiện banner thông báo khi đang mở app for testing
+    shouldShowBanner: true,
     shouldShowList: true,
   }),
 });
@@ -40,7 +40,7 @@ const queryClient = new QueryClient({
     onError: (error) => {
       // This runs automatically whenever ANY useQuery fails
       if (error instanceof ApiError && error.status === 401) {
-        authActions.signout();
+        authActions.clearPersistedAuth();
         showAlert({
           title: "Phiên đăng nhập hết hạn",
           message: "Hãy đăng nhập lại",

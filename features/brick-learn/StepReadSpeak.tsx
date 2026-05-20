@@ -1,0 +1,78 @@
+import { useCachedAudio } from "@/hooks/useCachedAudio";
+import { useAudioPlayer } from "expo-audio";
+import { useState } from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import PlaySoundButton from "@/components/PlaySoundButton";
+import { BrickDisplay } from "@/features/brick-practice/BrickDisplay";
+import NextButton from "@/features/brick-practice/NextButton";
+
+interface Props {
+  audioUri: string;
+  target_text: string;
+  native_text: string;
+  changeStep: () => void;
+}
+
+export default function StepReadSpeak({
+  audioUri,
+  target_text,
+  native_text,
+  changeStep,
+}: Props) {
+  const { audioPath, isAudioLoading } = useCachedAudio(audioUri);
+  const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
+  const DEFAULT_SETTINGS = {
+    firstShowTarget: true,
+    firstShowNative: false,
+  };
+  const [showTarget, setShowTarget] = useState<boolean>(
+    DEFAULT_SETTINGS.firstShowTarget,
+  );
+  const [showNative, setShowNative] = useState<boolean>(
+    DEFAULT_SETTINGS.firstShowNative,
+  );
+  const playSound = () => {
+    player.volume = 1.0;
+    player.seekTo(0);
+    player.play();
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Đọc hiểu tiếng Anh và Nói lại</Text>
+      <BrickDisplay
+        target_text={target_text}
+        native_text={native_text}
+        showTarget={showTarget}
+        showNative={showNative}
+        handleShowTarget={() => setShowTarget(!showTarget)}
+        setShowNative={setShowNative}
+      />
+      {isAudioLoading ? (
+        <ActivityIndicator />
+      ) : (
+        <PlaySoundButton onPress={playSound} style={styles.playSoundButton} />
+      )}
+      <NextButton onPress={changeStep} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 100,
+  },
+  playSoundButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    margin: 20,
+  },
+});

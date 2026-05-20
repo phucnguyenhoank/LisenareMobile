@@ -1,5 +1,10 @@
 import colors from "@/theme/colors";
-import { Entypo, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import {
+  Entypo,
+  FontAwesome6,
+  Ionicons,
+  MaterialIcons,
+} from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -27,7 +32,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Khám phá",
+          title: "Explore",
           tabBarIcon: ({ color }) => (
             <AntDesign name="compass" size={24} color={color} />
           ),
@@ -88,11 +93,23 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="pending-collections"
+        name="pending-bricks"
         options={{
-          title: "Thực hành",
+          title: "Practice",
           tabBarIcon: ({ color }) => (
-            <Entypo name="pencil" size={24} color={color} />
+            <MaterialIcons name="fitness-center" size={24} color={color} />
+          ),
+          headerRight: () => (
+            <Pressable
+              onPress={() => router.push("/collection-management")}
+              style={{ marginRight: 15 }}
+            >
+              <MaterialCommunityIcons
+                name="playlist-edit"
+                size={32}
+                color="black"
+              />
+            </Pressable>
           ),
         }}
       />
@@ -100,7 +117,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="learner-statistic"
         options={{
-          title: "Tiến độ",
+          title: "Progress",
           tabBarIcon: ({ color }) => (
             <AntDesign name="line-chart" size={24} color={color} />
           ),
@@ -118,7 +135,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="grammar-learning"
         options={{
-          title: "Ngữ pháp",
+          title: "Grammar",
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons
               name="alphabetical"

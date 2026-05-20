@@ -3,11 +3,11 @@ export type Collection = {
   name: string;
   creator_id: number;
   created_at: string;
-  brick_count: number | null;
-  learned_count: number | null;
+  brick_count?: number;
+  learned_count?: number;
 };
 
-export type GroupStats = {
-  group_name: string;
-  collection_count: number;
+export type SystemLevel = {
+  name: string;
+  id: number;
 };

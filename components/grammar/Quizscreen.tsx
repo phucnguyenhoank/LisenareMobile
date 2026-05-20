@@ -1,11 +1,6 @@
-import { request } from "@/api/client";
+import { request } from "@/services/client";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { QuizContext } from "../../context/QuizContext";
 import { C, isMultiChoice, normalize } from "../../theme/grammar_constants";
@@ -43,7 +38,9 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
     setScore(0);
     questionStartTimes.current = {};
     try {
-      const data = await request<Question[]>(`/grammar/questions/${exercise.id}`);
+      const data = await request<Question[]>(
+        `/grammar/questions/${exercise.id}`,
+      );
       setQuestions(data);
       data.forEach((_, i) => {
         questionStartTimes.current[i] = Date.now();
@@ -59,18 +56,21 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
     fetchQuestions();
   }, [fetchQuestions]);
 
-  const handleAnswer = useCallback((index: number, value: string) => {
-    const startTime = questionStartTimes.current[index] ?? Date.now();
-    const timeSeconds = Math.round((Date.now() - startTime) / 1000);
-    setAnswers((prev) => ({
-      ...prev,
-      [index]: {
-        question_id: questions[index]?.question_id,
-        user_answer: value,
-        time_seconds: timeSeconds,
-      },
-    }));
-  }, [questions]);
+  const handleAnswer = useCallback(
+    (index: number, value: string) => {
+      const startTime = questionStartTimes.current[index] ?? Date.now();
+      const timeSeconds = Math.round((Date.now() - startTime) / 1000);
+      setAnswers((prev) => ({
+        ...prev,
+        [index]: {
+          question_id: questions[index]?.question_id,
+          user_answer: value,
+          time_seconds: timeSeconds,
+        },
+      }));
+    },
+    [questions],
+  );
 
   const handleSubmit = async () => {
     let correct = 0;
@@ -103,18 +103,31 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
   };
 
   const allAnswered = useMemo(
-    () => questions.every((_, i) => answers[i]?.user_answer !== undefined && answers[i]?.user_answer !== ""),
-    [questions, answers]
+    () =>
+      questions.every(
+        (_, i) =>
+          answers[i]?.user_answer !== undefined &&
+          answers[i]?.user_answer !== "",
+      ),
+    [questions, answers],
   );
 
   const unanswered = useMemo(
-    () => questions.filter((_, i) => !answers[i]?.user_answer || answers[i]?.user_answer === "").length,
-    [questions, answers]
+    () =>
+      questions.filter(
+        (_, i) => !answers[i]?.user_answer || answers[i]?.user_answer === "",
+      ).length,
+    [questions, answers],
   );
 
-  const pct = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
+  const pct =
+    questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
   const msg =
-    pct >= 80 ? "Xuất sắc! 🎉" : pct >= 50 ? "Khá tốt! Cố lên nhé 💪" : "Cần ôn thêm rồi! 📚";
+    pct >= 80
+      ? "Xuất sắc! 🎉"
+      : pct >= 50
+        ? "Khá tốt! Cố lên nhé 💪"
+        : "Cần ôn thêm rồi! 📚";
 
   if (loading) {
     return (
@@ -197,7 +210,7 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
                   onAnswer={handleAnswer}
                   submitted={submitted}
                 />
-              )
+              ),
             )}
           </View>
 

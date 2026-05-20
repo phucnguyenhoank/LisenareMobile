@@ -1,6 +1,6 @@
-import { request } from "@/api/client";
+import { request } from "@/services/client";
 import { AudioInput } from "@/components/AudioInput";
-import { SnippetTextInput } from "@/components/SnippetTextInput";
+import { SnippetTextInput } from "@/features/add-snippet/SnippetTextInput";
 import colors from "@/theme/colors";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -12,9 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import {
-  KeyboardAwareScrollView
-} from "react-native-keyboard-controller";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AddSnippetScreen() {
