@@ -94,6 +94,11 @@ export type Brick = {
   learned: boolean;
 };
 
+export type BrickPage = {
+  items: Brick[];
+  total: number;
+};
+
 /** Simple version for lists/previews */
 export type SimpleBrick = Pick<Brick, "id" | "target_text">;
 

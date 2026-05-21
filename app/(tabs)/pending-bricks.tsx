@@ -18,7 +18,7 @@ import {
   View,
 } from "react-native";
 import Button from "@/components/Button";
-import { Brick } from "@/types/brick";
+import { Brick, BrickPage } from "@/types/brick";
 import BrickRowItem from "@/features/pending-bricks/BrickRowItem";
 import FilterSortModal from "@/features/pending-bricks/FilterSortModal";
 import {
@@ -27,14 +27,15 @@ import {
   SORT_OPTIONS,
   STATUS_OPTIONS,
 } from "@/constants/bricks";
-import { Toast } from "@/components/Toast";
+import { Toast } from "@/components/ToastOld";
 import BrickFilterBar from "@/features/pending-bricks/BrickFilterBar";
 
 export default function PendingCollectionsScreen() {
   const router = useRouter();
   const { token, isTokenLoading } = useAuth();
-  const [isFilterSortModelVisible, seIsFilterSortModelVisible] =
-    useState(false);
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
   const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -51,13 +52,13 @@ export default function PendingCollectionsScreen() {
   const [selectedCollectionId, setSelectedCollectionId] = useState<
     number | null
   >(null);
-  const selectedCollection = collections.find(
-    (collection) => collection.id === selectedCollectionId,
-  );
   const [selectedStatus, setSelectedStatus] = useState<BrickStatusFilter>(null);
   const [selectedSort, setSelectedSort] = useState<BrickSort>("RECOMMENDED");
 
-  // Auto-select the first collection once loaded
+  const selectedCollection = collections.find(
+    (collection) => collection.id === selectedCollectionId,
+  );
+
   useEffect(() => {
     if (collections.length > 0 && selectedCollectionId === null) {
       setSelectedCollectionId(collections[0].id);
@@ -75,7 +76,7 @@ export default function PendingCollectionsScreen() {
     queryKey: ["bricks", selectedCollectionId, selectedStatus, selectedSort],
     queryFn: async ({ pageParam }) => {
       if (selectedCollectionId === null) {
-        return [];
+        return { items: [], total: 0 };
       }
 
       const params = new URLSearchParams({
@@ -89,11 +90,16 @@ export default function PendingCollectionsScreen() {
         params.append("status", selectedStatus);
       }
 
-      return request<Brick[]>(`/bricks/pending?${params.toString()}`);
+      return request<BrickPage>(`/bricks/pending?${params.toString()}`);
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
-      return lastPage.length === PAGINATION_LIMIT
+      const totalLoadedSoFar = allPages.reduce(
+        (sum, page) => sum + page.items.length,
+        0,
+      );
+
+      return totalLoadedSoFar < lastPage.total
         ? allPages.length + 1
         : undefined;
     },
@@ -131,7 +137,8 @@ export default function PendingCollectionsScreen() {
     );
   }
 
-  const allBricks = bricksData?.pages.flat() ?? [];
+  const allBricks = bricksData?.pages.flatMap((page) => page.items) ?? [];
+  const globalTotalBricks = bricksData?.pages[0]?.total ?? 0;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -187,12 +194,13 @@ export default function PendingCollectionsScreen() {
   return (
     <View style={styles.container}>
       <BrickFilterBar
+        totalBricks={globalTotalBricks}
         selectedCollection={selectedCollection || null}
         selectedStatus={selectedStatus || ""}
         selectedSort={selectedSort}
         STATUS_OPTIONS={STATUS_OPTIONS}
         SORT_OPTIONS={SORT_OPTIONS}
-        seIsFilterSortModelVisible={seIsFilterSortModelVisible}
+        setIsModalVisible={setIsModalVisible}
       />
 
       <FlatList
@@ -209,7 +217,7 @@ export default function PendingCollectionsScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="document-text-outline" size={48} color="#ccc" />
-            <Text style={styles.emptyText}>Không thấy bài học nào.</Text>
+            <Text style={styles.emptyText}>Bài học trống</Text>
           </View>
         }
         onEndReached={() => {
@@ -233,8 +241,8 @@ export default function PendingCollectionsScreen() {
 
       {selectedCollectionId && (
         <FilterSortModal
-          visible={isFilterSortModelVisible}
-          onClose={() => seIsFilterSortModelVisible(false)}
+          visible={isModalVisible}
+          onClose={() => setIsModalVisible(false)}
           collections={collections}
           selectedCollectionId={selectedCollectionId}
           selectedStatus={selectedStatus}

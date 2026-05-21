@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Feather from "@expo/vector-icons/Feather";
 import colors from "@/theme/colors";
-import Button from "@/components/Button";
 
 export default function BrickRowItem({
   brick,
@@ -19,49 +18,59 @@ export default function BrickRowItem({
   const [showMenu, setShowMenu] = useState(false);
   const isLearned = !!brick.learned;
 
-  // High-contrast tag colors that pop out against the dark forest theme
   const getTagColor = (type: UnitType) => {
     switch (type?.toLowerCase()) {
       case "word":
-        return { bg: "#E0F2FE", text: "#0369A1" }; // Soft Blue
+        return { bg: "#E0F2FE", text: "#0369A1" };
       case "phrase":
-        return { bg: "#FEE2E2", text: "#B91C1C" }; // Soft Red
+        return { bg: "#FEE2E2", text: "#B91C1C" };
       case "sentence":
-        return { bg: "#FEF3C7", text: "#B45309" }; // Soft Amber
+        return { bg: "#FEF3C7", text: "#B45309" };
       default:
-        return { bg: "#F3F4F6", text: "#374151" }; // Gray
+        return { bg: "#F3F4F6", text: "#374151" };
     }
   };
 
   const tagStyle = getTagColor(brick.brick_metadata?.unit_type);
 
   return (
-    <View style={styles.cardContainer}>
-      <View style={styles.mainContent}>
-        {/* Top Metadata Row */}
+    <View style={[styles.cardContainer, isLearned && styles.learnedCard]}>
+      {/* Main Tappable Surface for Learning Action */}
+      <TouchableOpacity
+        activeOpacity={0.6}
+        onPress={() => onLearn(brick.id)}
+        style={styles.mainContent}
+      >
+        {/* Top Metadata Sub-Row */}
         <View style={styles.metaRow}>
-          <View style={[styles.tag, { backgroundColor: tagStyle.bg }]}>
-            <Text style={[styles.tagText, { color: tagStyle.text }]}>
-              {brick.brick_metadata?.unit_type || "Unknown"}
-            </Text>
+          <View style={styles.badgeGroup}>
+            <View style={[styles.tag, { backgroundColor: tagStyle.bg }]}>
+              <Text style={[styles.tagText, { color: tagStyle.text }]}>
+                {brick.brick_metadata?.unit_type || "Unknown"}
+              </Text>
+            </View>
+
+            {isLearned && (
+              <View style={styles.learnedBadge}>
+                <Feather
+                  name="check"
+                  size={12}
+                  color={colors.secondary5}
+                  style={styles.boldWeight}
+                />
+                <Text style={styles.learnedText}>Learned</Text>
+              </View>
+            )}
           </View>
 
-          {isLearned && (
-            <View style={styles.learnedBadge}>
-              <Feather
-                name="check"
-                size={12}
-                color={colors.secondary5}
-                style={styles.boldWeight}
-              />
-              <Text style={styles.learnedText}>Learned</Text>
-            </View>
-          )}
-
           <TouchableOpacity
-            hitSlop={12}
-            onPress={() => setShowMenu(!showMenu)}
+            hitSlop={16}
+            onPress={(e) => {
+              e.stopPropagation();
+              setShowMenu(!showMenu);
+            }}
             accessibilityLabel="More options"
+            style={styles.menuButton}
           >
             <Feather
               name="more-vertical"
@@ -77,15 +86,7 @@ export default function BrickRowItem({
           <Text style={styles.targetText}>{brick.target_text}</Text>
           <Text style={styles.nativeText}>{brick.native_text}</Text>
         </View>
-
-        {/* Main Action Button */}
-        <Button
-          title="Learn"
-          icon={<Feather name="play" size={20} color="#FFFFFF" />}
-          onPress={() => onLearn(brick.id)}
-          style={{ alignSelf: "flex-end" }}
-        />
-      </View>
+      </TouchableOpacity>
 
       {/* Conditional Inline Context Menu */}
       {showMenu && (
@@ -98,7 +99,7 @@ export default function BrickRowItem({
             }}
           >
             <Feather name="edit-2" size={16} color={colors.text} />
-            <Text style={styles.menuItemText}>Edit Brick</Text>
+            <Text style={styles.menuItemText}>Edit</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -122,16 +123,13 @@ export default function BrickRowItem({
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
+    borderRadius: 28,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: 12,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
-    overflow: "hidden",
+  },
+  learnedCard: {
+    backgroundColor: "#FAFDF9",
   },
   mainContent: {
     padding: 16,
@@ -140,14 +138,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 12,
+  },
+  badgeGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  menuButton: {
+    padding: 4,
+    marginRight: -4,
   },
   opacityDim: {
     opacity: 0.6,
   },
-
   tag: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 28,
   },
@@ -161,27 +167,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 3,
-    backgroundColor: "#E6F4EA", // Light success background overlay
-    paddingHorizontal: 6,
+    backgroundColor: "#E6F4EA",
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 28,
   },
   learnedText: {
     fontSize: 11,
     fontWeight: "600",
-    color: colors.secondary5, // Professional Success Green
+    color: colors.secondary5,
   },
   boldWeight: {
     fontWeight: "900",
   },
   textContainer: {
-    marginBottom: 16,
+    gap: 4,
   },
   targetText: {
     fontSize: 20,
     fontWeight: "700",
     color: colors.primary,
-    marginBottom: 4,
     letterSpacing: -0.2,
   },
   nativeText: {
@@ -189,20 +194,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     opacity: 0.7,
     fontWeight: "400",
-  },
-  learnButton: {
-    backgroundColor: colors.secondary,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    borderRadius: 10,
-    gap: 6,
-  },
-  learnButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "600",
   },
   dropdownMenu: {
     borderTopWidth: 1,

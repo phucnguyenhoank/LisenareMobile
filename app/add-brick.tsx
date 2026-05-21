@@ -38,6 +38,7 @@ import {
   KeyboardToolbar,
 } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { handleRequestError } from "@/utils/handle-request-error";
 
 export default function AddBrickScreen() {
   const params = useLocalSearchParams<{
@@ -51,7 +52,7 @@ export default function AddBrickScreen() {
   const [form, setForm] = useState({
     native: params.native || "",
     target: params.target || "",
-    coll: "My Daily Expressions",
+    coll: "Daily Expressions",
     public: true,
   });
 
@@ -66,6 +67,12 @@ export default function AddBrickScreen() {
   const [loading, setLoading] = useState(false);
   const [isTargetTextUnique, setIsTargetTextUnique] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
+
+  const [isReservedCollectionName, setIsReservedCollectionName] =
+    useState(false);
+
+  const [isCheckingCollectionName, setIsCheckingCollectionName] =
+    useState(false);
 
   const [audioPath, setAudioPath] = useState<string | null>(
     params.audio_path ?? null,
@@ -107,6 +114,7 @@ export default function AddBrickScreen() {
         setIsTargetTextUnique(!res.exists);
       } catch (err) {
         console.error(err);
+        handleRequestError(err);
       } finally {
         setIsChecking(false);
       }
@@ -114,6 +122,31 @@ export default function AddBrickScreen() {
 
     return () => clearTimeout(timeout);
   }, [form.target]);
+
+  useEffect(() => {
+    if (!form.coll.trim()) {
+      setIsReservedCollectionName(false);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      setIsCheckingCollectionName(true);
+
+      try {
+        const isReserved = await request<boolean>(
+          `/collections/reserved-name?name=${encodeURIComponent(form.coll)}`,
+        );
+
+        setIsReservedCollectionName(isReserved);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsCheckingCollectionName(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [form.coll]);
 
   const setManualAudio = (uri: string) => {
     setAudioPath(uri);
@@ -414,7 +447,13 @@ export default function AddBrickScreen() {
           <Text style={styles.sectionTitle}>Organization</Text>
 
           <View style={styles.fieldWrapper}>
-            <Text style={styles.fieldLabel}>Collection</Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.fieldLabel}>Collection</Text>
+
+              {isCheckingCollectionName && (
+                <ActivityIndicator size="small" color={colors.secondary2} />
+              )}
+            </View>
 
             <View style={styles.inputCard}>
               <TextInput
@@ -427,6 +466,11 @@ export default function AddBrickScreen() {
                   }))
                 }
               />
+              {isReservedCollectionName && (
+                <Text style={styles.warningText}>
+                  This collection name is reserved.
+                </Text>
+              )}
             </View>
           </View>
         </View>
@@ -472,11 +516,21 @@ export default function AddBrickScreen() {
         <TouchableOpacity
           style={[
             styles.submitButton,
-            (loading || isRecording || !isTargetTextUnique) && {
+            (loading ||
+              isRecording ||
+              !isTargetTextUnique ||
+              isReservedCollectionName ||
+              !audioPath) && {
               opacity: 0.5,
             },
           ]}
-          disabled={loading || isRecording || !isTargetTextUnique}
+          disabled={
+            loading ||
+            isRecording ||
+            !isTargetTextUnique ||
+            isReservedCollectionName ||
+            !audioPath
+          }
           onPress={onSubmit}
         >
           {loading ? (

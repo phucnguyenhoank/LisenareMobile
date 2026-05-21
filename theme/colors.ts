@@ -6,10 +6,15 @@ const colors = {
   secondary4: "#6AA84F", // Muted Sage (Formal version of your Sap Green)
   secondary5: "#28A745", // Professional Success Green (Crisper than lime)
   background: "#FBFDFB", // "Off-white" with a hint of mint to reduce eye strain
+  surface: "#FFFFFF",
   buttonBackground: "#F0F9EE", // Very subtle, clean mint tint
   text: "#1F2937", // Deep Slate (standard for modern professional UIs)
-  border: "#E5EBE3", // Sage-tinted gray (blends better with your theme)
+  textSecondary: "#4B5563",
+  border: "#C3D3BE", // Sage-tinted gray (blends better with your theme)
   important: "#D93025", // A slightly deeper, more "serious" red
+  warning: "#D97706", // caution/pending states
+  disabled: "#E2EBE0", // unclickable buttons
+  disabledText: "#8B9A86", // unclickable text
 };
 
 export default colors;

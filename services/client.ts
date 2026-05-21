@@ -1,5 +1,6 @@
 // api/client.ts
 import { API_BASE_URL } from "@/config/env";
+import { ERROR_MESSAGES } from "@/config/errorMessages";
 import { getToken } from "@/utils/auth-storage";
 
 interface RequestOptions {
@@ -8,28 +9,32 @@ interface RequestOptions {
   headers?: Record<string, string>;
 }
 
-export class ApiError extends Error {
+export class RequestError extends Error {
   status: number;
-  data: any;
+  error_code: string;
 
-  constructor(status: number, message: string, data?: any) {
+  constructor(status: number, error_code: string, message: string) {
     super(message);
-    this.name = "ApiError";
     this.status = status;
-    this.data = data;
+    this.error_code = error_code;
   }
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {
   const contentType = res.headers.get("content-type");
   const isJson = contentType && contentType.includes("application/json");
-
-  // Get raw body once
   const body = await (isJson ? res.json() : res.text());
 
   if (!res.ok) {
-    const message = body?.detail || body || `HTTP ${res.status}`;
-    throw new ApiError(res.status, message, body);
+    // {"debug_message": "Bad Credential", "error_code": "INVALID_CREDENTIALS"}
+    const error_code = body?.error_code || "UNKNOWN_ERROR";
+
+    const message =
+      ERROR_MESSAGES[error_code] ||
+      body?.detail?.debug_message ||
+      `HTTP Error ${res.status}`;
+
+    throw new RequestError(res.status, error_code, message);
   }
 
   return body as T;
@@ -41,7 +46,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
  * @param endpoint - The API path (appended to API_BASE_URL).
  * @param options - Configuration including method, body, custom headers.
  * @returns Parsed JSON or raw text response of type T.
- * @throws {ApiError} If the response status is not 2xx.
+ * @throws {RequestError} If the response status is not 2xx.
  *
  * @example
  * // 1. Simple GET (Auth is included by default)

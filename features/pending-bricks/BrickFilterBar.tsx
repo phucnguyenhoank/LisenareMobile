@@ -7,41 +7,49 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import colors from "@/theme/colors"; // Maps back to your forest theme colors
+import colors from "@/theme/colors";
 
 type FilterOption = { readonly value: string | null; readonly label: string };
 
 type FilterBarProps = {
+  totalBricks: number;
   selectedCollection: { name: string } | null;
   selectedStatus: string | null;
   selectedSort: string;
   STATUS_OPTIONS: readonly FilterOption[];
   SORT_OPTIONS: readonly FilterOption[];
-  seIsFilterSortModelVisible: (visible: boolean) => void;
+  setIsModalVisible: (visible: boolean) => void;
 };
 
 export default function BrickFilterBar({
+  totalBricks,
   selectedCollection,
   selectedStatus,
   selectedSort,
   STATUS_OPTIONS,
   SORT_OPTIONS,
-  seIsFilterSortModelVisible,
+  setIsModalVisible,
 }: FilterBarProps) {
-  const activeStatus = STATUS_OPTIONS.find(
-    (s) => s.value === selectedStatus,
-  )?.label;
-  const activeSort = SORT_OPTIONS.find((s) => s.value === selectedSort)?.label;
+  const activeStatus =
+    totalBricks > 0
+      ? STATUS_OPTIONS.find((s) => s.value === selectedStatus)?.label
+      : null;
+
+  const activeSort =
+    totalBricks > 0
+      ? SORT_OPTIONS.find((s) => s.value === selectedSort)?.label
+      : null;
 
   return (
     <View style={styles.container}>
       {/* Main Action Trigger Button */}
       <TouchableOpacity
         style={styles.filterTriggerButton}
-        onPress={() => seIsFilterSortModelVisible(true)}
+        onPress={() => setIsModalVisible(true)}
         activeOpacity={0.7}
       >
         <Ionicons name="options-outline" size={18} color="#FFFFFF" />
+        <Text style={styles.filterButtonText}>{totalBricks}</Text>
       </TouchableOpacity>
 
       {/* Side-Scrolling Selected Parameter Track */}
@@ -101,6 +109,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
+  },
+  filterButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
   },
   horizontalScrollWrapper: {
     flex: 1,

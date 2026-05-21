@@ -41,7 +41,6 @@ export default function ListeningPracticeScreen() {
     [],
   );
 
-  // 2. Renamed "groups" to "collections" for structural uniformity
   const { data: collections = [], isLoading: isLoadingCollections } = useQuery({
     queryKey: ["pending-collections"],
     queryFn: () => request<Collection[]>("/collections/pending"),
@@ -76,7 +75,7 @@ export default function ListeningPracticeScreen() {
 
   const totalItems = useMemo(() => {
     return data?.pages[0]?.total ?? 0;
-  }, [data?.pages]); // 4. Track layout data pages array delta instead of stale group values
+  }, [data?.pages]);
 
   // Playback State
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);

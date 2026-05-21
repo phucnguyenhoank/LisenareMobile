@@ -53,7 +53,7 @@ export default function CollectionSelector({
           keyExtractor={(item) =>
             item.type === "all" ? "all" : item.id.toString()
           }
-          contentContainerStyle={styles.groupContainer}
+          contentContainerStyle={styles.collectionContainer}
           renderItem={({ item }) => {
             const isAllItem = item.type === "all";
 
@@ -64,7 +64,10 @@ export default function CollectionSelector({
 
             return (
               <Pressable
-                style={[styles.groupChip, active && styles.groupChipActive]}
+                style={[
+                  styles.collectionChip,
+                  active && styles.collectionChipActive,
+                ]}
                 onPress={() => {
                   if (isAllItem) {
                     // Clicking "All" resets specific selections
@@ -85,7 +88,10 @@ export default function CollectionSelector({
                 }}
               >
                 <Text
-                  style={[styles.groupText, active && styles.groupTextActive]}
+                  style={[
+                    styles.collectionText,
+                    active && styles.collectionTextActive,
+                  ]}
                 >
                   {item.name}
                 </Text>
@@ -108,28 +114,28 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 10,
   },
-  groupContainer: {
+  collectionContainer: {
     gap: 10,
     paddingHorizontal: 4,
   },
-  groupChip: {
+  collectionChip: {
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 999,
-    backgroundColor: colors.border,
+    backgroundColor: colors.buttonBackground,
     borderWidth: 1,
-    borderColor: "transparent",
+    borderColor: colors.border,
   },
-  groupChipActive: {
+  collectionChipActive: {
     backgroundColor: colors.secondary,
     borderColor: colors.secondary2,
   },
-  groupText: {
+  collectionText: {
     fontSize: 13,
     color: colors.text,
     fontWeight: "500",
   },
-  groupTextActive: {
+  collectionTextActive: {
     color: "white",
     fontWeight: "600",
   },

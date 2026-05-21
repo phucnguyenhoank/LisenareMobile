@@ -27,13 +27,11 @@ export default function MemoryQualityCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "white",
-    borderRadius: 18,
     padding: 16,
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 
   dualMetricsRow: {

@@ -1,4 +1,4 @@
-import { ApiError } from "@/services/client";
+import { RequestError } from "@/services/client";
 import { AuthProvider } from "@/context/AuthContext";
 import { SessionProvider } from "@/context/SessionContext";
 import { showAlert } from "@/utils/alerts";
@@ -12,6 +12,8 @@ import { router, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import * as Notifications from "expo-notifications";
+import Toast from "@/components/Toast";
+import AlertDialog from "@/components/AlertDialog";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -27,7 +29,7 @@ const queryClient = new QueryClient({
     queries: {
       retry: (failureCount, error: any) => {
         // Don't retry if it's a 401 error
-        if (error instanceof ApiError && error.status === 401) {
+        if (error instanceof RequestError && error.status === 401) {
           return false;
         }
 
@@ -39,7 +41,7 @@ const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
       // This runs automatically whenever ANY useQuery fails
-      if (error instanceof ApiError && error.status === 401) {
+      if (error instanceof RequestError && error.status === 401) {
         authActions.clearPersistedAuth();
         showAlert({
           title: "Phiên đăng nhập hết hạn",
@@ -74,6 +76,8 @@ export default function RootLayout() {
                 }}
               />
             </Stack>
+            <Toast />
+            <AlertDialog />
           </KeyboardProvider>
         </AuthProvider>
       </SessionProvider>

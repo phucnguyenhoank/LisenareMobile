@@ -1,8 +1,8 @@
 import { request } from "@/services/client";
-import ChartCard from "@/components/learning-statistic/ChartCard";
-import HistorySummaryCard from "@/components/learning-statistic/HistorySummaryCard";
-import MemoryQualityCard from "@/components/learning-statistic/MemoryQualityCard";
-import TodayOverviewCard from "@/components/learning-statistic/TodayOverviewCard";
+import ChartCard from "@/features/learning-statistic/ChartCard";
+import HistorySummaryCard from "@/features/learning-statistic/HistorySummaryCard";
+import MemoryQualityCard from "@/features/learning-statistic/MemoryQualityCard";
+import TodayOverviewCard from "@/features/learning-statistic/TodayOverviewCard";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
 import {
@@ -206,7 +206,7 @@ function formatDays(value?: number) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F2F2F7",
+    backgroundColor: "#fff",
   },
   container: {
     padding: 20,

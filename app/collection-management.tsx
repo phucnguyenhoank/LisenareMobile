@@ -5,14 +5,16 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  TouchableOpacity,
+  Text,
 } from "react-native";
 import colors from "@/theme/colors";
-import Button from "@/components/Button";
 import { request } from "@/services/client";
 import { Collection } from "@/types/collection";
 import SystemLevelSelector from "@/features/collection-management/SystemLevelSelector";
 import LearnerCollectionsList from "@/features/collection-management/LearnerCollectionsList";
 import { SYSTEM_LEVELS } from "@/constants/collections";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function CollectionManagementScreen() {
   const [initialSystemIds, setInitialSystemIds] = useState<number[]>([]);
@@ -20,9 +22,13 @@ export default function CollectionManagementScreen() {
   const [learnerCollections, setLearnerCollections] = useState<Collection[]>(
     [],
   );
-  const [allFetchedCollections, setAllFetchedCollections] = useState<
+  const [allLearnerCollections, setAllLearnerCollections] = useState<
     Collection[]
   >([]);
+
+  const hasUnsavedChanges =
+    JSON.stringify([...selectedSystemIds].sort()) !==
+    JSON.stringify([...initialSystemIds].sort());
 
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -32,7 +38,7 @@ export default function CollectionManagementScreen() {
       try {
         setIsLoadingData(true);
         const collections = await request<Collection[]>("/collections/pending");
-        setAllFetchedCollections(collections);
+        setAllLearnerCollections(collections);
 
         const initialActiveSystemIds = SYSTEM_LEVELS.filter((systemLevel) =>
           collections.some((col) => col.name === systemLevel.name),
@@ -83,7 +89,7 @@ export default function CollectionManagementScreen() {
         const learnerCollectionIdsToDelete = removedSystemIds
           .map((sysId) => {
             const sysConfig = SYSTEM_LEVELS.find((s) => s.id === sysId);
-            const activeMatch = allFetchedCollections.find(
+            const activeMatch = allLearnerCollections.find(
               (c) => c.name === sysConfig?.name,
             );
             return activeMatch ? activeMatch.id : null;
@@ -94,7 +100,7 @@ export default function CollectionManagementScreen() {
           const queryParams = learnerCollectionIdsToDelete
             .map((id) => `collection_ids=${id}`)
             .join("&");
-          await request(`/collections/overrides?${queryParams}`, {
+          await request(`/collections?${queryParams}`, {
             method: "DELETE",
           });
         }
@@ -104,7 +110,7 @@ export default function CollectionManagementScreen() {
       const refreshedCollections = await request<Collection[]>(
         "/collections/pending",
       );
-      setAllFetchedCollections(refreshedCollections);
+      setAllLearnerCollections(refreshedCollections);
 
       Alert.alert(
         "Success",
@@ -129,13 +135,13 @@ export default function CollectionManagementScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            await request(`/collections/${collection_id}`, {
+            await request(`/collections?collection_ids=${collection_id}`, {
               method: "DELETE",
             });
             setLearnerCollections((prev) =>
               prev.filter((item) => item.id !== collection_id),
             );
-            setAllFetchedCollections((prev) =>
+            setAllLearnerCollections((prev) =>
               prev.filter((item) => item.id !== collection_id),
             );
           } catch (e) {
@@ -158,7 +164,7 @@ export default function CollectionManagementScreen() {
         prev.map((c) => (c.id === id ? { ...c, name } : c));
 
       setLearnerCollections(updater);
-      setAllFetchedCollections(updater);
+      setAllLearnerCollections(updater);
     } catch (e) {
       console.error(e);
     } finally {
@@ -187,6 +193,31 @@ export default function CollectionManagementScreen() {
         onToggleLevel={toggleSystemLevel}
       />
 
+      {hasUnsavedChanges && (
+        <View style={styles.systemSaveContainer}>
+          <TouchableOpacity
+            onPress={handleSaveAll}
+            disabled={isSaving}
+            style={styles.systemSaveButton}
+            activeOpacity={0.8}
+          >
+            {isSaving ? (
+              <ActivityIndicator size="small" color={colors.background} />
+            ) : (
+              <>
+                <Ionicons
+                  name="checkmark"
+                  size={16}
+                  color={colors.background}
+                />
+
+                <Text style={styles.systemSaveText}>Save</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.divider} />
 
       <LearnerCollectionsList
@@ -194,14 +225,6 @@ export default function CollectionManagementScreen() {
         isSaving={isSaving}
         onDelete={handleDeleteLearnerCol}
         onRename={handleRename}
-      />
-
-      <Button
-        title={isSaving ? "Saving..." : "Apply Changes"}
-        onPress={handleSaveAll}
-        variant="primary"
-        style={styles.saveButtonFull}
-        disabled={isSaving}
       />
     </ScrollView>
   );
@@ -216,11 +239,27 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: { padding: 20, paddingBottom: 40 },
-  divider: { height: 1.5, backgroundColor: colors.border, marginVertical: 24 },
-  saveButtonFull: {
-    alignSelf: "stretch",
-    marginTop: 36,
-    paddingVertical: 14,
-    borderRadius: 28,
+  systemSaveContainer: {
+    marginTop: 14,
+    alignItems: "flex-end",
   },
+
+  systemSaveButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+
+    backgroundColor: colors.secondary,
+    borderRadius: 999,
+  },
+
+  systemSaveText: {
+    color: colors.background,
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  divider: { height: 1.5, backgroundColor: colors.border, marginVertical: 24 },
 });

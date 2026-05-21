@@ -5,6 +5,7 @@ import {
   STATUS_OPTIONS,
 } from "@/constants/bricks";
 import colors from "@/theme/colors";
+import { Collection } from "@/types/collection";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
@@ -16,10 +17,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Button from "@/components/Button";
-import { Collection } from "@/types/collection";
 
-interface FilterSortModalProps {
+interface Props {
   visible: boolean;
   onClose: () => void;
 
@@ -29,7 +28,7 @@ interface FilterSortModalProps {
   selectedStatus: BrickStatusFilter;
   selectedSort: BrickSort;
 
-  onCollectionChange: (collectionId: number) => void;
+  onCollectionChange: (id: number) => void;
   onStatusChange: (status: BrickStatusFilter) => void;
   onSortChange: (sort: BrickSort) => void;
 }
@@ -37,136 +36,111 @@ interface FilterSortModalProps {
 export default function FilterSortModal({
   visible,
   onClose,
+
   collections,
+
   selectedCollectionId,
   selectedStatus,
   selectedSort,
+
   onCollectionChange,
   onStatusChange,
   onSortChange,
-}: FilterSortModalProps) {
-  const [tempCollectionId, setTempCollectionId] =
-    useState<number>(selectedCollectionId);
+}: Props) {
+  const [collectionId, setCollectionId] = useState(selectedCollectionId);
 
-  const [tempStatus, setTempStatus] =
-    useState<BrickStatusFilter>(selectedStatus);
+  const [status, setStatus] = useState<BrickStatusFilter>(selectedStatus);
 
-  const [tempSort, setTempSort] = useState<BrickSort>(selectedSort);
+  const [sort, setSort] = useState<BrickSort>(selectedSort);
 
   useEffect(() => {
-    if (visible) {
-      setTempCollectionId(selectedCollectionId);
-      setTempStatus(selectedStatus);
-      setTempSort(selectedSort);
-    }
+    if (!visible) return;
+
+    setCollectionId(selectedCollectionId);
+    setStatus(selectedStatus);
+    setSort(selectedSort);
   }, [visible, selectedCollectionId, selectedStatus, selectedSort]);
 
   const handleApply = () => {
-    onCollectionChange(tempCollectionId);
-    onStatusChange(tempStatus);
-    onSortChange(tempSort);
+    onCollectionChange(collectionId);
+    onStatusChange(status);
+    onSortChange(sort);
 
     onClose();
   };
 
+  const renderSection = (
+    title: string,
+    options: readonly {
+      label: string;
+      value: any;
+    }[],
+    selected: any,
+    onChange: (value: any) => void,
+  ) => (
+    <>
+      <Text style={styles.sectionTitle}>{title}</Text>
+
+      <View style={styles.chipGrid}>
+        {options.map((option) => {
+          const active = selected === option.value;
+
+          return (
+            <TouchableOpacity
+              key={option.label}
+              onPress={() => onChange(option.value)}
+              style={[styles.chip, active && styles.activeChip]}
+            >
+              <Text style={[styles.chipText, active && styles.activeChipText]}>
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </>
+  );
+
   return (
-    <Modal visible={visible} animationType="slide" transparent={true}>
+    <Modal visible={visible} transparent>
       <View style={styles.overlay}>
         <View style={styles.sheet}>
-          <SafeAreaView>
+          <SafeAreaView style={styles.safeArea}>
+            {/* HEADER */}
             <View style={styles.header}>
-              <Text style={styles.title}>Lọc và sắp xếp</Text>
-              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Ionicons name="close" size={24} color="#333" />
-              </TouchableOpacity>
+              <Text style={styles.title}>Sort & Filter</Text>
+
+              <View style={styles.headerActions}>
+                <TouchableOpacity onPress={handleApply}>
+                  <Text style={styles.applyText}>Apply</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={onClose}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
             </View>
 
+            {/* CONTENT */}
             <ScrollView
-              showsVerticalScrollIndicator={false}
               style={styles.content}
+              contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
             >
-              {/* COLLECTION */}
-              <Text style={styles.sectionTitle}>Bộ sưu tập</Text>
+              {renderSection(
+                "Collections",
+                collections.map((c) => ({
+                  label: c.name,
+                  value: c.id,
+                })),
+                collectionId,
+                setCollectionId,
+              )}
 
-              <View style={styles.chipGrid}>
-                {collections.map((collection) => (
-                  <TouchableOpacity
-                    key={collection.id}
-                    onPress={() => setTempCollectionId(collection.id)}
-                    style={[
-                      styles.chip,
-                      tempCollectionId === collection.id && styles.activeChip,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        tempCollectionId === collection.id &&
-                          styles.activeChipText,
-                      ]}
-                    >
-                      {collection.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              {renderSection("Status", STATUS_OPTIONS, status, setStatus)}
 
-              {/* STATUS */}
-              <Text style={styles.sectionTitle}>Trạng thái</Text>
-
-              <View style={styles.chipGrid}>
-                {STATUS_OPTIONS.map((option) => (
-                  <TouchableOpacity
-                    key={option.label}
-                    onPress={() => setTempStatus(option.value)}
-                    style={[
-                      styles.chip,
-                      tempStatus === option.value && styles.activeChip,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        tempStatus === option.value && styles.activeChipText,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* SORT */}
-              <Text style={styles.sectionTitle}>Sắp xếp</Text>
-
-              <View style={styles.chipGrid}>
-                {SORT_OPTIONS.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    onPress={() => setTempSort(option.value)}
-                    style={[
-                      styles.chip,
-                      tempSort === option.value && styles.activeChip,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        tempSort === option.value && styles.activeChipText,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              {renderSection("Sort by", SORT_OPTIONS, sort, setSort)}
             </ScrollView>
-
-            <Button
-              onPress={handleApply}
-              title="Áp dụng"
-              style={styles.applyButton}
-            />
           </SafeAreaView>
         </View>
       </View>
@@ -177,69 +151,105 @@ export default function FilterSortModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
+
   sheet: {
+    height: "68%",
     backgroundColor: "white",
+
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+  },
+
+  safeArea: {
+    flex: 1,
     paddingHorizontal: 20,
     paddingBottom: 20,
-    maxHeight: "85%",
   },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+
     paddingVertical: 20,
+
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
+
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+
+  applyText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.secondary,
+  },
+
   title: {
     fontSize: 18,
     fontWeight: "bold",
   },
-  closeButton: {
-    padding: 4,
-  },
+
   content: {
-    marginTop: 10,
+    flex: 1,
   },
+
+  contentContainer: {
+    paddingBottom: 24,
+  },
+
   sectionTitle: {
-    fontSize: 15,
-    fontWeight: "600",
     marginTop: 20,
     marginBottom: 12,
+
+    fontSize: 15,
+    fontWeight: "600",
     color: "#666",
   },
+
   chipGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
   },
+
   chip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
+
     borderRadius: 28,
+
     backgroundColor: "#f5f5f5",
+
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: colors.border,
   },
+
   activeChip: {
     backgroundColor: colors.secondary,
     borderColor: colors.secondary,
   },
+
   chipText: {
-    color: "#444",
     fontSize: 14,
+    color: "#444",
   },
+
   activeChipText: {
     color: "white",
     fontWeight: "500",
   },
-  applyButton: {
-    marginTop: 20,
-    alignSelf: "auto",
+
+  footer: {
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
   },
 });

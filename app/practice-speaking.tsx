@@ -6,7 +6,7 @@ import { BrickDisplay } from "@/features/brick-practice/BrickDisplay";
 import { LearnMenu } from "@/features/brick-practice/LearnMenu";
 import { ReportOtherInput } from "@/features/brick-practice/ReportOtherInput";
 import ResultDisplay from "@/features/brick-practice/ResultDisplay";
-import { Toast } from "@/components/Toast";
+import { Toast } from "@/components/ToastOld";
 import { useCachedAudio } from "@/hooks/useCachedAudio";
 import type { StatusResponse } from "@/types/api";
 import type { AudioTranscription } from "@/types/audio";
@@ -109,15 +109,12 @@ export default function PracticeScreen() {
       setShowNative(DEFAULT_SETTINGS.firstShowNative);
       setAnswer("");
       setCompareResult(null);
+
       const url = buildFetchBrickUrl(collectionIds);
-      const br = await request<Brick>(url);
-      setBrick(br);
-      setAudioUrl(br.target_audio_path);
-      setIsAnswerRevealed(false);
-      setHasSentReview(false);
-      setRecordedUri(null);
-    } catch (err: any) {
-      if (err.status == 400) {
+
+      const br = await request<Brick | null>(url);
+
+      if (!br) {
         showAlert({
           title: "Chưa có dữ liệu",
           message: "Không có câu nào để luyện tập. Hãy thêm câu mới nhé!",
@@ -129,9 +126,17 @@ export default function PracticeScreen() {
           },
           showCancel: true,
         });
-      } else {
-        console.error("Failed to fetch brick:", err);
+
+        return;
       }
+
+      setBrick(br);
+      setAudioUrl(br.target_audio_path);
+      setIsAnswerRevealed(false);
+      setHasSentReview(false);
+      setRecordedUri(null);
+    } catch (err) {
+      console.error("Failed to fetch brick:", err);
     }
   };
 

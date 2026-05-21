@@ -16,13 +16,15 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAudioPlayer } from "expo-audio";
 import { useCachedAudio } from "@/hooks/useCachedAudio";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { StatusResponse } from "@/types/api";
+import SaveBrickOverrideModal from "@/features/search/SaveBrickOverrideModal";
 
 export default function BrickDetails() {
   const { id } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const [isSaveModalVisible, setIsSaveModalVisible] = useState(false);
 
   const {
     data: brick,
@@ -48,28 +50,6 @@ export default function BrickDetails() {
     if (!audioPath) return;
     player.seekTo(0);
     player.play();
-  };
-
-  const handleSaveOverride = async () => {
-    if (!brick) {
-      Alert.alert("Error", "Brick not found.");
-      return;
-    }
-    try {
-      const response = await request<StatusResponse>(
-        `/bricks/override/${brick.id}`,
-        {
-          method: "POST",
-        },
-      );
-
-      if (response.status === "success") {
-        Alert.alert("Saved!", "This brick has been saved to your collection.");
-      }
-    } catch (error) {
-      console.error("Failed to save override:", error);
-      Alert.alert("Error", "Could not save the brick. Please try again.");
-    }
   };
 
   if (isLoading)
@@ -100,7 +80,7 @@ export default function BrickDetails() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.saveOverrideBtn}
-          onPress={handleSaveOverride}
+          onPress={() => setIsSaveModalVisible(true)}
         >
           <Feather name="copy" size={20} color={colors.primary} />
           <Text style={styles.saveOverrideText}>Save a copy</Text>
@@ -168,6 +148,11 @@ export default function BrickDetails() {
           Updated: {new Date(brick.last_edit_at).toLocaleDateString()}
         </Text>
       </View>
+      <SaveBrickOverrideModal
+        visible={isSaveModalVisible}
+        onClose={() => setIsSaveModalVisible(false)}
+        brick={brick}
+      />
     </ScrollView>
   );
 }
