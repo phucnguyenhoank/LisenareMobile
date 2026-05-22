@@ -73,6 +73,11 @@ export default function RootLayout() {
                   headerShown: true,
                 }}
               />
+
+              <Stack.Screen
+                name="adaptive-practice"
+                options={{ headerShown: false }}
+              />
             </Stack>
           </KeyboardProvider>
         </AuthProvider>

@@ -3,11 +3,19 @@ import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
 import { Link, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, BackHandler, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  BackHandler,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { ExerciseListScreen } from "../../components/grammar/Exerciselistscreen";
 import { LessonListScreen } from "../../components/grammar/Lessonlistscreen";
 import { QuizScreen } from "../../components/grammar/Quizscreen";
 import { TopicListScreen } from "../../components/grammar/Topiclistscreen";
+import { C } from "../../theme/grammar_constants";
 import { S } from "../../theme/grammar_styles";
 import { Screen, Topic } from "../../types/grammar";
 import TextButton from "@/components/TextButton";
@@ -112,13 +120,27 @@ export default function GrammarStudying() {
   const renderScreen = () => {
     if (screen.type === "topics") {
       return (
-        <TopicListScreen
-          topics={topics}
-          loading={loading}
-          error={error}
-          onSelect={(t) => setScreen({ type: "lessons", topic: t })}
-          onRetry={fetchTopics}
-        />
+        <View style={S.fill}>
+          <View style={localStyles.topBar}>
+            <TouchableOpacity
+              style={localStyles.adaptiveBtn}
+              onPress={() => router.push("/adaptive-practice" as any)}
+              activeOpacity={0.75}
+            >
+              <Text style={localStyles.adaptiveBtnIcon}>🎯</Text>
+              <Text style={localStyles.adaptiveBtnText}>
+                Luyện tập thích ứng
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <TopicListScreen
+            topics={topics}
+            loading={loading}
+            error={error}
+            onSelect={(t) => setScreen({ type: "lessons", topic: t })}
+            onRetry={fetchTopics}
+          />
+        </View>
       );
     }
     if (screen.type === "lessons") {
@@ -149,3 +171,33 @@ export default function GrammarStudying() {
 
   return <View style={S.fill}>{renderScreen()}</View>;
 }
+
+const localStyles = StyleSheet.create({
+  topBar: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+    backgroundColor: C.bg,
+  },
+  adaptiveBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: C.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  adaptiveBtnIcon: { fontSize: 14 },
+  adaptiveBtnText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+});
