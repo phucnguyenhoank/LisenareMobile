@@ -6,7 +6,7 @@ import StepUnderstandSpeak from "@/features/brick-learn/StepUnderstandSpeak";
 import colors from "@/theme/colors";
 import { PronunciationAnalysisResponse } from "@/types/audio";
 import { Brick } from "@/types/brick";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -21,7 +21,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function LearnScreen() {
   const { brick_id } = useLocalSearchParams();
-  const router = useRouter();
   const [currentBrick, setCurrentBrick] = useState<Brick | null>(null);
   const [recordedUri, setRecordedUri] = useState<string | null>(null);
   const [step, setStep] = useState(1);

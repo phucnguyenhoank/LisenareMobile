@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { create } from "zustand";
 
 interface DialogOptions {
@@ -5,6 +6,7 @@ interface DialogOptions {
 
   title: string;
   message: string;
+  children?: ReactNode;
 
   confirmText?: string;
   cancelText?: string;
@@ -26,6 +28,7 @@ export const useDialogStore = create<DialogState>((set) => ({
 
   title: "",
   message: "",
+  children: undefined,
 
   confirmText: "OK",
   cancelText: "Cancel",
@@ -35,11 +38,13 @@ export const useDialogStore = create<DialogState>((set) => ({
   showDialog: (options) =>
     set({
       visible: true,
+      children: undefined, // Clear out old components
       ...options,
     }),
 
   hideDialog: () =>
     set({
       visible: false,
+      children: undefined,
     }),
 }));

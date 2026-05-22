@@ -7,44 +7,30 @@ import { useAuth } from "@/context/AuthContext";
 import { Learner } from "@/types/learnner";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import EditableName from "@/features/setting-screen/EditableName";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import Button from "@/components/Button";
 
 type AuthMode = "signin" | "signup" | "forgot";
 
 export default function SettingScreen() {
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation({
-    mutationFn: (newName: string) =>
-      request("/learners/me", {
-        method: "PATCH",
-        body: { full_name: newName },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["me"] });
-    },
-  });
-
   const params = useLocalSearchParams();
-  const router = useRouter();
   const { token, clearPersistedAuth, isTokenLoading } = useAuth();
   const [mode, setMode] = useState<AuthMode>("signin");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
+  // 2. Change the generic type from Learner to LearnerRead
   const { data: user, isLoading: isLoadingUser } = useQuery<Learner>({
     queryKey: ["me"],
     queryFn: () => request<Learner>("/learners/me"),
-    enabled: !!token, // only run when token exists
+    enabled: !!token,
   });
 
   useEffect(() => {
     if (token && params.from === "auth_required") {
       router.back();
     }
-
     setIsChangingPassword(false);
   }, [token]);
 
@@ -67,6 +53,18 @@ export default function SettingScreen() {
             {/* Profile Card */}
             <View style={styles.card}>
               {user && <EditableName fullName={user.full_name} />}
+
+              {/* Render masked email if it exists */}
+              {user?.email && (
+                <Text
+                  style={styles.emailText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  Email: {user.email}
+                </Text>
+              )}
+
               <Text style={styles.subtitle}>Mã người học: {user?.id}</Text>
             </View>
 
@@ -101,11 +99,9 @@ export default function SettingScreen() {
           onForgotPassword={() => setMode("forgot")}
         />
       )}
-
       {mode === "signup" && (
         <SignUpForm onSwitchToSignin={() => setMode("signin")} />
       )}
-
       {mode === "forgot" && (
         <ForgotPasswordForm onBackToSignin={() => setMode("signin")} />
       )}
@@ -121,21 +117,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#f8fbf8",
   },
-
   card: {
     backgroundColor: "#fff",
     padding: 16,
     borderRadius: 16,
     shadowColor: "#000",
     elevation: 1,
+    width: "85%", // Keeps the card looking uniform if the email is long
   },
-
+  // 4. Added a styling rule for the email text
+  emailText: {
+    fontSize: 14,
+    color: "#444",
+    marginTop: 8,
+  },
   subtitle: {
     fontSize: 13,
     color: "#888",
     marginTop: 6,
   },
-
   spacing: {
     height: 16,
   },

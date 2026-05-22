@@ -10,6 +10,7 @@ export default function AlertDialog() {
     visible,
     title,
     message,
+    children,
     confirmText,
     cancelText,
     showCancel,
@@ -45,17 +46,21 @@ export default function AlertDialog() {
 
           <Text style={styles.message}>{message}</Text>
 
-          <View style={styles.actions}>
-            {showCancel && (
-              <Button
-                title={cancelText || "Cancel"}
-                onPress={handleCancel}
-                variant="outline"
-              />
-            )}
+          {children}
 
-            <Button title={confirmText || "OK"} onPress={handleConfirm} />
-          </View>
+          {!children && (
+            <View style={styles.actions}>
+              {showCancel && (
+                <Button
+                  title={cancelText || "Cancel"}
+                  onPress={handleCancel}
+                  variant="outline"
+                />
+              )}
+
+              <Button title={confirmText || "OK"} onPress={handleConfirm} />
+            </View>
+          )}
         </Pressable>
       </Pressable>
     </Modal>

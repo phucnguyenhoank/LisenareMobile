@@ -1,14 +1,18 @@
 import Button from "@/components/Button";
+import { useAuth } from "@/context/AuthContext";
 import { request } from "@/services/client";
 import colors from "@/theme/colors";
 import { Brick } from "@/types/brick";
 import { Collection } from "@/types/collection";
+import { showDialog } from "@/utils/dialogs";
+import { handleRequestError } from "@/utils/handle-request-error";
+import { toast } from "@/utils/toasts";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -35,11 +39,12 @@ export default function SaveBrickOverrideModal({
 }: Props) {
   const [collectionName, setCollectionName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const { token, isTokenLoading } = useAuth();
 
   const { data: collections = [], isLoading } = useQuery({
     queryKey: ["pendingCollections"],
     queryFn: () => request<Collection[]>("/collections/pending"),
-    enabled: visible,
+    enabled: !!token && visible,
   });
 
   useEffect(() => {
@@ -66,18 +71,50 @@ export default function SaveBrickOverrideModal({
         },
       });
 
-      Alert.alert("Saved", `Added to "${trimmed}"`);
+      toast.success(`Added to your collection "${trimmed}"`);
 
       onClose();
     } catch (error: any) {
-      Alert.alert(
-        "Error",
-        error?.data?.detail || error?.message || "Could not save brick.",
-      );
+      handleRequestError(error);
     } finally {
       setIsSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (!isTokenLoading && !token && visible) {
+      showDialog({
+        title: "Authentication Required",
+        message:
+          "Please log in to access this feature and track your learning progress.",
+        confirmText: "Log In",
+        cancelText: "Maybe Later",
+        showCancel: true,
+        onCancel: () => onClose(),
+        onConfirm: () => {
+          onClose(); // Safe clean-up
+          router.push({
+            pathname: "/setting",
+            params: { from: "auth_required" },
+          });
+        },
+      });
+    }
+  }, [token, isTokenLoading, visible, onClose]);
+
+  if (isTokenLoading) {
+    return (
+      <Modal visible={visible} transparent animationType="fade">
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={colors.secondary} />
+        </View>
+      </Modal>
+    );
+  }
+
+  if (!token) {
+    return null;
+  }
 
   return (
     <Modal
@@ -170,7 +207,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-end",
   },
-
+  loadingOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.35)",

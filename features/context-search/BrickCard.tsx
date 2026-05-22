@@ -1,7 +1,7 @@
 import colors from "@/theme/colors";
 import spacing from "@/theme/spacing";
 import { BrickContextSearchResult } from "@/types/context-search";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -10,7 +10,6 @@ export default function BrickCard({
 }: {
   item: BrickContextSearchResult;
 }) {
-  const router = useRouter();
   const handlePress = () => {
     // Navigate to your detail screen, passing the brick_id
     router.push({

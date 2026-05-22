@@ -16,7 +16,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
   Switch,
   Text,
@@ -26,6 +25,8 @@ import {
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "@/components/Button";
+import { showDialog } from "@/utils/dialogs";
+import { handleRequestError } from "@/utils/handle-request-error";
 
 export default function EditBrickScreen() {
   const { token, isTokenLoading } = useAuth();
@@ -142,7 +143,10 @@ export default function EditBrickScreen() {
       const hasTextChanged = Object.keys(updateData).length > 0;
 
       if (!hasTextChanged && !newAudioPath) {
-        Alert.alert("Thông báo", "Bạn chưa thay đổi gì");
+        showDialog({
+          title: "No changes made",
+          message: "You haven't changed anything yet",
+        });
         return;
       }
 
@@ -162,10 +166,16 @@ export default function EditBrickScreen() {
         body: formData,
       });
 
-      Alert.alert("Thành công", "Đã lưu chỉnh sửa");
+      showDialog({
+        title: "Success",
+        message: "Changes saved successfully",
+        confirmText: "OK",
+        showCancel: false,
+        onConfirm: () => router.back(),
+      });
       router.back();
     } catch (error) {
-      Alert.alert("Error", "Failed to save");
+      handleRequestError(error);
     } finally {
       setIsSaving(false);
     }

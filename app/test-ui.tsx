@@ -4,6 +4,7 @@ import { request } from "@/services/client";
 import Button from "@/components/Button";
 import { handleRequestError } from "@/utils/handle-request-error";
 import { showDialog } from "@/utils/dialogs";
+import { router } from "expo-router";
 
 export default function TestScreen() {
   const handleDelete = async () => {
@@ -20,13 +21,10 @@ export default function TestScreen() {
       message: "This action cannot be undone.",
 
       confirmText: "Delete",
-      cancelText: "Cancel",
 
-      showCancel: true,
+      showCancel: false,
 
-      onConfirm: () => {
-        handleDelete();
-      },
+      onConfirm: () => router.back(),
     });
   };
 

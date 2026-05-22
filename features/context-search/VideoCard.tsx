@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#222",
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 20,
   },
 
   replayText: {

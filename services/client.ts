@@ -26,6 +26,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
   const body = await (isJson ? res.json() : res.text());
 
   if (!res.ok) {
+    console.log("body", body, "status", res.status);
     // {"debug_message": "Bad Credential", "error_code": "INVALID_CREDENTIALS"}
     const error_code = body?.error_code || "UNKNOWN_ERROR";
 

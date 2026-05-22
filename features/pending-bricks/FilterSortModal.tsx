@@ -6,7 +6,6 @@ import {
 } from "@/constants/bricks";
 import colors from "@/theme/colors";
 import { Collection } from "@/types/collection";
-import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
   Modal,
@@ -14,6 +13,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  Pressable, // 1. Imported Pressable
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -48,9 +48,7 @@ export default function FilterSortModal({
   onSortChange,
 }: Props) {
   const [collectionId, setCollectionId] = useState(selectedCollectionId);
-
   const [status, setStatus] = useState<BrickStatusFilter>(selectedStatus);
-
   const [sort, setSort] = useState<BrickSort>(selectedSort);
 
   useEffect(() => {
@@ -65,7 +63,6 @@ export default function FilterSortModal({
     onCollectionChange(collectionId);
     onStatusChange(status);
     onSortChange(sort);
-
     onClose();
   };
 
@@ -80,7 +77,6 @@ export default function FilterSortModal({
   ) => (
     <>
       <Text style={styles.sectionTitle}>{title}</Text>
-
       <View style={styles.chipGrid}>
         {options.map((option) => {
           const active = selected === option.value;
@@ -102,21 +98,20 @@ export default function FilterSortModal({
   );
 
   return (
-    <Modal visible={visible} transparent>
-      <View style={styles.overlay}>
-        <View style={styles.sheet}>
+    <Modal visible={visible} transparent animationType="slide">
+      {/* 2. Made grey backdrop dismiss the modal on tap */}
+      <Pressable style={styles.overlay} onPress={onClose}>
+        {/* 3. Stop clicks inside the sheet content from bubbling up and triggering onClose */}
+        <Pressable style={styles.sheet} pointerEvents="auto">
           <SafeAreaView style={styles.safeArea}>
             {/* HEADER */}
             <View style={styles.header}>
               <Text style={styles.title}>Sort & Filter</Text>
 
               <View style={styles.headerActions}>
+                {/* 4. Kept Apply button and cleanly removed the old X button container */}
                 <TouchableOpacity onPress={handleApply}>
                   <Text style={styles.applyText}>Apply</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={onClose}>
-                  <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -142,8 +137,8 @@ export default function FilterSortModal({
               {renderSection("Sort by", SORT_OPTIONS, sort, setSort)}
             </ScrollView>
           </SafeAreaView>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
@@ -154,99 +149,76 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     backgroundColor: "rgba(0,0,0,0.5)",
   },
-
   sheet: {
     height: "68%",
     backgroundColor: "white",
-
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },
-
   safeArea: {
     flex: 1,
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
-
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-
     paddingVertical: 20,
-
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
-
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
   },
-
   applyText: {
     fontSize: 16,
     fontWeight: "600",
     color: colors.secondary,
   },
-
   title: {
     fontSize: 18,
     fontWeight: "bold",
   },
-
   content: {
     flex: 1,
   },
-
   contentContainer: {
     paddingBottom: 24,
   },
-
   sectionTitle: {
     marginTop: 20,
     marginBottom: 12,
-
     fontSize: 15,
     fontWeight: "600",
     color: "#666",
   },
-
   chipGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
   },
-
   chip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-
     borderRadius: 28,
-
     backgroundColor: "#f5f5f5",
-
     borderWidth: 1,
     borderColor: colors.border,
   },
-
   activeChip: {
     backgroundColor: colors.secondary,
     borderColor: colors.secondary,
   },
-
   chipText: {
     fontSize: 14,
     color: "#444",
   },
-
   activeChipText: {
     color: "white",
     fontWeight: "500",
   },
-
   footer: {
     paddingTop: 12,
     borderTopWidth: 1,

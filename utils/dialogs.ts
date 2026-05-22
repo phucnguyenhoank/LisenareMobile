@@ -1,8 +1,10 @@
 import { useDialogStore } from "@/stores/dialog-store";
+import { ReactNode } from "react";
 
 interface ShowDialogOptions {
   title: string;
   message: string;
+  children?: ReactNode;
 
   confirmText?: string;
   cancelText?: string;

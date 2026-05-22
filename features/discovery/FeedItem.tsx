@@ -7,16 +7,16 @@ import { useCachedAudio } from "@/hooks/useCachedAudio";
 import { WordSegmentSecond } from "@/types/forced-alignment";
 import { SentenceTranslateResponse } from "@/types/sentence";
 import { Reaction, Snippet } from "@/types/snippet";
-import { showAlert } from "@/utils/alerts";
 import { InteractionType, logInteraction } from "@/utils/log-interaction";
 import { useQuery } from "@tanstack/react-query";
 import { useAudioPlayer } from "expo-audio";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 import FeedFooter from "./FeedFooter";
 import FeedHeader from "./FeedHeader";
 import SnippetAudioPlayerButton from "./SnippetAudioPlayerButton";
 import SnippetContent from "./SnippetContent";
 import TranslationSection from "./TranslationSection";
+import { showDialog } from "@/utils/dialogs";
 
 interface FeedItemProps {
   item: Snippet;
@@ -25,7 +25,6 @@ interface FeedItemProps {
 export default function FeedItem({ item }: FeedItemProps) {
   const { sessionId } = useSession();
   const { token } = useAuth();
-  const router = useRouter();
 
   const { audioPath, isAudioLoading } = useCachedAudio(item.audio_path);
   const player = useAudioPlayer(audioPath ? { uri: audioPath } : null);
@@ -56,16 +55,18 @@ export default function FeedItem({ item }: FeedItemProps) {
 
   const handleReact = (nextReaction: Reaction) => {
     if (!token) {
-      showAlert({
-        title: "Thông báo",
-        message: "Bạn hãy đăng nhập trước nhé",
-        confirmText: "Đăng nhập",
+      showDialog({
+        title: "Authentication Required",
+        message:
+          "Please log in to access this feature and track your learning progress.",
+        confirmText: "Log In",
+        cancelText: "Maybe Later",
+        showCancel: true,
         onConfirm: () =>
           router.push({
             pathname: "/setting",
             params: { from: "auth_required" },
           }),
-        onCancel: () => {},
       });
       return;
     }
@@ -104,16 +105,18 @@ export default function FeedItem({ item }: FeedItemProps) {
     if (isAdding) return;
 
     if (!token) {
-      showAlert({
-        title: "Thông báo",
-        message: "Bạn hãy đăng nhập trước nhé",
-        confirmText: "Đăng nhập",
+      showDialog({
+        title: "Authentication Required",
+        message:
+          "Please log in to access this feature and track your learning progress.",
+        confirmText: "Log In",
+        cancelText: "Maybe Later",
+        showCancel: true,
         onConfirm: () =>
           router.push({
             pathname: "/setting",
             params: { from: "auth_required" },
           }),
-        onCancel: () => {},
       });
       return;
     }

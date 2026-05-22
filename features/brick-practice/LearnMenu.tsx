@@ -1,7 +1,7 @@
 import colors from "@/theme/colors";
 import type { Brick } from "@/types/brick";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 type Props = {
@@ -17,8 +17,6 @@ export function LearnMenu({
   brick,
   reportBrokenFile,
 }: Props) {
-  const router = useRouter();
-
   return (
     <>
       <Pressable

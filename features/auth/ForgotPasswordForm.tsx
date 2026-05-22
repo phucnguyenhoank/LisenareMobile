@@ -4,7 +4,6 @@ import colors from "@/theme/colors";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -12,6 +11,8 @@ import {
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { authStyles } from "./authStyles";
+import { showDialog } from "@/utils/dialogs";
+import { handleRequestError } from "@/utils/handle-request-error";
 
 type Props = {
   onBackToSignin: () => void;
@@ -27,7 +28,12 @@ export default function ForgotPasswordForm({ onBackToSignin }: Props) {
 
   const handleForgetPassword = async () => {
     if (!username?.trim()) {
-      Alert.alert("Thông báo", "Hãy nhập tên tài khoản");
+      showDialog({
+        title: "Username Required",
+        message: "Please enter your username or email address to proceed.",
+        confirmText: "OK",
+        showCancel: false,
+      });
       return;
     }
 
@@ -43,32 +49,59 @@ export default function ForgotPasswordForm({ onBackToSignin }: Props) {
       // Always move to step 2
       setStep(2);
 
-      Alert.alert(
-        "Kiểm tra email của bạn",
-        "Mã OTP đã được gửi nếu tên tài khoản này tồn tại.",
-      );
+      showDialog({
+        title: "Check Your Email",
+        message:
+          "A verification code (OTP) has been sent if this account exists in our system.",
+        confirmText: "OK",
+        showCancel: false,
+      });
     } catch (err) {
-      // Only show network/system errors
-      Alert.alert("Error", "Something went wrong. Please try again later.");
+      handleRequestError(err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleResetPassword = async () => {
-    if (!otp || !newPassword)
-      return Alert.alert("Thông báo", "Hãy nhập đủ thông tin");
+    if (!otp || !newPassword) {
+      showDialog({
+        title: "Missing Information",
+        message:
+          "Please enter both your verification code and your new password.",
+        confirmText: "OK",
+        showCancel: false,
+      });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      showDialog({
+        title: "Password Too Short",
+        message:
+          "Your password must be at least 8 characters long to keep your account secure.",
+        confirmText: "OK",
+        showCancel: false,
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       await request("/accounts/reset-password", {
         method: "POST",
         body: { username, otp, new_password: newPassword },
       });
-      Alert.alert("Thành công", "Mật khẩu đã được cập nhật!", [
-        { text: "Login", onPress: onBackToSignin },
-      ]);
+      showDialog({
+        title: "Password Reset Success",
+        message:
+          "Your password has been updated successfully! You can now log in with your new password.",
+        confirmText: "Go to Login",
+        showCancel: false,
+        onConfirm: onBackToSignin, // Navigates the user back to the sign-in screen
+      });
     } catch (err) {
-      Alert.alert("Thông báo", "Mã OTP không hợp lệ hoặc lỗi mạng.");
+      handleRequestError(err);
     } finally {
       setLoading(false);
     }
@@ -78,6 +111,7 @@ export default function ForgotPasswordForm({ onBackToSignin }: Props) {
     <KeyboardAwareScrollView
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
     >
       <Text style={styles.title}>
         {step === 1 ? "Đặt lại mật khẩu" : "Xác thực OTP"}

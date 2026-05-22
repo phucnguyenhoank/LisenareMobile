@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
   TouchableOpacity,
   Text,
@@ -15,6 +14,11 @@ import SystemLevelSelector from "@/features/collection-management/SystemLevelSel
 import LearnerCollectionsList from "@/features/collection-management/LearnerCollectionsList";
 import { SYSTEM_LEVELS } from "@/constants/collections";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { handleRequestError } from "@/utils/handle-request-error";
+import { hideDialog, showDialog } from "@/utils/dialogs";
+import { toast } from "@/utils/toasts";
+import Button from "@/components/Button";
 
 export default function CollectionManagementScreen() {
   const [initialSystemIds, setInitialSystemIds] = useState<number[]>([]);
@@ -52,8 +56,10 @@ export default function CollectionManagementScreen() {
         setInitialSystemIds(initialActiveSystemIds);
         setSelectedSystemIds(initialActiveSystemIds);
         setLearnerCollections(customLearnerCollections);
-      } catch (error) {
-        Alert.alert("Error", "Failed to load collection settings.");
+      } catch (error: any) {
+        if (error.error_code === "AUTH_FAILED") {
+          router.replace("/setting");
+        }
         console.error(error);
       } finally {
         setIsLoadingData(false);
@@ -111,14 +117,9 @@ export default function CollectionManagementScreen() {
         "/collections/pending",
       );
       setAllLearnerCollections(refreshedCollections);
-
-      Alert.alert(
-        "Success",
-        "Your practice collection updates have been saved.",
-      );
+      toast.success("Your practice collection updates have been saved.");
     } catch (error) {
-      Alert.alert("Error", "Could not synchronize choices with server.");
-      console.error(error);
+      handleRequestError(error);
     } finally {
       setIsSaving(false);
     }
@@ -127,29 +128,46 @@ export default function CollectionManagementScreen() {
   const handleDeleteLearnerCol = (collection_id: number) => {
     const targetCol = learnerCollections.find((c) => c.id === collection_id);
     const colName = targetCol ? targetCol.name : "this collection";
-
-    Alert.alert("Delete", `Delete custom "${colName}"?`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await request(`/collections?collection_ids=${collection_id}`, {
-              method: "DELETE",
-            });
-            setLearnerCollections((prev) =>
-              prev.filter((item) => item.id !== collection_id),
-            );
-            setAllLearnerCollections((prev) =>
-              prev.filter((item) => item.id !== collection_id),
-            );
-          } catch (e) {
-            console.error(e);
-          }
-        },
-      },
-    ]);
+    showDialog({
+      title: "Delete Collection?",
+      message: `Are you sure you want to delete "${colName}"? This will permanently remove the collection and all items inside it.`,
+      children: (
+        <View style={{ gap: 12, marginTop: 10 }}>
+          <Button
+            title="Cancel"
+            variant="outline"
+            onPress={() => hideDialog()}
+          />
+          <Button
+            title="Yes, Delete"
+            onPress={async () => {
+              hideDialog(); // Close dialog first to ensure snappy UI transitions
+              try {
+                await request(`/collections?collection_ids=${collection_id}`, {
+                  method: "DELETE",
+                });
+                setLearnerCollections((prev) =>
+                  prev.filter((item) => item.id !== collection_id),
+                );
+                setAllLearnerCollections((prev) =>
+                  prev.filter((item) => item.id !== collection_id),
+                );
+              } catch (e) {
+                handleRequestError(e); // Use your global handler to catch issues
+              }
+            }}
+            style={{
+              backgroundColor: colors.important,
+              borderColor: colors.important,
+            }}
+            textStyle={{
+              color: colors.surface,
+              fontWeight: "700",
+            }}
+          />
+        </View>
+      ),
+    });
   };
 
   const handleRename = async (id: number, name: string) => {

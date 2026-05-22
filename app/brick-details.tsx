@@ -2,7 +2,7 @@ import { request } from "@/services/client";
 import colors from "@/theme/colors";
 import { Brick } from "@/types/brick";
 import { useQuery } from "@tanstack/react-query";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons"; // Assuming Expo
 import {
   ActivityIndicator,
@@ -11,19 +11,16 @@ import {
   Text,
   View,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAudioPlayer } from "expo-audio";
 import { useCachedAudio } from "@/hooks/useCachedAudio";
 import { useEffect, useState } from "react";
-import { StatusResponse } from "@/types/api";
 import SaveBrickOverrideModal from "@/features/search/SaveBrickOverrideModal";
 
 export default function BrickDetails() {
   const { id } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const [isSaveModalVisible, setIsSaveModalVisible] = useState(false);
 
   const {

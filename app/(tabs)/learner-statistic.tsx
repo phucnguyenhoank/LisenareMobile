@@ -13,11 +13,10 @@ import {
 } from "@/types/learner-statistic";
 import { Learner } from "@/types/learnner";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -34,7 +33,6 @@ const RANGE_TO_DAYS: Record<TimeRange, number | null> = {
 };
 
 export default function LearnerStatisticScreen() {
-  const router = useRouter();
   const { token, isTokenLoading: authLoading } = useAuth();
   const [selectedRange, setSelectedRange] = useState<TimeRange>("30d");
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -217,7 +215,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F2F2F7",
+    backgroundColor: "#fff",
     padding: 20,
   },
 

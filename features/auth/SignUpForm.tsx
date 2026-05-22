@@ -2,7 +2,6 @@ import { request } from "@/services/client";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -11,6 +10,8 @@ import {
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Button from "@/components/Button";
 import { authStyles } from "./authStyles";
+import { showDialog } from "@/utils/dialogs";
+import { handleRequestError } from "@/utils/handle-request-error";
 
 type Props = {
   onSwitchToSignin: () => void;
@@ -20,17 +21,70 @@ export default function SignUpForm({ onSwitchToSignin }: Props) {
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSignUp = async () => {
     if (!fullName || !username || !password) {
-      Alert.alert(
-        "Thiếu thông tin",
-        "Hãy điền đầy đủ thông tin được đánh dấu *",
-      );
+      showDialog({
+        title: "Missing Information",
+        message:
+          "Please fill out all required fields marked with an asterisk (*).",
+        confirmText: "OK",
+        showCancel: false,
+      });
       return;
+    }
+
+    if (password.length < 8) {
+      showDialog({
+        title: "Password Too Short",
+        message:
+          "Your password must be at least 8 characters long to keep your account secure.",
+        confirmText: "OK",
+        showCancel: false,
+      });
+      return;
+    }
+
+    // 2. Username validation
+    const usernameRegex = /^[a-zA-Z0-9_]+$/; // Allows letters, numbers, and underscores
+
+    if (username.length < 3) {
+      showDialog({
+        title: "Username Too Short",
+        message: "Your username must be at least 3 characters long.",
+        confirmText: "OK",
+        showCancel: false,
+      });
+      return;
+    }
+
+    if (!usernameRegex.test(username)) {
+      showDialog({
+        title: "Invalid Username",
+        message:
+          "Usernames can only contain letters, numbers, and underscores. No spaces or special characters allowed.",
+        confirmText: "OK",
+        showCancel: false,
+      });
+      return;
+    }
+
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showDialog({
+          title: "Invalid Email Address",
+          message:
+            "Please enter a valid email address format (e.g., name@example.com).",
+          confirmText: "OK",
+          showCancel: false,
+        });
+        return;
+      }
     }
 
     try {
@@ -39,24 +93,30 @@ export default function SignUpForm({ onSwitchToSignin }: Props) {
       await request("/accounts", {
         method: "POST",
         body: {
-          full_name: fullName,
+          full_name: fullName.trim(),
           username,
           password,
           email: email || undefined,
         },
       });
 
-      Alert.alert("Success 🎉", "Please signin.");
-
-      setFullName("");
-      setUsername("");
-      setPassword("");
-      setEmail("");
+      showDialog({
+        title: "Account Created! 🎉",
+        message:
+          "Your registration was successful. Please log in with your new credentials.",
+        confirmText: "Go to Login",
+        showCancel: false,
+        onConfirm: () => {
+          // Clear input states on success
+          setFullName("");
+          setUsername("");
+          setPassword("");
+          setEmail("");
+          onSwitchToSignin();
+        },
+      });
     } catch (error) {
-      Alert.alert(
-        "Sign Up Failed",
-        "Username already exist or your password is too short.",
-      );
+      handleRequestError(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -66,6 +126,7 @@ export default function SignUpForm({ onSwitchToSignin }: Props) {
     <KeyboardAwareScrollView
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
     >
       <Text style={styles.title}>Tạo tài khoản</Text>
       <TextInput
@@ -80,7 +141,7 @@ export default function SignUpForm({ onSwitchToSignin }: Props) {
         placeholder="Tên đăng nhập *"
         style={authStyles.input}
         value={username}
-        onChangeText={setUsername}
+        onChangeText={(text) => setUsername(text.replace(/\s/g, ""))}
         autoCapitalize="none"
       />
 
@@ -97,7 +158,7 @@ export default function SignUpForm({ onSwitchToSignin }: Props) {
           style={styles.toggle}
           onPress={() => setShowPassword((prev) => !prev)}
         >
-          {showPassword ? "🙈" : "👁"}
+          {showPassword ? "🙈" : "🐵"}
         </Text>
       </View>
 
@@ -105,7 +166,7 @@ export default function SignUpForm({ onSwitchToSignin }: Props) {
         placeholder="Email (bảo vệ tài khoản)"
         style={authStyles.input}
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(text) => setEmail(text.replace(/\s/g, ""))}
         keyboardType="email-address"
         autoCapitalize="none"
       />
@@ -137,6 +198,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     justifyContent: "center",
+    paddingHorizontal: 24,
   },
 
   title: {

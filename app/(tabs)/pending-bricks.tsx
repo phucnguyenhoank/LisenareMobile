@@ -6,11 +6,10 @@ import colors from "@/theme/colors";
 import type { Collection } from "@/types/collection";
 import { Ionicons } from "@expo/vector-icons";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -18,7 +17,7 @@ import {
   View,
 } from "react-native";
 import Button from "@/components/Button";
-import { Brick, BrickPage } from "@/types/brick";
+import { BrickPage } from "@/types/brick";
 import BrickRowItem from "@/features/pending-bricks/BrickRowItem";
 import FilterSortModal from "@/features/pending-bricks/FilterSortModal";
 import {
@@ -27,17 +26,17 @@ import {
   SORT_OPTIONS,
   STATUS_OPTIONS,
 } from "@/constants/bricks";
-import { Toast } from "@/components/ToastOld";
 import BrickFilterBar from "@/features/pending-bricks/BrickFilterBar";
+import { handleRequestError } from "@/utils/handle-request-error";
+import { hideDialog, showDialog } from "@/utils/dialogs";
+import { toast } from "@/utils/toasts";
 
-export default function PendingCollectionsScreen() {
-  const router = useRouter();
+export default function PendingBricksScreen() {
   const { token, isTokenLoading } = useAuth();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const [refreshing, setRefreshing] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
 
   const {
     data: collections = [],
@@ -60,10 +59,19 @@ export default function PendingCollectionsScreen() {
   );
 
   useEffect(() => {
-    if (collections.length > 0 && selectedCollectionId === null) {
-      setSelectedCollectionId(collections[0].id);
+    if (collections.length > 0) {
+      // If there are collections and none are selected (or the old selection is gone), pick the first one
+      if (
+        selectedCollectionId === null ||
+        !collections.some((c) => c.id === selectedCollectionId)
+      ) {
+        setSelectedCollectionId(collections[0].id);
+      }
+    } else {
+      // Clear out the selection if everything was deleted on the other screen
+      setSelectedCollectionId(null);
     }
-  }, [collections]);
+  }, [collections, selectedCollectionId]);
 
   const {
     data: bricksData,
@@ -106,6 +114,15 @@ export default function PendingCollectionsScreen() {
     enabled: !!token,
   });
 
+  useFocusEffect(
+    useCallback(() => {
+      if (token) {
+        refetchCollections();
+        refetchBricks();
+      }
+    }, [token, refetchCollections, refetchBricks]),
+  );
+
   if (isTokenLoading) {
     return (
       <View style={styles.centered}>
@@ -139,6 +156,7 @@ export default function PendingCollectionsScreen() {
 
   const allBricks = bricksData?.pages.flatMap((page) => page.items) ?? [];
   const globalTotalBricks = bricksData?.pages[0]?.total ?? 0;
+  console.log(globalTotalBricks);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -168,40 +186,58 @@ export default function PendingCollectionsScreen() {
       await request(`/bricks/${brickId}`, {
         method: "DELETE",
       });
-      setToast("Brick deleted successfully");
+      toast.success("Brick deleted successfully");
     } catch (err: any) {
-      Alert.alert("Không thể xóa", err.message);
-      console.log(err);
+      handleRequestError(err);
     }
   };
 
   const handleDeleteBrick = (brickId: number) => {
-    Alert.alert(
-      "Bạn có chắc muốn xóa Brick này?",
-      "Xóa brick KHÔNG THỂ HOÀN TÁC và tất cả tương tác với brick này sẽ MẤT VĨNH VIỄN.",
-      [
-        { text: "Thoát", style: "cancel" },
-        {
-          text: "Xóa",
-          style: "destructive",
-          onPress: () => performDelete(brickId),
-        },
-      ],
-      { cancelable: true },
-    );
+    showDialog({
+      title: "Delete Brick Permanently?",
+      message:
+        "This action CANNOT BE UNDONE. This brick and all associated progress, history, and analytics will be DESTROYED FOREVER.",
+      children: (
+        <View style={{ gap: 12, marginTop: 10 }}>
+          <Button
+            title="Cancel, Keep It"
+            variant="outline"
+            onPress={() => hideDialog()}
+          />
+
+          <Button
+            title="Yes, Delete Permanently"
+            onPress={() => {
+              performDelete(brickId);
+              hideDialog();
+            }}
+            style={{
+              backgroundColor: colors.important,
+              borderColor: colors.important,
+            }}
+            textStyle={{
+              color: colors.surface,
+              fontWeight: "900",
+            }}
+          />
+        </View>
+      ),
+    });
   };
 
   return (
     <View style={styles.container}>
-      <BrickFilterBar
-        totalBricks={globalTotalBricks}
-        selectedCollection={selectedCollection || null}
-        selectedStatus={selectedStatus || ""}
-        selectedSort={selectedSort}
-        STATUS_OPTIONS={STATUS_OPTIONS}
-        SORT_OPTIONS={SORT_OPTIONS}
-        setIsModalVisible={setIsModalVisible}
-      />
+      {collections.length > 0 && (
+        <BrickFilterBar
+          totalBricks={globalTotalBricks}
+          selectedCollection={selectedCollection || null}
+          selectedStatus={selectedStatus || ""}
+          selectedSort={selectedSort}
+          STATUS_OPTIONS={STATUS_OPTIONS}
+          SORT_OPTIONS={SORT_OPTIONS}
+          setIsModalVisible={setIsModalVisible}
+        />
+      )}
 
       <FlatList
         data={allBricks}
@@ -216,8 +252,12 @@ export default function PendingCollectionsScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="document-text-outline" size={48} color="#ccc" />
-            <Text style={styles.emptyText}>Bài học trống</Text>
+            <Ionicons
+              name="document-text-outline"
+              size={48}
+              color={colors.secondary}
+            />
+            <Text style={styles.emptyText}>Danh sách trống</Text>
           </View>
         }
         onEndReached={() => {
@@ -238,7 +278,6 @@ export default function PendingCollectionsScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
-
       {selectedCollectionId && (
         <FilterSortModal
           visible={isModalVisible}
@@ -252,17 +291,6 @@ export default function PendingCollectionsScreen() {
           onSortChange={setSelectedSort}
         />
       )}
-
-      {toast && (
-        <View style={styles.toastWrapper}>
-          <Toast
-            message={toast}
-            onClose={() => setToast(null)}
-            duration={3000}
-          />
-        </View>
-      )}
-
       <FloatingActionMenu />
     </View>
   );
@@ -280,9 +308,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   subtitle: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 8,
+    marginTop: 10,
+    fontSize: 16,
+    color: "#444",
   },
   emptyContainer: {
     alignItems: "center",

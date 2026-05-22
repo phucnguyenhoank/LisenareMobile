@@ -2,6 +2,7 @@ import { StyleSheet } from "react-native";
 
 export const authStyles = StyleSheet.create({
   input: {
+    minWidth: 250,
     borderWidth: 1,
     borderColor: "#000",
     borderRadius: 20,

@@ -9,11 +9,9 @@ export function handleRequestError(err: unknown) {
 
   if (err instanceof RequestError) {
     const message = ERROR_MESSAGES[err.error_code] || err.message;
-
     showToast(message, "info");
-
     return;
   }
 
-  showToast("Something went wrong", "error");
+  showToast("We are so sorry, something went wrong.", "error");
 }

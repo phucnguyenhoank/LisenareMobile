@@ -6,13 +6,10 @@ import { BrickDisplay } from "@/features/brick-practice/BrickDisplay";
 import { LearnMenu } from "@/features/brick-practice/LearnMenu";
 import { ReportOtherInput } from "@/features/brick-practice/ReportOtherInput";
 import ResultDisplay from "@/features/brick-practice/ResultDisplay";
-import { Toast } from "@/components/ToastOld";
 import { useCachedAudio } from "@/hooks/useCachedAudio";
-import type { StatusResponse } from "@/types/api";
 import type { AudioTranscription } from "@/types/audio";
 import type { Brick } from "@/types/brick";
 import type { SentenceCompareResponse } from "@/types/comparison";
-import { showAlert } from "@/utils/alerts";
 import { AntDesign } from "@expo/vector-icons";
 
 import {
@@ -23,11 +20,10 @@ import {
   useAudioRecorder,
   useAudioRecorderState,
 } from "expo-audio";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Dimensions,
   Pressable,
@@ -38,6 +34,9 @@ import {
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Button from "@/components/Button";
+import { showDialog, hideDialog } from "@/utils/dialogs";
+import { toast } from "@/utils/toasts";
+import { handleRequestError } from "@/utils/handle-request-error";
 
 function normalizeCollectionIds(input?: string | string[]): number[] | null {
   if (!input) return null;
@@ -61,7 +60,6 @@ const DEFAULT_SETTINGS = {
 const NUM_TRANSCRIPTION_ATTEMPTS = 5;
 
 export default function PracticeScreen() {
-  const router = useRouter();
   const { collection_ids } = useLocalSearchParams<{
     collection_ids?: string | string[];
   }>();
@@ -85,7 +83,6 @@ export default function PracticeScreen() {
     DEFAULT_SETTINGS.firstShowNative,
   );
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
-  const [toast, setToast] = useState<string | null>(null);
   const [answer, setAnswer] = useState<string>("");
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [compareResult, setCompareResult] =
@@ -115,16 +112,16 @@ export default function PracticeScreen() {
       const br = await request<Brick | null>(url);
 
       if (!br) {
-        showAlert({
+        showDialog({
           title: "Chưa có dữ liệu",
           message: "Không có câu nào để luyện tập. Hãy thêm câu mới nhé!",
+          showCancel: true,
           cancelText: "Để sau",
           onCancel: () => router.back(),
           confirmText: "Thêm ngay",
           onConfirm: () => {
             router.push("/add-brick");
           },
-          showCancel: true,
         });
 
         return;
@@ -154,31 +151,47 @@ export default function PracticeScreen() {
   };
 
   const reportBrokenFile = () => {
-    Alert.alert(
-      "Báo cáo lỗi",
-      "Câu này có gì sai vậy?",
-      [
-        { text: "Khác...", onPress: () => setIsReporting(true) }, // Shows the simple input
-        {
-          text: "Câu thiếu ý",
-          onPress: () => sendReport("wrong brick type"),
-        },
-        {
-          text: "Audio bị hỏng",
-          onPress: () => sendReport("broken audio"),
-        },
-      ],
-      { cancelable: true },
-    );
+    showDialog({
+      title: "Report an Issue",
+      message: "What is wrong with this sentence?",
+      children: (
+        <View style={{ gap: 10, marginTop: 5 }}>
+          <Button
+            title="Audio is broken"
+            onPress={() => {
+              sendReport("broken audio");
+              hideDialog();
+            }}
+            variant="outline"
+          />
+          <Button
+            title="Incomplete meaning"
+            onPress={() => {
+              sendReport("wrong brick type");
+              hideDialog();
+            }}
+            variant="outline"
+          />
+          <Button
+            title="Other..."
+            variant="outline"
+            onPress={() => {
+              setIsReporting(true);
+              hideDialog();
+            }}
+          />
+        </View>
+      ),
+    });
   };
 
   const sendReport = async (description: string) => {
     const brickId = brick?.id;
-    const response = await request<StatusResponse>(
+    await request(
       `/bricks/report/${brickId}?description=${encodeURIComponent(description)}`,
       { method: "POST" },
     );
-    setToast(`${response.message}. Cảm ơn bạn!`);
+    toast.info(`Đã nhận báo cáo, cảm ơn bạn!`);
     setIsReporting(false);
     setOtherText("");
     fetchBrickFSRS();
@@ -193,7 +206,7 @@ export default function PracticeScreen() {
     }
 
     if (!finalAnswer.trim() || !brick) {
-      setToast("Nhập câu trả lời của bạn trước nha!");
+      toast.info("Nhập câu trả lời của bạn trước nha!");
       return;
     }
 
@@ -223,8 +236,7 @@ export default function PracticeScreen() {
 
       setCompareResult(result);
     } catch (err) {
-      console.error("Comparison failed:", err);
-      setToast("Failed to check answer.");
+      handleRequestError(err);
     } finally {
       setSubmitting(false);
       setAnswer(finalAnswer);
@@ -297,7 +309,11 @@ export default function PracticeScreen() {
       fetchBrickFSRS();
       const status = await AudioModule.requestRecordingPermissionsAsync();
       if (!status.granted) {
-        Alert.alert("Quyền truy cập microphone bị từ chối");
+        showDialog({
+          title: "Quyền Truy Cập Micro",
+          message:
+            "Bạn đã từ chối ứng dụng sử dụng microphone để ghi âm giọng nói của bạn.",
+        });
         return;
       }
       await setAudioModeAsync({
@@ -320,7 +336,7 @@ export default function PracticeScreen() {
         useNativeDriver: true,
       }).start();
     } else {
-      setToast(
+      toast.success(
         `Làm lại nhé 💪, bạn được ${Math.round(compareResult.score * 100)}%`,
       );
     }
@@ -405,16 +421,6 @@ export default function PracticeScreen() {
           />
         )}
       </KeyboardAwareScrollView>
-
-      {toast && (
-        <View style={styles.toastWrapper}>
-          <Toast
-            message={toast}
-            onClose={() => setToast(null)}
-            duration={1000}
-          />
-        </View>
-      )}
 
       {compareResult?.correct && (
         <Pressable style={styles.backdrop} onPress={closeBottomSheet} />
@@ -502,14 +508,6 @@ const styles = StyleSheet.create({
   sheetFooter: {
     alignItems: "flex-end",
     padding: 20,
-  },
-
-  toastWrapper: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 60,
-    alignItems: "center",
   },
 
   revealedStateText: {

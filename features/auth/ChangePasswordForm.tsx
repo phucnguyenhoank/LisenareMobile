@@ -4,16 +4,16 @@ import colors from "@/theme/colors";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Button from "@/components/Button";
 import { authStyles } from "./authStyles";
+import { showDialog } from "@/utils/dialogs";
+import { handleRequestError } from "@/utils/handle-request-error";
 
 type Props = {
   onCancel: () => void;
@@ -28,17 +28,42 @@ export default function ChangePasswordForm({ onCancel }: Props) {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleChangePassword = async () => {
-    // 1. Validation cơ bản
+    // 1. Basic validation checks
     if (!oldPassword || !newPassword || !confirmPassword) {
-      return Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin.");
+      showDialog({
+        title: "Missing Information",
+        message: "Please fill out all password fields before submitting.",
+        confirmText: "OK",
+        showCancel: false,
+      });
+      return;
     }
+
+    if (newPassword.length < 8) {
+      showDialog({
+        title: "Password Too Short",
+        message:
+          "Your password must be at least 8 characters long to keep your account secure.",
+        confirmText: "OK",
+        showCancel: false,
+      });
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
-      return Alert.alert("Lỗi", "Mật khẩu xác nhận không khớp.");
+      showDialog({
+        title: "Passwords Do Not Match",
+        message:
+          "Your new password and confirmation password must be identical.",
+        confirmText: "OK",
+        showCancel: false,
+      });
+      return;
     }
 
     setLoading(true);
     try {
-      // 2. Gọi API đổi mật khẩu
+      // 2. Call the password update endpoint
       await request("/accounts/me/password", {
         method: "PATCH",
         body: {
@@ -47,14 +72,17 @@ export default function ChangePasswordForm({ onCancel }: Props) {
         },
       });
 
-      // 3. Đổi thành công -> Thông báo và Đăng xuất
-      Alert.alert(
-        "Thành công",
-        "Mật khẩu đã được thay đổi. Vui lòng đăng nhập lại.",
-        [{ text: "OK", onPress: clearPersistedAuth }],
-      );
+      // 3. Success state -> Inform the user and sign out cleanly
+      showDialog({
+        title: "Password Updated",
+        message:
+          "Your password has been changed successfully. Please log back in with your new credentials.",
+        confirmText: "Log In Again",
+        showCancel: false,
+        onConfirm: clearPersistedAuth, // Clears tokens and handles navigation redirect automatically
+      });
     } catch (err: any) {
-      Alert.alert("Lỗi", "Mật khẩu cũ không đúng hoặc đã có lỗi xảy ra.");
+      handleRequestError(err);
     } finally {
       setLoading(false);
     }
@@ -64,6 +92,7 @@ export default function ChangePasswordForm({ onCancel }: Props) {
     <KeyboardAwareScrollView
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
     >
       <Text style={styles.title}>Đổi mật khẩu</Text>
 
@@ -104,7 +133,11 @@ export default function ChangePasswordForm({ onCancel }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, justifyContent: "center", paddingHorizontal: 24 },
+  container: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
   title: {
     fontSize: 20,
     fontWeight: "700",

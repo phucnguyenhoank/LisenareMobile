@@ -1,7 +1,6 @@
 import { RequestError } from "@/services/client";
 import { AuthProvider } from "@/context/AuthContext";
 import { SessionProvider } from "@/context/SessionContext";
-import { showAlert } from "@/utils/alerts";
 import { authActions } from "@/utils/auth-events";
 import {
   QueryCache,
@@ -12,6 +11,7 @@ import { router, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import * as Notifications from "expo-notifications";
+import { showDialog } from "@/utils/dialogs";
 import Toast from "@/components/Toast";
 import AlertDialog from "@/components/AlertDialog";
 
@@ -43,15 +43,15 @@ const queryClient = new QueryClient({
       // This runs automatically whenever ANY useQuery fails
       if (error instanceof RequestError && error.status === 401) {
         authActions.clearPersistedAuth();
-        showAlert({
-          title: "Phiên đăng nhập hết hạn",
-          message: "Hãy đăng nhập lại",
-          confirmText: "Đăng nhập",
+        showDialog({
+          title: "Session Expired",
+          message:
+            "Your session has timed out. Please log in again to continue learning.",
+          confirmText: "Log In",
+          showCancel: false, // Prevents them from closing the modal and staying on an unauthorized page
           onConfirm: () => {
-            router.push("/setting");
+            router.replace("/setting");
           },
-          showCancel: false,
-          cancelable: false,
         });
       }
     },

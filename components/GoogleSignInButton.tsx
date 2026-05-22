@@ -1,15 +1,12 @@
-import {
-  Alert,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { showDialog } from "@/utils/dialogs";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function GoogleSigninButton() {
   const handleGoogleSignIn = () => {
-    Alert.alert("Google Sign In", "Chức năng đang phát triển");
+    showDialog({
+      title: "Google Sign In",
+      message: "Chức năng đang phát triển",
+    });
   };
   return (
     <TouchableOpacity

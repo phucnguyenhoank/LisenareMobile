@@ -1,12 +1,7 @@
-import { request } from "@/services/client";
-import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
-import type { Token } from "@/types/token";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
-  Image,
   StyleSheet,
   Text,
   TextInput,
@@ -18,6 +13,7 @@ import { useSignIn } from "./useSignIn";
 import GoogleSigninButton from "@/components/GoogleSignInButton";
 import Button from "@/components/Button";
 import { authStyles } from "./authStyles";
+import { handleRequestError } from "@/utils/handle-request-error";
 
 type Props = {
   onSwitchToSignup: () => void;
@@ -35,9 +31,9 @@ export default function SignInForm({
 
   const handleSignin = async () => {
     try {
-      signin(username, password);
+      await signin(username, password);
     } catch (error) {
-      Alert.alert("Đăng nhập thất bại", "Sai tên đăng nhập hoặc mật khẩu");
+      handleRequestError(error);
     }
   };
 
@@ -49,6 +45,7 @@ export default function SignInForm({
     <KeyboardAwareScrollView
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
     >
       <Text style={styles.title}>Hello 👋</Text>
 

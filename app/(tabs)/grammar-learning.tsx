@@ -1,7 +1,7 @@
 import { request } from "@/services/client";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
-import { Link, useRouter } from "expo-router";
+import { Link } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, BackHandler, Text, View } from "react-native";
 import { ExerciseListScreen } from "../../components/grammar/Exerciselistscreen";
@@ -13,7 +13,6 @@ import { Screen, Topic } from "../../types/grammar";
 
 export default function GrammarStudying() {
   const { token, isTokenLoading } = useAuth();
-  const router = useRouter();
 
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(false); // ← đổi thành false

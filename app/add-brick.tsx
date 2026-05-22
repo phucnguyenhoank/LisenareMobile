@@ -23,9 +23,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
-  Button,
-  Pressable,
   StyleSheet,
   Switch,
   Text,
@@ -39,6 +36,8 @@ import {
 } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { handleRequestError } from "@/utils/handle-request-error";
+import { showDialog } from "@/utils/dialogs";
+import { toast } from "@/utils/toasts";
 
 export default function AddBrickScreen() {
   const params = useLocalSearchParams<{
@@ -164,7 +163,10 @@ export default function AddBrickScreen() {
 
     const permission = await AudioModule.requestRecordingPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Permission needed", "Please allow microphone access.");
+      showDialog({
+        title: "Permission needed",
+        message: "Please allow microphone access.",
+      });
       return;
     }
     await recorder.prepareToRecordAsync();
@@ -181,10 +183,11 @@ export default function AddBrickScreen() {
       if (!result.canceled) {
         const asset = result.assets[0];
         setManualAudio(asset.uri);
-        Alert.alert("Success", `Selected: ${asset.name}`);
+
+        toast.success(`Selected: ${asset.name}`);
       }
     } catch (err) {
-      Alert.alert("Error", "Could not select audio file.");
+      toast.error("Sorry, could not select audio file.");
     }
   };
 
@@ -196,14 +199,19 @@ export default function AddBrickScreen() {
 
   const onSubmit = async () => {
     if (!audioPath) {
-      return Alert.alert("Missing audio", "Please add audio.");
+      showDialog({
+        title: "Missing audio",
+        message: "Please add audio.",
+      });
+      return;
     }
 
     if (!form.native || !form.target) {
-      return Alert.alert(
-        "Missing fields",
-        "Please complete Vietnamese and English text.",
-      );
+      showDialog({
+        title: "Missing fields",
+        message: "Please complete Vietnamese and English text.",
+      });
+      return;
     }
 
     setLoading(true);
@@ -240,25 +248,16 @@ export default function AddBrickScreen() {
         body: data,
       });
 
-      Alert.alert(
-        "Success",
-        "Brick created successfully!",
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-            onPress: () => router.back(),
-          },
-          {
-            text: "OK",
-            onPress: () => {},
-          },
-        ],
-        { cancelable: false },
-      );
+      showDialog({
+        title: "Success",
+        message: "Brick created successfully!",
+        confirmText: "Add Another",
+        cancelText: "Cancel",
+        showCancel: true,
+        onCancel: () => router.back(),
+      });
     } catch (err) {
-      Alert.alert("Error", "Please check your connection.");
-      console.log((err as any).data);
+      toast.error("Please try again later.");
     } finally {
       setLoading(false);
     }
