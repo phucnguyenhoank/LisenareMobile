@@ -53,3 +53,6 @@ app-example
 gen-lang-client*.json
 google-services.json
 .env
+
+# temp code
+commands.md

@@ -1,4 +1,4 @@
-import { request } from "@/api/client";
+import { request } from "@/services/client";
 import { BrickMetadataSelector } from "@/components/brick-form/BrickMetadataSelector";
 import { useTTSPlayer } from "@/hooks/useTTSPlayer";
 import colors from "@/theme/colors";
@@ -23,9 +23,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
-  Button,
-  Pressable,
   StyleSheet,
   Switch,
   Text,
@@ -38,6 +35,9 @@ import {
   KeyboardToolbar,
 } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { handleRequestError } from "@/utils/handle-request-error";
+import { showDialog } from "@/utils/dialogs";
+import { toast } from "@/utils/toasts";
 
 export default function AddBrickScreen() {
   const params = useLocalSearchParams<{
@@ -51,8 +51,7 @@ export default function AddBrickScreen() {
   const [form, setForm] = useState({
     native: params.native || "",
     target: params.target || "",
-    coll: "My Daily Expressions",
-    group: "Essential",
+    coll: "Daily Expressions",
     public: true,
   });
 
@@ -67,6 +66,12 @@ export default function AddBrickScreen() {
   const [loading, setLoading] = useState(false);
   const [isTargetTextUnique, setIsTargetTextUnique] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
+
+  const [isReservedCollectionName, setIsReservedCollectionName] =
+    useState(false);
+
+  const [isCheckingCollectionName, setIsCheckingCollectionName] =
+    useState(false);
 
   const [audioPath, setAudioPath] = useState<string | null>(
     params.audio_path ?? null,
@@ -108,6 +113,7 @@ export default function AddBrickScreen() {
         setIsTargetTextUnique(!res.exists);
       } catch (err) {
         console.error(err);
+        handleRequestError(err);
       } finally {
         setIsChecking(false);
       }
@@ -115,6 +121,31 @@ export default function AddBrickScreen() {
 
     return () => clearTimeout(timeout);
   }, [form.target]);
+
+  useEffect(() => {
+    if (!form.coll.trim()) {
+      setIsReservedCollectionName(false);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      setIsCheckingCollectionName(true);
+
+      try {
+        const isReserved = await request<boolean>(
+          `/collections/reserved-name?name=${encodeURIComponent(form.coll)}`,
+        );
+
+        setIsReservedCollectionName(isReserved);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsCheckingCollectionName(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [form.coll]);
 
   const setManualAudio = (uri: string) => {
     setAudioPath(uri);
@@ -132,7 +163,10 @@ export default function AddBrickScreen() {
 
     const permission = await AudioModule.requestRecordingPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Permission needed", "Please allow microphone access.");
+      showDialog({
+        title: "Permission needed",
+        message: "Please allow microphone access.",
+      });
       return;
     }
     await recorder.prepareToRecordAsync();
@@ -149,10 +183,11 @@ export default function AddBrickScreen() {
       if (!result.canceled) {
         const asset = result.assets[0];
         setManualAudio(asset.uri);
-        Alert.alert("Success", `Selected: ${asset.name}`);
+
+        toast.success(`Selected: ${asset.name}`);
       }
     } catch (err) {
-      Alert.alert("Error", "Could not select audio file.");
+      toast.error("Sorry, could not select audio file.");
     }
   };
 
@@ -164,14 +199,19 @@ export default function AddBrickScreen() {
 
   const onSubmit = async () => {
     if (!audioPath) {
-      return Alert.alert("Missing audio", "Please add audio.");
+      showDialog({
+        title: "Missing audio",
+        message: "Please add audio.",
+      });
+      return;
     }
 
     if (!form.native || !form.target) {
-      return Alert.alert(
-        "Missing fields",
-        "Please complete Vietnamese and English text.",
-      );
+      showDialog({
+        title: "Missing fields",
+        message: "Please complete Vietnamese and English text.",
+      });
+      return;
     }
 
     setLoading(true);
@@ -189,7 +229,6 @@ export default function AddBrickScreen() {
         native_text: form.native,
         target_text: form.target,
         collection_name: form.coll,
-        group_name: form.group,
         is_public: form.public,
         brick_metadata: {
           unit_type: metadata.unitType,
@@ -209,25 +248,16 @@ export default function AddBrickScreen() {
         body: data,
       });
 
-      Alert.alert(
-        "Success",
-        "Brick created successfully!",
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-            onPress: () => router.back(),
-          },
-          {
-            text: "OK",
-            onPress: () => {},
-          },
-        ],
-        { cancelable: false },
-      );
+      showDialog({
+        title: "Success",
+        message: "Brick created successfully!",
+        confirmText: "Add Another",
+        cancelText: "Cancel",
+        showCancel: true,
+        onCancel: () => router.back(),
+      });
     } catch (err) {
-      Alert.alert("Error", "Please check your connection.");
-      console.log((err as any).data);
+      toast.error("Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -416,7 +446,13 @@ export default function AddBrickScreen() {
           <Text style={styles.sectionTitle}>Organization</Text>
 
           <View style={styles.fieldWrapper}>
-            <Text style={styles.fieldLabel}>Collection</Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.fieldLabel}>Collection</Text>
+
+              {isCheckingCollectionName && (
+                <ActivityIndicator size="small" color={colors.secondary2} />
+              )}
+            </View>
 
             <View style={styles.inputCard}>
               <TextInput
@@ -429,23 +465,11 @@ export default function AddBrickScreen() {
                   }))
                 }
               />
-            </View>
-          </View>
-
-          <View style={styles.fieldWrapper}>
-            <Text style={styles.fieldLabel}>Group</Text>
-
-            <View style={styles.inputCard}>
-              <TextInput
-                style={styles.singleInput}
-                value={form.group}
-                onChangeText={(t) =>
-                  setForm((f) => ({
-                    ...f,
-                    group: t,
-                  }))
-                }
-              />
+              {isReservedCollectionName && (
+                <Text style={styles.warningText}>
+                  This collection name is reserved.
+                </Text>
+              )}
             </View>
           </View>
         </View>
@@ -491,11 +515,21 @@ export default function AddBrickScreen() {
         <TouchableOpacity
           style={[
             styles.submitButton,
-            (loading || isRecording || !isTargetTextUnique) && {
+            (loading ||
+              isRecording ||
+              !isTargetTextUnique ||
+              isReservedCollectionName ||
+              !audioPath) && {
               opacity: 0.5,
             },
           ]}
-          disabled={loading || isRecording || !isTargetTextUnique}
+          disabled={
+            loading ||
+            isRecording ||
+            !isTargetTextUnique ||
+            isReservedCollectionName ||
+            !audioPath
+          }
           onPress={onSubmit}
         >
           {loading ? (

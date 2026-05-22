@@ -1,5 +1,4 @@
-import { request } from "@/api/client";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { usePushNotificationToken } from "@/hooks/usePushNotificationToken";
 import { TokenPayload } from "@/types/token";
 import { authActions } from "@/utils/auth-events";
 import * as authStorage from "@/utils/auth-storage";
@@ -17,8 +16,8 @@ interface AuthContextType {
   token: string | null;
   tokenPayload: TokenPayload | null;
   isTokenLoading: boolean;
-  signin: (newToken: string) => Promise<void>;
-  signout: () => Promise<void>;
+  persistAuth: (token: string) => Promise<void>;
+  clearPersistedAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,49 +25,57 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [tokenPayload, setTokenPayload] = useState<TokenPayload | null>(null);
-  const [isTokenLoading, setIsLoading] = useState(true);
-  const { pushToken } = usePushNotifications();
+  const [isTokenLoading, setIsTokenLoading] = useState(true);
+
+  const { pushToken } = usePushNotificationToken();
   console.log("pushToken:", pushToken);
 
-  const setAuthData = (newToken: string | null) => {
-    setToken(newToken);
-    if (newToken) {
-      const decoded = authStorage.decodeToken(newToken);
-      setTokenPayload(decoded);
-    } else {
-      setTokenPayload(null);
-    }
+  const setAuthState = (token: string, payload: TokenPayload) => {
+    setToken(token);
+    setTokenPayload(payload);
   };
 
-  const signin = async (newToken: string) => {
-    const decoded = authStorage.decodeToken(newToken);
-    setToken(newToken);
-    setTokenPayload(decoded);
-    await authStorage.saveToken(newToken);
+  /**
+   * Use the token to update auth state and save it to secure storage.
+   */
+  const persistAuth = async (token: string) => {
+    const decodedPayload = authStorage.decodeToken(token);
+    setToken(token);
+    setTokenPayload(decodedPayload);
+    await authStorage.saveToken(token);
   };
 
-  const signout = async () => {
+  /**
+   * Clear auth state and remove the token from secure storage.
+   */
+  const clearPersistedAuth = async () => {
     setToken(null);
     setTokenPayload(null);
     await authStorage.removeToken();
   };
 
-  // Load the token once when the app start
+  // Once when the app start
+  // Load the stored token to check the expiration
+  // Remove the token if it's expired, otherwise set the auth state
   useEffect(() => {
     const initializeAuth = async () => {
       const storedToken = await authStorage.getToken();
-      if (storedToken) {
-        const decoded = authStorage.decodeToken(storedToken);
 
-        // Check expiry immediately
-        if (decoded && Date.now() >= decoded.exp * 1000) {
-          await authStorage.removeToken();
-        } else {
-          setAuthData(storedToken);
+      if (storedToken) {
+        const decodedPayload = authStorage.decodeToken(storedToken);
+
+        if (decodedPayload) {
+          if (Date.now() >= decodedPayload.exp * 1000) {
+            await authStorage.removeToken();
+          } else {
+            setAuthState(storedToken, decodedPayload);
+          }
         }
       }
-      setIsLoading(false);
+
+      setIsTokenLoading(false);
     };
+
     initializeAuth();
   }, []);
 
@@ -78,25 +85,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const interval = setInterval(() => {
       // 10 seconds in advance
+      // Comparing in ms
       if (Date.now() + 10000 >= tokenPayload.exp * 1000) {
-        console.warn("Session expired");
-        signout();
+        console.log("Session expired");
+        clearPersistedAuth();
       }
     }, 5000);
 
     return () => clearInterval(interval);
   }, [tokenPayload]);
 
+  // This will be used by others
   useEffect(() => {
-    authActions.signout = signout;
-  }, [signout]);
+    authActions.clearPersistedAuth = clearPersistedAuth;
+  }, [clearPersistedAuth]);
 
   useEffect(() => {
     if (!pushToken || !token) return;
     console.log("Sending push token:", pushToken);
 
-    // have to use fetch instead of request here
+    // have to use fetch to upload the push token instead of request here
     // because the token is not available on the storage at this time
+    // to make a request with token
     fetch(`${API_BASE_URL}/push-tokens`, {
       method: "POST",
       headers: {
@@ -112,7 +122,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ token, tokenPayload, isTokenLoading, signin, signout }}
+      value={{
+        token,
+        tokenPayload,
+        isTokenLoading,
+        persistAuth,
+        clearPersistedAuth,
+      }}
     >
       {children}
     </AuthContext.Provider>

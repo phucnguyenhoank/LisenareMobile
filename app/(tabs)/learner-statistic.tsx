@@ -1,9 +1,8 @@
-import { request } from "@/api/client";
-import ChartCard from "@/components/learning-statistic/ChartCard";
-import HistorySummaryCard from "@/components/learning-statistic/HistorySummaryCard";
-import MemoryQualityCard from "@/components/learning-statistic/MemoryQualityCard";
-import TodayOverviewCard from "@/components/learning-statistic/TodayOverviewCard";
-import TextButton from "@/components/TextButton";
+import { request } from "@/services/client";
+import ChartCard from "@/features/learning-statistic/ChartCard";
+import HistorySummaryCard from "@/features/learning-statistic/HistorySummaryCard";
+import MemoryQualityCard from "@/features/learning-statistic/MemoryQualityCard";
+import TodayOverviewCard from "@/features/learning-statistic/TodayOverviewCard";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
 import {
@@ -14,17 +13,17 @@ import {
 } from "@/types/learner-statistic";
 import { Learner } from "@/types/learnner";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import Button from "@/components/Button";
 
 const RANGE_TO_DAYS: Record<TimeRange, number | null> = {
   "30d": 30,
@@ -34,7 +33,6 @@ const RANGE_TO_DAYS: Record<TimeRange, number | null> = {
 };
 
 export default function LearnerStatisticScreen() {
-  const router = useRouter();
   const { token, isTokenLoading: authLoading } = useAuth();
   const [selectedRange, setSelectedRange] = useState<TimeRange>("30d");
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -120,7 +118,11 @@ export default function LearnerStatisticScreen() {
   if (!token) {
     return (
       <View style={styles.center}>
-        <TextButton title="Đăng nhập" onPress={() => router.push("/setting")} />
+        <Button
+          title="Đăng nhập"
+          onPress={() => router.push("/setting")}
+          style={{ alignSelf: "center" }}
+        />
         <Text style={styles.subtitle}>để theo dõi tiến độ học tập</Text>
       </View>
     );
@@ -150,10 +152,10 @@ export default function LearnerStatisticScreen() {
         <RefreshControl refreshing={pageLoading} onRefresh={onRefresh} />
       }
     >
-      <Text style={styles.pageTitle}>Xin chào, {user?.full_name ?? "bạn"}</Text>
-      <Text style={styles.pageSubtitle}>Dữ liệu học tập của bạn</Text>
+      <Text style={styles.pageTitle}>Thống kê học tập </Text>
+      <Text style={styles.pageSubtitle}>của {user?.full_name ?? "bạn"}</Text>
 
-      <Text style={styles.sectionTitle}>Dữ liệu của hôm nay</Text>
+      <Text style={styles.sectionTitle}>Số thẻ mới hôm nay</Text>
 
       <TodayOverviewCard
         total={todayTotal}
@@ -202,7 +204,7 @@ function formatDays(value?: number) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F2F2F7",
+    backgroundColor: "#fff",
   },
   container: {
     padding: 20,
@@ -213,7 +215,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F2F2F7",
+    backgroundColor: "#fff",
     padding: 20,
   },
 

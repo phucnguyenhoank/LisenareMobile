@@ -1,5 +1,5 @@
+import Button from "@/components/Button";
 import CloseButton from "@/components/CloseButton";
-import TextButton from "@/components/TextButton";
 import colors from "@/theme/colors";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -92,7 +92,7 @@ export default function HelpScreen() {
           Hỏi đáp về những khó khăn bạn gặp tại Đây
         </Text>
 
-        <TextButton title="Luyện tập ngay" onPress={() => {}} />
+        <Button title="Luyện tập ngay" onPress={() => {}} />
       </ScrollView>
     </View>
   );

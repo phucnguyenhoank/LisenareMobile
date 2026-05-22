@@ -19,13 +19,6 @@ import {
 } from "react-native";
 import { GrammarPointSelector } from "./GrammarPointSelector";
 
-if (
-  Platform.OS === "android" &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
 type MetadataState = {
   unitType: UnitType;
   structure: SentenceStructure | null;

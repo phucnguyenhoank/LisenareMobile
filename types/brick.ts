@@ -86,10 +86,17 @@ export type Brick = {
   is_public: boolean;
   creator_id: number;
   collection_id: number | null;
+  lesson_id: string | null;
   brick_metadata_id: number;
   last_edit_at: string;
   brick_metadata: BrickMetadata;
   creator: Learner;
+  learned: boolean;
+};
+
+export type BrickPage = {
+  items: Brick[];
+  total: number;
 };
 
 /** Simple version for lists/previews */

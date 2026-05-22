@@ -1,5 +1,5 @@
-import { request } from "@/api/client";
-import FeedItem from "@/components/discovery/FeedItem";
+import { request } from "@/services/client";
+import FeedItem from "@/features/discovery/FeedItem";
 import { useSession } from "@/context/SessionContext";
 import { useAttentionTracking } from "@/hooks/useAttentionTracking";
 import colors from "@/theme/colors";

@@ -1,52 +1,47 @@
-import { useEffect } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useToastStore } from "@/stores/toast-store";
+import { StyleSheet, Text, View } from "react-native";
 
-export function Toast({
-  message,
-  onClose,
-  duration,
-}: {
-  message: string;
-  onClose: () => void;
-  duration?: number;
-}) {
-  useEffect(() => {
-    if (duration) {
-      const timer = setTimeout(onClose, duration);
-      return () => clearTimeout(timer);
-    }
-  }, [duration, onClose]);
+export default function Toast() {
+  const { visible, message, type } = useToastStore();
+  if (!visible) return null;
 
   return (
-    <View style={styles.toastContainer}>
-      <Text style={styles.toastText}>{message}</Text>
-
-      {!duration && (
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Text style={{ color: "#fff", fontWeight: "bold", marginLeft: 10 }}>
-            ✕
-          </Text>
-        </TouchableOpacity>
-      )}
+    <View
+      style={[
+        styles.container,
+        type === "error" && styles.error,
+        type === "success" && styles.success,
+      ]}
+    >
+      <Text style={styles.text}>{message}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  toastContainer: {
-    flexDirection: "row", // Để nội dung và nút X nằm ngang
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.8)",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+  container: {
+    position: "absolute",
+    top: 100,
+    left: 32,
+    right: 32,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 20,
-    justifyContent: "space-between",
+    backgroundColor: "rgba(39, 39, 42, 0.8)",
+    zIndex: 9999,
   },
-  toastText: {
-    color: "#fff",
-    maxWidth: "85%", // Tránh chữ đè lên nút X
+
+  text: {
+    color: "#ffffff",
+    fontSize: 14,
+    textAlign: "center",
   },
-  closeButton: {
-    padding: 5,
+
+  error: {
+    backgroundColor: "rgba(225, 29, 72, 0.8)",
+  },
+
+  success: {
+    backgroundColor: "rgba(5, 150, 105, 0.8)", // Emerald green
   },
 });

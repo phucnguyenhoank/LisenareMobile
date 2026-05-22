@@ -1,21 +1,20 @@
-import { request } from "@/api/client";
+import { request } from "@/services/client";
 import { AudioInput } from "@/components/AudioInput";
-import { SnippetTextInput } from "@/components/SnippetTextInput";
+import { SnippetTextInput } from "@/features/add-snippet/SnippetTextInput";
 import colors from "@/theme/colors";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import {
-  KeyboardAwareScrollView
-} from "react-native-keyboard-controller";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { showDialog } from "@/utils/dialogs";
+import { handleRequestError } from "@/utils/handle-request-error";
 
 export default function AddSnippetScreen() {
   const insets = useSafeAreaInsets();
@@ -26,10 +25,18 @@ export default function AddSnippetScreen() {
 
   const onSubmit = async () => {
     if (!content) {
-      return Alert.alert("Missing content");
+      showDialog({
+        title: "Sorry",
+        message: "Missing snippet content",
+      });
+      return;
     }
     if (!audioPath) {
-      return Alert.alert("Missing audio");
+      showDialog({
+        title: "Sorry",
+        message: "Missing snippet audio",
+      });
+      return;
     }
 
     const formData = new FormData();
@@ -53,11 +60,16 @@ export default function AddSnippetScreen() {
         body: formData,
       });
 
-      Alert.alert("Success", "Snippet created!", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
+      showDialog({
+        title: "Success",
+        message: "Snippet created!",
+        showCancel: true,
+        cancelText: "Cancel",
+        onCancel: () => router.back(),
+        confirmText: "Ok",
+      });
     } catch (err) {
-      Alert.alert("Error", "Failed to create snippet");
+      handleRequestError(err);
     } finally {
       setLoading(false);
     }

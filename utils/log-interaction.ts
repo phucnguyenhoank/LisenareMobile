@@ -1,5 +1,5 @@
 // utils/log-interaction.ts
-import { request } from "@/api/client";
+import { request } from "@/services/client";
 
 export enum InteractionType {
   LISTEN = "LISTEN",
