@@ -1,4 +1,4 @@
-import { ApiError, request } from "@/api/client";
+import { RequestError as ApiError, request } from "@/services/client";
 import { PracticeQuestionCard } from "@/components/adaptive-practice/PracticeQuestionCard";
 import { PracticeResult } from "@/components/adaptive-practice/PracticeResult";
 import { TopicSelector } from "@/components/adaptive-practice/TopicSelector";
@@ -21,6 +21,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Phase =
   | { type: "select" }
@@ -43,6 +44,7 @@ type Phase =
 export default function AdaptivePracticeScreen() {
   const { token, isTokenLoading } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loadingTopics, setLoadingTopics] = useState(true);
@@ -293,7 +295,7 @@ export default function AdaptivePracticeScreen() {
 
   return (
     <View style={styles.root}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           onPress={handleExit}
           style={styles.backBtn}
@@ -325,7 +327,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: C.white,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: C.border,
   },

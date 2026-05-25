@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { AdaptivePracticeView } from "../../components/adaptive-practice/AdaptivePracticeView";
 import { ExerciseListScreen } from "../../components/grammar/Exerciselistscreen";
 import { LessonListScreen } from "../../components/grammar/Lessonlistscreen";
 import { QuizScreen } from "../../components/grammar/Quizscreen";
@@ -122,7 +123,7 @@ export default function GrammarStudying() {
           <View style={localStyles.topBar}>
             <TouchableOpacity
               style={localStyles.adaptiveBtn}
-              onPress={() => router.push("/adaptive-practice" as any)}
+              onPress={() => setScreen({ type: "adaptive" })}
               activeOpacity={0.75}
             >
               <Text style={localStyles.adaptiveBtnIcon}>🎯</Text>
@@ -163,6 +164,17 @@ export default function GrammarStudying() {
     }
     if (screen.type === "quiz") {
       return <QuizScreen exercise={screen.exercise} onBack={onBack!} />;
+    }
+    if (screen.type === "adaptive") {
+      return (
+        <AdaptivePracticeView
+          topics={topics}
+          loadingTopics={loading}
+          topicError={error}
+          onRetry={fetchTopics}
+          onExit={() => setScreen({ type: "topics" })}
+        />
+      );
     }
     return null;
   };

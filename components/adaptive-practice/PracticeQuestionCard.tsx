@@ -107,12 +107,6 @@ export function PracticeQuestionCard({
         <View style={styles.statusPill}>
           <Text style={styles.statusPillText}>✓ {correctCount}</Text>
         </View>
-        <View style={[styles.statusPill, styles.thetaPill]}>
-          <Text style={styles.thetaText}>θ = {theta.toFixed(2)}</Text>
-        </View>
-        <View style={[styles.statusPill, styles.diffPill]}>
-          <Text style={styles.diffText}>Độ khó {question.difficulty.toFixed(2)}</Text>
-        </View>
       </View>
 
       <View style={styles.autoRow}>

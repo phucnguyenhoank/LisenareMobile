@@ -44,6 +44,7 @@ export function TopicListScreen({ topics, loading, error, onSelect, onRetry }: P
       <FlatList
         data={topics}
         keyExtractor={(t) => String(t.id)}
+        style={{ flex: 1 }}
         contentContainerStyle={{ padding: 16, gap: 10 }}
         renderItem={({ item, index }) => (
           <TouchableOpacity

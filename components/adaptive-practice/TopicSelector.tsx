@@ -71,14 +71,6 @@ export function TopicSelector({
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={styles.intro}>
-        <Text style={styles.title}>Chọn chủ đề luyện tập</Text>
-        <Text style={styles.sub}>
-          Câu hỏi được chọn tự động theo trình độ (theta) của bạn dựa trên các
-          chủ đề bên dưới.
-        </Text>
-      </View>
-
       <View style={styles.actionsRow}>
         <Text style={styles.count}>
           Đã chọn {selected.size}/{topics.length}
@@ -93,6 +85,7 @@ export function TopicSelector({
       <FlatList
         data={topics}
         keyExtractor={(t) => String(t.id)}
+        style={{ flex: 1 }}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => {
           const isOn = selected.has(item.id);
