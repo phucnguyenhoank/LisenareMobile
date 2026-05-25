@@ -124,7 +124,6 @@ const styles = StyleSheet.create({
     paddingRight: 16,
   },
   chip: {
-    backgroundColor: colors.disabled,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,

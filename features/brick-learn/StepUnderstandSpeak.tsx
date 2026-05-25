@@ -98,7 +98,7 @@ export default function StepUnderstandSpeak({
         }
       }
     }
-    setStatusMessage("Lỗi đánh giá. Thử lại!");
+    setStatusMessage("Xin lỗi về sự bất tiện, hãy thử lại!");
     return null;
   };
 

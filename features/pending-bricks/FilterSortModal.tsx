@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Props {
   visible: boolean;
+  showSortBy: boolean;
   onClose: () => void;
 
   collections: Collection[];
@@ -35,6 +36,7 @@ interface Props {
 
 export default function FilterSortModal({
   visible,
+  showSortBy,
   onClose,
 
   collections,
@@ -134,7 +136,8 @@ export default function FilterSortModal({
 
               {renderSection("Status", STATUS_OPTIONS, status, setStatus)}
 
-              {renderSection("Sort by", SORT_OPTIONS, sort, setSort)}
+              {showSortBy &&
+                renderSection("Sort by", SORT_OPTIONS, sort, setSort)}
             </ScrollView>
           </SafeAreaView>
         </Pressable>
@@ -203,7 +206,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 28,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: colors.background,
     borderWidth: 1,
     borderColor: colors.border,
   },

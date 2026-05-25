@@ -114,3 +114,13 @@ export type BrickAudioPage = {
   limit: number;
   total: number;
 };
+
+export type BrickLessonRead = {
+  lesson_id: number;
+  brick_count: number;
+};
+
+export type BrickLessonPage = {
+  items: BrickLessonRead[];
+  total: number;
+};
