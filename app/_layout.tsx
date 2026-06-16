@@ -80,6 +80,11 @@ export default function RootLayout() {
                 name="adaptive-practice"
                 options={{ headerShown: false }}
               />
+
+              <Stack.Screen
+                name="agent-test"
+                options={{ headerShown: true, title: "Test Agent" }}
+              />
             </Stack>
             <Toast />
             <AlertDialog />

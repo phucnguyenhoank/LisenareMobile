@@ -1,7 +1,7 @@
 import { request } from "@/services/client";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
-import { Link } from "expo-router";
+import { Href, Link, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -22,6 +22,7 @@ import { Screen, Topic } from "../../types/grammar";
 
 export default function GrammarStudying() {
   const { token, isTokenLoading } = useAuth();
+  const router = useRouter();
 
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(false); // ← đổi thành false
@@ -131,6 +132,14 @@ export default function GrammarStudying() {
                 Luyện tập thích ứng
               </Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={localStyles.agentBtn}
+              onPress={() => router.push("/agent-test" as Href)}
+              activeOpacity={0.75}
+            >
+              <Text style={localStyles.adaptiveBtnIcon}>🤖</Text>
+              <Text style={localStyles.agentBtnText}>Test Agent</Text>
+            </TouchableOpacity>
           </View>
           <TopicListScreen
             topics={topics}
@@ -185,6 +194,8 @@ export default function GrammarStudying() {
 const localStyles = StyleSheet.create({
   topBar: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
@@ -207,6 +218,22 @@ const localStyles = StyleSheet.create({
   adaptiveBtnIcon: { fontSize: 14 },
   adaptiveBtnText: {
     color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  agentBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#fff",
+    borderWidth: 1.5,
+    borderColor: C.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+  },
+  agentBtnText: {
+    color: C.primary,
     fontSize: 13,
     fontWeight: "700",
   },
