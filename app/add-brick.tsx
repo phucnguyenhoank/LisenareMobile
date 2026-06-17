@@ -255,6 +255,14 @@ export default function AddBrickScreen() {
         cancelText: "Cancel",
         showCancel: true,
         onCancel: () => router.back(),
+        onConfirm: () => {
+          setAudioPath(null);
+          setForm((f) => ({
+            ...f,
+            target: "",
+            native: "",
+          }));
+        },
       });
     } catch (err) {
       toast.error("Please try again later.");
@@ -614,7 +622,7 @@ const styles = StyleSheet.create({
 
   recordButton: {
     height: 58,
-    borderRadius: 18,
+    borderRadius: 28,
     backgroundColor: colors.secondary2,
     marginTop: 24,
 
@@ -637,7 +645,7 @@ const styles = StyleSheet.create({
   uploadButton: {
     marginTop: 14,
     height: 54,
-    borderRadius: 16,
+    borderRadius: 28,
     borderWidth: 1,
     borderColor: "#ECECEC",
 
@@ -655,7 +663,7 @@ const styles = StyleSheet.create({
   previewButton: {
     marginTop: 16,
     backgroundColor: colors.buttonBackground,
-    borderRadius: 14,
+    borderRadius: 28,
     paddingVertical: 12,
 
     flexDirection: "row",
@@ -764,7 +772,7 @@ const styles = StyleSheet.create({
 
   submitButton: {
     height: 60,
-    borderRadius: 20,
+    borderRadius: 28,
     backgroundColor: colors.secondary2,
 
     marginTop: 36,

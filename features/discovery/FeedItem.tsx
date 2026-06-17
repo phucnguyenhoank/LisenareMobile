@@ -37,7 +37,9 @@ export default function FeedItem({ item }: FeedItemProps) {
   const { data: segments = [] } = useQuery({
     queryKey: ["segments", item.audio_path],
     queryFn: () =>
-      request<WordSegmentSecond[]>(`/text/forced_alignment/${item.audio_path}`),
+      request<WordSegmentSecond[]>(
+        `/audio/forced-alignment/${item.audio_path}`,
+      ),
     staleTime: Infinity,
   });
 

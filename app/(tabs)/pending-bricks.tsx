@@ -4,7 +4,7 @@ import { PAGINATION_LIMIT } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext";
 import colors from "@/theme/colors";
 import type { Collection } from "@/types/collection";
-import { Ionicons } from "@expo/vector-icons";
+import { EvilIcons, Ionicons } from "@expo/vector-icons";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -14,10 +14,11 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import Button from "@/components/Button";
-import { BrickPage } from "@/types/brick";
+import { BrickLessonPage, BrickPage } from "@/types/brick";
 import BrickRowItem from "@/features/pending-bricks/BrickRowItem";
 import FilterSortModal from "@/features/pending-bricks/FilterSortModal";
 import {
@@ -30,6 +31,8 @@ import BrickFilterBar from "@/features/pending-bricks/BrickFilterBar";
 import { handleRequestError } from "@/utils/handle-request-error";
 import { hideDialog, showDialog } from "@/utils/dialogs";
 import { toast } from "@/utils/toasts";
+import { SYSTEM_LEVELS } from "@/constants/collections";
+import LessonRowItem from "@/features/pending-bricks/LessonRowItem";
 
 export default function PendingBricksScreen() {
   const { token, isTokenLoading } = useAuth();
@@ -58,6 +61,61 @@ export default function PendingBricksScreen() {
     (collection) => collection.id === selectedCollectionId,
   );
 
+  const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
+  const isSystemCollection =
+    selectedCollection != null &&
+    SYSTEM_LEVELS.some((level) => level.name === selectedCollection.name);
+
+  useEffect(() => {
+    setSelectedLessonId(null);
+  }, [selectedCollectionId]);
+
+  const {
+    data: lessonsData,
+    fetchNextPage: fetchNextLessonsPage,
+    hasNextPage: hasNextLessonsPage,
+    isLoading: isLessonsLoading,
+    isFetchingNextPage: isFetchingNextLessonsPage,
+    refetch: refetchLessons,
+  } = useInfiniteQuery({
+    queryKey: ["pending-lessons", selectedCollectionId, selectedStatus],
+    queryFn: async ({ pageParam }) => {
+      if (selectedCollectionId === null) {
+        return { items: [], total: 0 };
+      }
+
+      const params = new URLSearchParams({
+        collection_id: selectedCollectionId.toString(),
+        page: pageParam.toString(),
+        limit: PAGINATION_LIMIT.toString(),
+      });
+
+      if (selectedStatus) {
+        params.append("status", selectedStatus);
+      }
+
+      return request<BrickLessonPage>(
+        `/bricks/pending/lessons?${params.toString()}`,
+      );
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      const totalLoadedSoFar = allPages.reduce(
+        (sum, page) => sum + page.items.length,
+        0,
+      );
+
+      return totalLoadedSoFar < lastPage.total
+        ? allPages.length + 1
+        : undefined;
+    },
+    enabled:
+      !!token &&
+      !!selectedCollectionId &&
+      isSystemCollection &&
+      selectedLessonId === null,
+  });
+
   useEffect(() => {
     if (collections.length > 0) {
       // If there are collections and none are selected (or the old selection is gone), pick the first one
@@ -81,7 +139,13 @@ export default function PendingBricksScreen() {
     isFetchingNextPage,
     refetch: refetchBricks,
   } = useInfiniteQuery({
-    queryKey: ["bricks", selectedCollectionId, selectedStatus, selectedSort],
+    queryKey: [
+      "pending-bricks",
+      selectedCollectionId,
+      selectedStatus,
+      selectedSort,
+      selectedLessonId,
+    ],
     queryFn: async ({ pageParam }) => {
       if (selectedCollectionId === null) {
         return { items: [], total: 0 };
@@ -98,6 +162,10 @@ export default function PendingBricksScreen() {
         params.append("status", selectedStatus);
       }
 
+      if (isSystemCollection && selectedLessonId !== null) {
+        params.append("lesson_id", selectedLessonId.toString());
+      }
+
       return request<BrickPage>(`/bricks/pending?${params.toString()}`);
     },
     initialPageParam: 1,
@@ -111,7 +179,10 @@ export default function PendingBricksScreen() {
         ? allPages.length + 1
         : undefined;
     },
-    enabled: !!token,
+    enabled:
+      !!token &&
+      !!selectedCollectionId &&
+      (!isSystemCollection || selectedLessonId !== null),
   });
 
   useFocusEffect(
@@ -154,14 +225,23 @@ export default function PendingBricksScreen() {
     );
   }
 
-  const allBricks = bricksData?.pages.flatMap((page) => page.items) ?? [];
-  const globalTotalBricks = bricksData?.pages[0]?.total ?? 0;
-  console.log(globalTotalBricks);
+  const showLessons = isSystemCollection && selectedLessonId === null;
+
+  const lessonItems = lessonsData?.pages.flatMap((page) => page.items) ?? [];
+  const brickItems = bricksData?.pages.flatMap((page) => page.items) ?? [];
+
+  const totalCount = showLessons
+    ? (lessonsData?.pages[0]?.total ?? 0)
+    : (bricksData?.pages[0]?.total ?? 0);
 
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refetchCollections(), refetchBricks()]);
+      await Promise.all([
+        refetchCollections(),
+        refetchBricks(),
+        refetchLessons(),
+      ]);
     } finally {
       setRefreshing(false);
     }
@@ -196,7 +276,8 @@ export default function PendingBricksScreen() {
     showDialog({
       title: "Delete Brick Permanently?",
       message:
-        "This action CANNOT BE UNDONE. This brick and all associated progress, history, and analytics will be DESTROYED FOREVER.",
+        "This action CANNOT BE UNDONE. This brick and all \
+        associated progress, history, and analytics will be DESTROYED FOREVER.",
       children: (
         <View style={{ gap: 12, marginTop: 10 }}>
           <Button
@@ -229,7 +310,7 @@ export default function PendingBricksScreen() {
     <View style={styles.container}>
       {collections.length > 0 && (
         <BrickFilterBar
-          totalBricks={globalTotalBricks}
+          totalBricks={totalCount}
           selectedCollection={selectedCollection || null}
           selectedStatus={selectedStatus || ""}
           selectedSort={selectedSort}
@@ -240,16 +321,26 @@ export default function PendingBricksScreen() {
       )}
 
       <FlatList
-        data={allBricks}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <BrickRowItem
-            brick={item}
-            onLearn={handleLearnBrick}
-            onEdit={handleEditBrick}
-            onDelete={handleDeleteBrick}
-          />
-        )}
+        // Cast to any[] to stop TypeScript from complaining about the mixed types
+        data={(showLessons ? lessonItems : brickItems) as any[]}
+        keyExtractor={(item) =>
+          showLessons ? item.lesson_id.toString() : item.id.toString()
+        }
+        renderItem={({ item }) =>
+          showLessons ? (
+            <LessonRowItem
+              lesson={item}
+              onPress={() => setSelectedLessonId(item.lesson_id)}
+            />
+          ) : (
+            <BrickRowItem
+              brick={item}
+              onLearn={handleLearnBrick}
+              onEdit={handleEditBrick}
+              onDelete={handleDeleteBrick}
+            />
+          )
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons
@@ -261,11 +352,28 @@ export default function PendingBricksScreen() {
           </View>
         }
         onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+          if (showLessons) {
+            if (hasNextLessonsPage && !isFetchingNextLessonsPage) {
+              fetchNextLessonsPage();
+            }
+          } else {
+            if (hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
+            }
+          }
         }}
         onEndReachedThreshold={0.5}
         ListFooterComponent={
-          isFetchingNextPage ? (
+          showLessons ? (
+            isFetchingNextLessonsPage ? (
+              <ActivityIndicator
+                style={{ marginVertical: 20 }}
+                color={colors.primary}
+              />
+            ) : (
+              <View style={{ height: 100 }} />
+            )
+          ) : isFetchingNextPage ? (
             <ActivityIndicator
               style={{ marginVertical: 20 }}
               color={colors.primary}
@@ -281,6 +389,7 @@ export default function PendingBricksScreen() {
       {selectedCollectionId && (
         <FilterSortModal
           visible={isModalVisible}
+          showSortBy={!showLessons}
           onClose={() => setIsModalVisible(false)}
           collections={collections}
           selectedCollectionId={selectedCollectionId}
@@ -292,6 +401,25 @@ export default function PendingBricksScreen() {
         />
       )}
       <FloatingActionMenu />
+
+      {/* Elegant Bottom-Left Floating Back Control */}
+      {showLessons === false && isSystemCollection && (
+        <TouchableOpacity
+          style={[
+            styles.floatingBackButton,
+            { backgroundColor: colors.secondary },
+          ]}
+          onPress={() => setSelectedLessonId(null)}
+        >
+          <EvilIcons
+            name="chevron-left"
+            size={32}
+            color="#FFF"
+            style={styles.backIcon}
+          />
+          <Text style={styles.backButtonText}>Lessons</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -330,5 +458,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     zIndex: 9999,
     pointerEvents: "box-none",
+  },
+  floatingBackButton: {
+    position: "absolute",
+    bottom: 24,
+    left: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    height: 42,
+    paddingLeft: 6,
+    paddingRight: 16,
+    borderRadius: 21,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  backIcon: {
+    marginRight: -2,
+  },
+  backButtonText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontWeight: "600",
+    letterSpacing: 0.2,
   },
 });
