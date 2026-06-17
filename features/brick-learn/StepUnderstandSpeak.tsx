@@ -13,6 +13,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import PlaySoundButton from "@/components/PlaySoundButton";
 import { BrickDisplay } from "@/features/brick-practice/BrickDisplay";
 import { MicButton } from "@/features/brick-practice/MicButton";
+import { toast } from "@/utils/toasts";
 
 interface Props {
   brick_id: number;
@@ -79,7 +80,7 @@ export default function StepUnderstandSpeak({
     } as any);
     formData;
 
-    const endpoint = `/audio/ipa-evaluation?target_brick_id=${encodeURIComponent(brick_id)}`;
+    const endpoint = `/audio/pronunciation-evaluation?target_brick_id=${encodeURIComponent(brick_id)}`;
 
     for (let attempt = 1; attempt <= NUM_TRANSCRIPTION_ATTEMPTS; attempt++) {
       try {
@@ -98,7 +99,7 @@ export default function StepUnderstandSpeak({
         }
       }
     }
-    setStatusMessage("Xin lỗi về sự bất tiện, hãy thử lại!");
+    toast.info("Xin lỗi về sự bất tiện, hãy thử lại!");
     return null;
   };
 
