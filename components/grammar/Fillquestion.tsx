@@ -1,3 +1,4 @@
+import Feather from "@expo/vector-icons/Feather";
 import { useRef, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { C, normalize } from "../../theme/grammar_constants";
@@ -15,12 +16,15 @@ interface Props {
 
 export function FillQuestion({ question, index, onAnswer, submitted }: Props) {
   const [value, setValue] = useState("");
+  const [focused, setFocused] = useState(false);
   const startTimeRef = useRef<number>(Date.now());
   const correct = question.correct_answer;
   const isCorrect = submitted && normalize(value) === normalize(correct);
   const isWrong = submitted && !isCorrect;
 
-  const borderColor = !submitted ? C.border : isCorrect ? C.success : C.error;
+  const borderColor = !submitted
+    ? focused ? C.primary : C.border
+    : isCorrect ? C.success : C.error;
   const bgColor = !submitted ? C.white : isCorrect ? C.successLight : C.errorLight;
   const textColor = !submitted ? C.text : isCorrect ? "#15803D" : "#DC2626";
   const cardRef = useRef<View>(null);
@@ -53,14 +57,19 @@ export function FillQuestion({ question, index, onAnswer, submitted }: Props) {
               onAnswer(index, v, elapsed);
             }
           }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           placeholder="Nhập đáp án..."
           placeholderTextColor={C.textLight}
           editable={!submitted}
         />
         {submitted && (
-          <Text style={{ color: isCorrect ? C.success : C.error, fontSize: 18, marginRight: 12 }}>
-            {isCorrect ? "✓" : "✗"}
-          </Text>
+          <View style={{ marginRight: 12 }}>
+            {isCorrect
+              ? <Feather name="check-circle" size={18} color={C.success} />
+              : <Feather name="x-circle" size={18} color={C.error} />
+            }
+          </View>
         )}
       </View>
 

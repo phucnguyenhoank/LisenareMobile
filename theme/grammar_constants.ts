@@ -3,10 +3,11 @@ import { Question } from "../types/grammar";
 // ─── Colors ───────────────────────────────────────────────────────────────────
 
 export const C = {
-  bg: "#F4F6FB",
+  bg: "#F7FAF4",
   white: "#FFFFFF",
-  primary: "#293F16",           
-  primaryLight: "#E8EDE0",     
+  primary: "#3A7D1E",
+  primaryLight: "#E8F5E2",
+  primaryMid: "#C5E0B0",
   primaryDark: "#1A2A0E",
   success: "#22C55E",
   successLight: "#F0FDF4",
@@ -19,7 +20,11 @@ export const C = {
   border: "#E5E7EB",
   badge: "#FEF3C7",
   badgeText: "#92400E",
-  muted: "#5f992c"
+  muted: "#5f992c",
+  progressBg: "#E5E7EB",
+  progressFill: "#3A7D1E",
+  cardBg: "#FFFFFF",
+  headerBg: "#F0F7EA",
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

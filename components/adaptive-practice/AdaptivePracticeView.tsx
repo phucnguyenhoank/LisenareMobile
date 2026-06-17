@@ -6,16 +6,19 @@ import {
   PracticeQuestion,
   StartPracticeResponse,
 } from "@/types/practice";
+import Feather from "@expo/vector-icons/Feather";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   BackHandler,
+  Pressable,
   Text,
   View,
 } from "react-native";
 import { PracticeQuestionCard } from "./PracticeQuestionCard";
 import { PracticeResult } from "./PracticeResult";
 import { TopicSelector } from "./TopicSelector";
+import { C } from "@/theme/grammar_constants";
 
 type Phase =
   | { type: "select" }
@@ -256,7 +259,10 @@ export function AdaptivePracticeView({
   return (
     <View style={S.fill}>
       <View style={S.header}>
-        <View style={{ flex: 1 }}>
+        <Pressable onPress={handleExit} style={S.backBtn}>
+          <Feather name="arrow-left" size={20} color={C.textMid} />
+        </Pressable>
+        <View style={{ flex: 1, marginLeft: 10 }}>
           <Text style={S.headerTitle}>Luyện tập thích ứng</Text>
           <Text style={S.headerSub}>{subtitle}</Text>
         </View>

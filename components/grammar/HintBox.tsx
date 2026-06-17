@@ -1,13 +1,14 @@
 import { API_BASE_URL } from "@/config/env";
 import { S } from "@/theme/grammar_styles";
 import { getToken } from "@/utils/auth-storage";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { fetch } from "expo/fetch";
 import { useState } from "react";
 import {
   ActivityIndicator,
   Modal,
+  Pressable,
   Text,
-  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
@@ -64,7 +65,7 @@ export function HintBox({ question_hinted }: { question_hinted: Question }) {
 
       if (!response.ok) throw new Error("Suggest failed");
 
-      setHintLoading(false); // tắt spinner, bắt đầu hiện text stream
+      setHintLoading(false);
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -72,10 +73,9 @@ export function HintBox({ question_hinted }: { question_hinted: Question }) {
         const { done, value } = await reader!.read();
         if (done) break;
         const chunk = decoder.decode(value);
-        // setHint((prev) => (prev ?? "") + chunk); // nối dần từng chunk
         for (const char of chunk) {
           setHint((prev) => (prev ?? "") + char);
-          await new Promise((resolve) => setTimeout(resolve, 2)); // 20ms mỗi ký tự
+          await new Promise((resolve) => setTimeout(resolve, 2));
         }
       }
     } catch {
@@ -87,9 +87,9 @@ export function HintBox({ question_hinted }: { question_hinted: Question }) {
 
   return (
     <>
-      <TouchableOpacity onPress={handleHint} style={S.hintBtn}>
-        <Text style={S.hintIcon}>💡</Text>
-      </TouchableOpacity>
+      <Pressable onPress={handleHint} style={S.hintBtn}>
+        <Ionicons name="bulb-outline" size={18} color="#B58900" />
+      </Pressable>
 
       <Modal
         visible={showModal}
@@ -103,7 +103,10 @@ export function HintBox({ question_hinted }: { question_hinted: Question }) {
 
         <View style={S.sheet}>
           <View style={S.sheetHandle} />
-          <Text style={S.sheetTitle}>💡 Gợi ý</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 }}>
+            <Ionicons name="bulb-outline" size={18} color="#B58900" />
+            <Text style={S.sheetTitle}>Gợi ý</Text>
+          </View>
 
           {hintLoading ? (
             <ActivityIndicator size="small" color={C.primary} style={{ marginTop: 16 }} />
@@ -111,9 +114,9 @@ export function HintBox({ question_hinted }: { question_hinted: Question }) {
             <Text style={S.sheetText}>{hint}</Text>
           )}
 
-          <TouchableOpacity onPress={() => setShowModal(false)} style={S.closeBtn}>
+          <Pressable onPress={() => setShowModal(false)} style={S.closeBtn} android_ripple={{ color: C.border }}>
             <Text style={S.closeBtnText}>Đóng</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </Modal>
     </>

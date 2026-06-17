@@ -1,5 +1,6 @@
+import Feather from "@expo/vector-icons/Feather";
 import { memo, useRef, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { C } from "../../theme/grammar_constants";
 import { S } from "../../theme/grammar_styles";
 import { Question } from "../../types/grammar";
@@ -59,24 +60,24 @@ export const MultiQuestion = memo(({ question, index, onAnswer, submitted }: Pro
         {question.answer.map((opt, i) => {
           const st = getStyle(opt);
           return (
-            <TouchableOpacity
+            <Pressable
               key={i}
               onPress={() => handleSelect(opt)}
               disabled={submitted}
               style={[S.optBtn, { borderColor: st.border, backgroundColor: st.bg }]}
-              activeOpacity={0.7}
+              android_ripple={{ color: C.primaryLight }}
             >
               <View style={[S.optLetter, { backgroundColor: st.border }]}>
                 <Text style={S.optLetterText}>{String.fromCharCode(65 + i)}</Text>
               </View>
               <Text style={[S.optText, { color: st.text }]}>{opt}</Text>
               {submitted && opt === correct && (
-                <Text style={{ color: C.success, marginLeft: "auto" }}>✓</Text>
+                <Feather name="check-circle" size={16} color={C.success} style={{ marginLeft: "auto" as any }} />
               )}
               {submitted && opt === selected && opt !== correct && (
-                <Text style={{ color: C.error, marginLeft: "auto" }}>✗</Text>
+                <Feather name="x-circle" size={16} color={C.error} style={{ marginLeft: "auto" as any }} />
               )}
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>

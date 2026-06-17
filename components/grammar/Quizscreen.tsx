@@ -1,6 +1,7 @@
+import Feather from "@expo/vector-icons/Feather";
 import { request } from "@/services/client";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { QuizContext } from "../../context/QuizContext";
 import { C, isMultiChoice, normalize } from "../../theme/grammar_constants";
@@ -122,12 +123,13 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
 
   const pct =
     questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
+  const wrong = questions.length - score;
   const msg =
     pct >= 80
-      ? "Xuất sắc! 🎉"
+      ? "Xuất sắc!"
       : pct >= 50
-        ? "Khá tốt! Cố lên nhé 💪"
-        : "Cần ôn thêm rồi! 📚";
+        ? "Khá tốt! Cố lên nhé"
+        : "Cần ôn thêm rồi!";
 
   if (loading) {
     return (
@@ -141,11 +143,11 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
   if (error) {
     return (
       <View style={[S.fill, S.center]}>
-        <Text style={{ fontSize: 40 }}>⚠️</Text>
+        <Feather name="alert-triangle" size={36} color={C.error} />
         <Text style={S.softText}>{error}</Text>
-        <TouchableOpacity style={S.btn} onPress={fetchQuestions}>
+        <Pressable style={S.btn} onPress={fetchQuestions} android_ripple={{ color: "rgba(255,255,255,0.2)" }}>
           <Text style={S.btnText}>Thử lại</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   }
@@ -155,6 +157,9 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
       <View style={S.fill}>
         {/* Header */}
         <View style={S.header}>
+          <Pressable onPress={onBack} style={S.backBtn}>
+            <Feather name="arrow-left" size={20} color={C.textMid} />
+          </Pressable>
           <View style={{ flex: 1, marginLeft: 10 }}>
             <Text style={S.headerTitle} numberOfLines={1}>
               {exercise.name}
@@ -181,12 +186,22 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
                 <View>
                   <Text style={S.resultMsg}>{msg}</Text>
                   <Text style={S.resultPct}>{pct}% chính xác</Text>
+                  <View style={S.resultStatRow}>
+                    <View style={[S.resultStatItem, { backgroundColor: C.successLight }]}>
+                      <Feather name="check-circle" size={13} color={C.success} />
+                      <Text style={[S.resultStatText, { color: "#15803D" }]}>{score}</Text>
+                    </View>
+                    <View style={[S.resultStatItem, { backgroundColor: C.errorLight }]}>
+                      <Feather name="x-circle" size={13} color={C.error} />
+                      <Text style={[S.resultStatText, { color: "#DC2626" }]}>{wrong}</Text>
+                    </View>
+                  </View>
                 </View>
               </View>
               <View style={{ gap: 8 }}>
-                <TouchableOpacity style={S.btn} onPress={fetchQuestions}>
+                <Pressable style={S.btn} onPress={fetchQuestions} android_ripple={{ color: "rgba(255,255,255,0.2)" }}>
                   <Text style={S.btnText}>Làm lại</Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             </View>
           )}
@@ -222,13 +237,14 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
                   ? "Đã trả lời tất cả. Sẵn sàng nộp bài!"
                   : `Còn ${unanswered} câu chưa trả lời`}
               </Text>
-              <TouchableOpacity
+              <Pressable
                 style={[S.submitBtn, !allAnswered && { opacity: 0.45 }]}
                 onPress={handleSubmit}
                 disabled={!allAnswered}
+                android_ripple={{ color: "rgba(255,255,255,0.2)" }}
               >
                 <Text style={S.submitBtnText}>Nộp bài</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           )}
         </KeyboardAwareScrollView>

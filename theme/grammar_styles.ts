@@ -18,12 +18,12 @@ export const S = StyleSheet.create({
     borderBottomColor: C.border,
   },
   backBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: C.border,
-    backgroundColor: C.white,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: C.primaryLight,
   },
   backBtnText: { color: C.textMid, fontSize: 13, fontWeight: "600" },
   headerTitle: { fontSize: 15, fontWeight: "700", color: C.text },
@@ -39,6 +39,7 @@ export const S = StyleSheet.create({
     gap: 12,
     borderWidth: 1,
     borderColor: C.border,
+    overflow: "hidden",
   },
   topicIndex: {
     width: 36,
@@ -62,6 +63,7 @@ export const S = StyleSheet.create({
     gap: 12,
     borderWidth: 1,
     borderColor: C.border,
+    overflow: "hidden",
   },
   listIcon: {
     width: 36,
@@ -81,6 +83,7 @@ export const S = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: C.border,
+    overflow: "hidden",
   },
   qTop: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
   qNum: {
@@ -210,7 +213,7 @@ export const S = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#FFF9C4",
+    backgroundColor: C.badge,
     alignItems: "center" as const,
     justifyContent: "center" as const,
     elevation: 2,
@@ -247,4 +250,19 @@ export const S = StyleSheet.create({
     alignItems: "center" as const,
   },
   closeBtnText: { fontSize: 14, fontWeight: "500" as const, color: "#374151" },
+
+  // Result stats (đúng/sai badges)
+  resultStatRow: {
+    flexDirection: "row" as const,
+    gap: 8,
+  },
+  resultStatItem: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  resultStatText: { fontSize: 13, fontWeight: "600" as const },
 });

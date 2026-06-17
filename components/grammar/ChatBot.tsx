@@ -1,5 +1,7 @@
 import { API_BASE_URL } from "@/config/env";
 import { getToken } from "@/utils/auth-storage";
+import Feather from "@expo/vector-icons/Feather";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { fetch } from "expo/fetch";
 import React, { useRef, useState } from "react";
 import {
@@ -8,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -368,11 +371,11 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
       return (
         <View style={styles.header}>
           <TouchableOpacity onPress={() => setChatView("current")} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>‹</Text>
+            <Feather name="arrow-left" size={20} color={colors.secondary2} />
           </TouchableOpacity>
           <Text style={styles.headerText}>Lịch sử chat</Text>
           <TouchableOpacity onPress={() => setVisible(false)}>
-            <Text style={styles.closeBtn}>✕</Text>
+            <Feather name="x" size={20} color="#999" />
           </TouchableOpacity>
         </View>
       );
@@ -380,16 +383,19 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
 
     return (
       <View style={styles.header}>
-        <Text style={styles.headerText}>🤖 Trợ lý AI</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
+          <Ionicons name="hardware-chip-outline" size={18} color={colors.secondary2} />
+          <Text style={styles.headerText}>Trợ lý AI</Text>
+        </View>
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={startNewChat} style={styles.historyBtn}>
-            <Text style={styles.historyBtnText}>✏️</Text>
+            <Feather name="edit" size={18} color={colors.secondary2} />
           </TouchableOpacity>
           <TouchableOpacity onPress={fetchHistory} style={styles.historyBtn}>
-            <Text style={styles.historyBtnText}>📋</Text>
+            <Feather name="clock" size={18} color={colors.secondary2} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setVisible(false)}>
-            <Text style={styles.closeBtn}>✕</Text>
+            <Feather name="x" size={20} color="#999" />
           </TouchableOpacity>
         </View>
       </View>
@@ -467,9 +473,9 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
             onSubmitEditing={sendMessage}
             returnKeyType="send"
           />
-          <TouchableOpacity style={styles.sendBtn} onPress={sendMessage}>
-            <Text style={styles.sendText}>Gửi</Text>
-          </TouchableOpacity>
+          <Pressable style={styles.sendBtn} onPress={sendMessage} android_ripple={{ color: "rgba(255,255,255,0.3)" }}>
+            <Ionicons name="send" size={16} color="#fff" />
+          </Pressable>
         </View>
       </>
     );
@@ -478,7 +484,7 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
   return (
     <>
       <TouchableOpacity style={styles.fab} onPress={() => setVisible(true)}>
-        <Text style={styles.fabIcon}>💬</Text>
+        <Ionicons name="chatbubble-ellipses-outline" size={24} color="#fff" />
       </TouchableOpacity>
 
       <Modal visible={visible} animationType="slide" transparent>
@@ -513,7 +519,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
-  fabIcon: { fontSize: 22 },
   overlay: {
     flex: 1,
     justifyContent: "flex-end",
@@ -538,9 +543,8 @@ const styles = StyleSheet.create({
   headerText: { fontSize: 16, fontWeight: "600", color: colors.text, flex: 1 },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 12 },
   historyBtn: { padding: 4 },
-  historyBtnText: { fontSize: 18 },
-  closeBtn: { fontSize: 18, color: "#999" },
-  backBtn: { marginRight: 8 },
+  historyBtnText: { fontSize: 18 },  closeBtn: { padding: 4 },
+  backBtn: { marginRight: 8, padding: 4 },
   backBtnText: { fontSize: 22, color: colors.secondary2, fontWeight: "700", lineHeight: 24 },
   messageList: { flex: 1, marginVertical: 8 },
   bubble: {
@@ -592,9 +596,12 @@ const styles = StyleSheet.create({
   },
   sendBtn: {
     backgroundColor: colors.secondary2,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    width: 40,
+    height: 40,
     borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
   sendText: { color: "#fff", fontWeight: "600" },
   // History screens
