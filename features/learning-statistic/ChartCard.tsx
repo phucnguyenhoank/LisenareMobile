@@ -234,12 +234,16 @@ export default function ChartCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "white",
+    backgroundColor: "#fff",
     padding: 16,
-    marginBottom: 16,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: colors.border,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 1,
   },
 
   // Chart

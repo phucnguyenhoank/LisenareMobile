@@ -19,7 +19,7 @@ import {
   View,
 } from "react-native";
 import { Exercise, Question } from "../../types/grammar";
-import colors from "@/theme/colors";
+import { C } from "../../theme/grammar_constants";
 
 interface Props {
   exercise: Exercise;
@@ -57,76 +57,35 @@ const INITIAL_MESSAGES = [
 
 const renderInlineMarkdown = (text: string) => {
   const parts = text.split(/(\*\*.*?\*\*|`.*?`|\*.*?\*)/g);
-
   return parts.map((part, index) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return (
-        <Text key={index} style={styles.boldText}>
-          {part.slice(2, -2)}
-        </Text>
-      );
-    }
-
-    if (part.startsWith("`") && part.endsWith("`")) {
-      return (
-        <Text key={index} style={styles.inlineCode}>
-          {part.slice(1, -1)}
-        </Text>
-      );
-    }
-
-    if (part.startsWith("*") && part.endsWith("*")) {
-      return (
-        <Text key={index} style={styles.italicText}>
-          {part.slice(1, -1)}
-        </Text>
-      );
-    }
-
+    if (part.startsWith("**") && part.endsWith("**"))
+      return <Text key={index} style={cs.boldText}>{part.slice(2, -2)}</Text>;
+    if (part.startsWith("`") && part.endsWith("`"))
+      return <Text key={index} style={cs.inlineCode}>{part.slice(1, -1)}</Text>;
+    if (part.startsWith("*") && part.endsWith("*"))
+      return <Text key={index} style={cs.italicText}>{part.slice(1, -1)}</Text>;
     return part;
   });
 };
 
 const renderFormattedText = (text: string, isUser: boolean) => {
-  if (isUser) {
-    return <Text style={styles.userText}>{text}</Text>;
-  }
-
+  if (isUser) return <Text style={cs.userText}>{text}</Text>;
   const lines = text.split("\n");
-
   return (
     <View>
       {lines.map((line, index) => {
         const trimmed = line.trim();
-
-        if (!trimmed) {
-          return <View key={index} style={{ height: 8 }} />;
-        }
-
-        if (trimmed.startsWith("###")) {
+        if (!trimmed) return <View key={index} style={{ height: 6 }} />;
+        if (trimmed.startsWith("###"))
+          return <Text key={index} style={cs.aiHeading}>{trimmed.replace(/^#+\s*/, "")}</Text>;
+        if (trimmed.startsWith("* ") || trimmed.startsWith("- "))
           return (
-            <Text key={index} style={styles.aiHeading}>
-              {trimmed.replace(/^#+\s*/, "")}
-            </Text>
-          );
-        }
-
-        if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
-          return (
-            <View key={index} style={styles.bulletRow}>
-              <Text style={styles.bulletDot}>•</Text>
-              <Text style={styles.aiText}>
-                {renderInlineMarkdown(trimmed.replace(/^[-*]\s*/, ""))}
-              </Text>
+            <View key={index} style={cs.bulletRow}>
+              <Text style={cs.bulletDot}>•</Text>
+              <Text style={cs.aiText}>{renderInlineMarkdown(trimmed.replace(/^[-*]\s*/, ""))}</Text>
             </View>
           );
-        }
-
-        return (
-          <Text key={index} style={styles.aiText}>
-            {renderInlineMarkdown(trimmed)}
-          </Text>
-        );
+        return <Text key={index} style={cs.aiText}>{renderInlineMarkdown(trimmed)}</Text>;
       })}
     </View>
   );
@@ -142,20 +101,13 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [currentQuestionId, setCurrentQuestionId] = useState<number | null>(null);
-  // Phiên chat hiện tại: null → cuộc trò chuyện mới (BE sẽ tạo row mới);
-  // có giá trị → đang tiếp tục một phiên đã có.
   const [sessionId, setSessionId] = useState<number | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
-  // Lịch sử chat
   const [chatView, setChatView] = useState<ChatView>("current");
   const [learnerId, setLearnerId] = useState<number | null>(null);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
-
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
 
   const resolveLearnerId = async (): Promise<number> => {
     if (learnerId !== null) return learnerId;
@@ -172,7 +124,6 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
     try {
       const id = await resolveLearnerId();
       const token = await getToken();
-      // Chỉ lấy lịch sử chat của đúng exercise này (không thấy exercise khác).
       const data = (await fetch(
         `${API_BASE_URL}/grammar/chat/history/${id}/${exercise.id}`,
         { headers: { Authorization: `Bearer ${token}` } },
@@ -180,14 +131,11 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
       setSessions(data.sessions ?? []);
       setChatView("history-list");
     } catch {
-      // giữ nguyên view nếu lỗi
     } finally {
       setHistoryLoading(false);
     }
   };
 
-  // Mở một phiên chat trong lịch sử để xem lại + tiếp tục chat. Nội dung gõ
-  // thêm sẽ được ghi vào đúng file JSON của phiên này (qua session_id).
   const openSession = async (session: ChatSession) => {
     setHistoryLoading(true);
     try {
@@ -206,13 +154,11 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
       setCurrentQuestionId(null);
       setChatView("current");
     } catch {
-      // giữ view nếu lỗi
     } finally {
       setHistoryLoading(false);
     }
   };
 
-  // Bắt đầu một cuộc trò chuyện mới (BE sẽ tạo row mới trong history_chat).
   const startNewChat = () => {
     setMessages(INITIAL_MESSAGES);
     setSessionId(null);
@@ -221,13 +167,8 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
     setChatView("current");
   };
 
-  // ---------------------------------------------------------------------------
-  // Send message
-  // ---------------------------------------------------------------------------
-
   const sendMessage = async () => {
     if (!input.trim()) return;
-
     const userMsg = { id: Date.now().toString(), role: "user", text: input };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
@@ -237,18 +178,11 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
     try {
       const token = await getToken();
       const id = await resolveLearnerId();
-
       const response = await fetch(`${API_BASE_URL}/grammar/chat`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          messages: newMessages.map((m) => ({
-            role: m.role,
-            content: m.text,
-          })),
+          messages: newMessages.map((m) => ({ role: m.role, content: m.text })),
           learner_id: id,
           session_id: sessionId,
           context: {
@@ -268,10 +202,7 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
       if (!response.ok) throw new Error("Chat failed");
 
       const assistantId = Date.now().toString();
-      setMessages((prev) => [
-        ...prev,
-        { id: assistantId, role: "assistant", text: "" },
-      ]);
+      setMessages((prev) => [...prev, { id: assistantId, role: "assistant", text: "" }]);
       setLoading(false);
 
       const reader = response.body?.getReader();
@@ -281,220 +212,174 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
       const processLine = (line: string) => {
         line = line.trim();
         if (!line) return;
-
         try {
           const data = JSON.parse(line);
-
           if (data.answer) {
             setMessages((prev) => {
               const last = prev[prev.length - 1];
-              return [
-                ...prev.slice(0, -1),
-                { ...last, text: last.text + data.answer },
-              ];
+              return [...prev.slice(0, -1), { ...last, text: last.text + data.answer }];
             });
           }
-
-          if (
-            data.current_question_id !== null &&
-            data.current_question_id !== undefined
-          ) {
-            setCurrentQuestionId(data.current_question_id);
-          }
-
-          // BE trả về session_id của phiên (mới tạo hoặc đang tiếp tục) để
-          // các lượt chat sau ghi vào đúng phiên này.
-          if (
-            data.session_id !== null &&
-            data.session_id !== undefined
-          ) {
-            setSessionId(data.session_id);
-          }
-        } catch (e) {
-          console.error("Failed to parse JSON line:", line);
-        }
+          if (data.current_question_id != null) setCurrentQuestionId(data.current_question_id);
+          if (data.session_id != null) setSessionId(data.session_id);
+        } catch {}
       };
 
       while (true) {
         const { done, value } = await reader!.read();
-
-        if (done) {
-          if (buffer.trim()) processLine(buffer);
-          break;
-        }
-
+        if (done) { if (buffer.trim()) processLine(buffer); break; }
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
         buffer = lines[lines.length - 1];
-
-        for (let i = 0; i < lines.length - 1; i++) {
-          processLine(lines[i]);
-        }
+        for (let i = 0; i < lines.length - 1; i++) processLine(lines[i]);
       }
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          role: "assistant",
-          text: "Có lỗi xảy ra, thử lại nhé!",
-        },
-      ]);
+      setMessages((prev) => [...prev, { id: Date.now().toString(), role: "assistant", text: "Có lỗi xảy ra, thử lại nhé!" }]);
     } finally {
       setLoading(false);
       flatListRef.current?.scrollToEnd();
     }
   };
 
-  // ---------------------------------------------------------------------------
-  // Render helpers
-  // ---------------------------------------------------------------------------
-
   const formatDate = (iso: string | null) => {
     if (!iso) return "";
     try {
       const d = new Date(iso);
-      return d.toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return iso;
-    }
+      return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    } catch { return iso; }
   };
 
-  const renderHeader = () => {
-    if (chatView === "history-list") {
-      return (
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => setChatView("current")} style={styles.backBtn}>
-            <Feather name="arrow-left" size={20} color={colors.secondary2} />
-          </TouchableOpacity>
-          <Text style={styles.headerText}>Lịch sử chat</Text>
-          <TouchableOpacity onPress={() => setVisible(false)}>
-            <Feather name="x" size={20} color="#999" />
-          </TouchableOpacity>
-        </View>
-      );
-    }
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
-    return (
-      <View style={styles.header}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
-          <Ionicons name="hardware-chip-outline" size={18} color={colors.secondary2} />
-          <Text style={styles.headerText}>Trợ lý AI</Text>
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={startNewChat} style={styles.historyBtn}>
-            <Feather name="edit" size={18} color={colors.secondary2} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={fetchHistory} style={styles.historyBtn}>
-            <Feather name="clock" size={18} color={colors.secondary2} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setVisible(false)}>
-            <Feather name="x" size={20} color="#999" />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
-
-  const renderContent = () => {
+  const renderHistoryView = () => {
     if (historyLoading) {
       return (
-        <View style={styles.centerLoading}>
-          <ActivityIndicator size="large" color={colors.secondary2} />
+        <View style={cs.centerLoading}>
+          <ActivityIndicator size="large" color={C.primary} />
         </View>
       );
     }
-
-    if (chatView === "history-list") {
-      if (sessions.length === 0) {
-        return (
-          <View style={styles.centerLoading}>
-            <Text style={styles.emptyText}>Chưa có lịch sử chat nào.</Text>
-          </View>
-        );
-      }
+    if (sessions.length === 0) {
       return (
-        <ScrollView style={styles.messageList}>
-          {sessions.map((s) => (
-            <TouchableOpacity
-              key={s.session_id}
-              style={styles.sessionCard}
-              onPress={() => openSession(s)}
-            >
-              <Text style={styles.sessionTitle}>
-                {formatDate(s.created_at)}
-              </Text>
-              <Text style={styles.sessionMeta}>
-                {s.message_count} tin nhắn · cập nhật {formatDate(s.updated_at)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <View style={cs.centerLoading}>
+          <Ionicons name="chatbubbles-outline" size={48} color={C.primaryMid} />
+          <Text style={cs.emptyText}>Chưa có lịch sử chat nào.</Text>
+        </View>
       );
     }
-
-    // current chat view
     return (
-      <>
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
-          style={styles.messageList}
-          renderItem={({ item }) => (
-            <View
-              style={[
-                styles.bubble,
-                item.role === "user" ? styles.userBubble : styles.aiBubble,
-              ]}
-            >
-              {renderFormattedText(item.text, item.role === "user")}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 10 }}>
+        {sessions.map((s) => (
+          <TouchableOpacity key={s.session_id} style={cs.sessionCard} onPress={() => openSession(s)} activeOpacity={0.8}>
+            <View style={cs.sessionIconWrap}>
+              <Ionicons name="chatbubble-outline" size={18} color={C.primary} />
             </View>
-          )}
-        />
-
-        {loading && (
-          <ActivityIndicator style={{ marginBottom: 8 }} color={colors.secondary2} />
-        )}
-
-        <View style={styles.inputRow}>
-          <TextInput
-            style={styles.input}
-            placeholder="Nhập câu hỏi..."
-            value={input}
-            onChangeText={setInput}
-            onSubmitEditing={sendMessage}
-            returnKeyType="send"
-          />
-          <Pressable style={styles.sendBtn} onPress={sendMessage} android_ripple={{ color: "rgba(255,255,255,0.3)" }}>
-            <Ionicons name="send" size={16} color="#fff" />
-          </Pressable>
-        </View>
-      </>
+            <View style={{ flex: 1 }}>
+              <Text style={cs.sessionTitle}>{formatDate(s.created_at)}</Text>
+              <Text style={cs.sessionMeta}>{s.message_count} tin nhắn · cập nhật {formatDate(s.updated_at)}</Text>
+            </View>
+            <Feather name="chevron-right" size={16} color={C.textLight} />
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
     );
   };
+
+  const renderChatView = () => (
+    <>
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        keyExtractor={(item) => item.id}
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+        style={cs.messageList}
+        contentContainerStyle={{ padding: 12, gap: 8 }}
+        renderItem={({ item }) => (
+          <View style={[cs.bubble, item.role === "user" ? cs.userBubble : cs.aiBubble]}>
+            {renderFormattedText(item.text, item.role === "user")}
+          </View>
+        )}
+      />
+
+      {loading && (
+        <View style={cs.typingRow}>
+          <View style={cs.typingDot} />
+          <View style={[cs.typingDot, { opacity: 0.6 }]} />
+          <View style={[cs.typingDot, { opacity: 0.3 }]} />
+        </View>
+      )}
+
+      <View style={cs.inputRow}>
+        <TextInput
+          style={cs.input}
+          placeholder="Nhập câu hỏi của bạn..."
+          placeholderTextColor={C.textLight}
+          value={input}
+          onChangeText={setInput}
+          onSubmitEditing={sendMessage}
+          returnKeyType="send"
+          multiline
+        />
+        <Pressable style={cs.sendBtn} onPress={sendMessage} android_ripple={{ color: "rgba(255,255,255,0.3)" }}>
+          <Ionicons name="send" size={16} color="#fff" />
+        </Pressable>
+      </View>
+    </>
+  );
 
   return (
     <>
-      <TouchableOpacity style={styles.fab} onPress={() => setVisible(true)}>
+      {/* FAB */}
+      <TouchableOpacity style={cs.fab} onPress={() => setVisible(true)} activeOpacity={0.85}>
         <Ionicons name="chatbubble-ellipses-outline" size={24} color="#fff" />
       </TouchableOpacity>
 
       <Modal visible={visible} animationType="slide" transparent>
         <KeyboardAvoidingView
-          style={styles.overlay}
+          style={cs.overlay}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          <View style={styles.chatBox}>
-            {renderHeader()}
-            {renderContent()}
+          <View style={cs.chatBox}>
+            {/* Header */}
+            {chatView === "history-list" ? (
+              <View style={cs.header}>
+                <TouchableOpacity onPress={() => setChatView("current")} style={cs.headerBackBtn}>
+                  <Feather name="arrow-left" size={20} color={C.textMid} />
+                </TouchableOpacity>
+                <Text style={cs.headerTitle}>Lịch sử chat</Text>
+                <TouchableOpacity onPress={() => setVisible(false)} style={cs.headerCloseBtn}>
+                  <Feather name="x" size={20} color={C.textSoft} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={cs.header}>
+                <View style={cs.headerAvatar}>
+                  <Ionicons name="hardware-chip-outline" size={20} color={C.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={cs.headerTitle}>Trợ lý AI</Text>
+                  <View style={cs.onlineRow}>
+                    <View style={cs.onlineDot} />
+                    <Text style={cs.onlineText}>Online</Text>
+                  </View>
+                </View>
+                <View style={cs.headerActions}>
+                  <TouchableOpacity onPress={startNewChat} style={cs.headerIconBtn}>
+                    <Feather name="edit" size={18} color={C.textMid} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={fetchHistory} style={cs.headerIconBtn}>
+                    <Feather name="clock" size={18} color={C.textMid} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setVisible(false)} style={cs.headerIconBtn}>
+                    <Feather name="x" size={20} color={C.textSoft} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {chatView === "history-list" ? renderHistoryView() : renderChatView()}
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -502,128 +387,226 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
   );
 };
 
-const styles = StyleSheet.create({
+const cs = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 16,
     bottom: 24,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: colors.secondary2,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: C.primary,
     justifyContent: "center",
     alignItems: "center",
     elevation: 6,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
   overlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(0,0,0,0.35)",
   },
   chatBox: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    height: "70%",
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    backgroundColor: "#F7FAF4",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    height: "72%",
+    overflow: "hidden",
   },
+
+  // Header
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    backgroundColor: "#fff",
+    paddingHorizontal: 16,
     paddingVertical: 12,
+    gap: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: "#E5E7EB",
   },
-  headerText: { fontSize: 16, fontWeight: "600", color: colors.text, flex: 1 },
-  headerActions: { flexDirection: "row", alignItems: "center", gap: 12 },
-  historyBtn: { padding: 4 },
-  historyBtnText: { fontSize: 18 },  closeBtn: { padding: 4 },
-  backBtn: { marginRight: 8, padding: 4 },
-  backBtnText: { fontSize: 22, color: colors.secondary2, fontWeight: "700", lineHeight: 24 },
-  messageList: { flex: 1, marginVertical: 8 },
-  bubble: {
-    maxWidth: "85%",
-    padding: 10,
-    borderRadius: 12,
-    marginVertical: 4,
-  },
-  aiBubble: { backgroundColor: colors.buttonBackground, alignSelf: "flex-start" },
-  userBubble: { backgroundColor: colors.secondary2, alignSelf: "flex-end" },
-  aiText: { color: colors.text, fontSize: 14, lineHeight: 21 },
-  userText: { color: "#fff", fontSize: 14, lineHeight: 21 },
-  aiHeading: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: "700",
-    marginTop: 8,
-    marginBottom: 4,
-    lineHeight: 22,
-  },
-  boldText: { fontWeight: "700", color: colors.text },
-  italicText: { fontStyle: "italic", color: colors.text },
-  inlineCode: {
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    backgroundColor: colors.border,
-    color: colors.text,
-    paddingHorizontal: 4,
-    borderRadius: 4,
-  },
-  bulletRow: { flexDirection: "row", alignItems: "flex-start", marginVertical: 2 },
-  bulletDot: { color: colors.text, marginRight: 6, lineHeight: 21 },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: 8,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    fontSize: 14,
-    color: colors.text,
-  },
-  sendBtn: {
-    backgroundColor: colors.secondary2,
+  headerAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: C.primaryLight,
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
   },
-  sendText: { color: "#fff", fontWeight: "600" },
-  // History screens
+  headerTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: C.text,
+  },
+  onlineRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 2,
+  },
+  onlineDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: "#22C55E",
+  },
+  onlineText: {
+    fontSize: 11,
+    color: "#22C55E",
+    fontWeight: "500",
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  headerIconBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerBackBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 4,
+  },
+  headerCloseBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // Chat
+  messageList: { flex: 1 },
+  bubble: {
+    maxWidth: "82%",
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 16,
+  },
+  aiBubble: {
+    backgroundColor: "#fff",
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderBottomLeftRadius: 4,
+  },
+  userBubble: {
+    backgroundColor: C.primary,
+    alignSelf: "flex-end",
+    borderBottomRightRadius: 4,
+  },
+  aiText: { color: C.text, fontSize: 14, lineHeight: 21 },
+  userText: { color: "#fff", fontSize: 14, lineHeight: 21 },
+  aiHeading: { color: C.text, fontSize: 15, fontWeight: "700", marginTop: 6, marginBottom: 2, lineHeight: 22 },
+  boldText: { fontWeight: "700", color: C.text },
+  italicText: { fontStyle: "italic", color: C.text },
+  inlineCode: {
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    backgroundColor: "#F3F4F6",
+    color: C.text,
+    paddingHorizontal: 4,
+    borderRadius: 4,
+    fontSize: 13,
+  },
+  bulletRow: { flexDirection: "row", alignItems: "flex-start", marginVertical: 1 },
+  bulletDot: { color: C.text, marginRight: 6, lineHeight: 21 },
+
+  // Typing indicator
+  typingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 20,
+    paddingBottom: 6,
+  },
+  typingDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: C.primaryMid,
+  },
+
+  // Input
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: "#E5E7EB",
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    fontSize: 14,
+    color: C.text,
+    maxHeight: 100,
+    backgroundColor: "#F9FAFB",
+  },
+  sendBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: C.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // History
   centerLoading: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    gap: 12,
+    padding: 24,
   },
-  emptyText: { color: "#999", fontSize: 14 },
+  emptyText: { color: C.textSoft, fontSize: 14 },
   sessionCard: {
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 14,
+    gap: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  sessionIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: C.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
   },
   sessionTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "600",
-    color: colors.text,
-    marginBottom: 4,
+    color: C.text,
+    marginBottom: 2,
   },
-  sessionMeta: { fontSize: 12, color: "#888" },
+  sessionMeta: { fontSize: 12, color: C.textSoft },
 });
 
 export { ChatButton };

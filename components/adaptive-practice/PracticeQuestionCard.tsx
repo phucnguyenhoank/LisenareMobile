@@ -1,3 +1,5 @@
+import Feather from "@expo/vector-icons/Feather";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -55,20 +57,13 @@ export function PracticeQuestionCard({
     setSelected(null);
     setFillValue("");
     setFeedback(null);
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
   }, [question.id]);
 
   useEffect(() => {
     if (!feedback || !autoNext) return;
-    timerRef.current = setTimeout(() => {
-      onNext(feedback);
-    }, AUTO_NEXT_DELAY_MS);
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    timerRef.current = setTimeout(() => { onNext(feedback); }, AUTO_NEXT_DELAY_MS);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [feedback, autoNext, onNext]);
 
   const submit = async (value: string) => {
@@ -77,296 +72,293 @@ export function PracticeQuestionCard({
     if (res) setFeedback(res);
   };
 
-  const handleSelectMC = (opt: string) => {
-    if (submitted) return;
-    setSelected(opt);
-    submit(opt);
-  };
+  const handleSelectMC = (opt: string) => { if (submitted) return; setSelected(opt); submit(opt); };
+  const handleSubmitFill = () => { if (submitted || !fillValue.trim()) return; submit(fillValue.trim()); };
+  const handleNextClick = () => { if (feedback) onNext(feedback); };
+  const handleSkip = () => { if (feedback) onNext(feedback); };
 
-  const handleSubmitFill = () => {
-    if (submitted || !fillValue.trim()) return;
-    submit(fillValue.trim());
-  };
-
-  const handleNextClick = () => {
-    if (feedback) onNext(feedback);
+  const getOptState = (opt: string) => {
+    if (!submitted) { return selected === opt ? "selected" : "idle"; }
+    if (opt === feedback?.correct_answer) return "correct";
+    if (opt === selected && opt !== feedback?.correct_answer) return "wrong";
+    return "idle";
   };
 
   return (
     <KeyboardAwareScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 40 }}
+      contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
       keyboardShouldPersistTaps="handled"
       extraScrollHeight={100}
       enableOnAndroid={true}
     >
-      <View style={styles.statusRow}>
-        <View style={styles.statusPill}>
-          <Text style={styles.statusPillText}>Câu {questionIndex}</Text>
-        </View>
-        <View style={styles.statusPill}>
-          <Text style={styles.statusPillText}>✓ {correctCount}</Text>
+      {/* Status row */}
+      <View style={pq.statusRow}>
+        <View style={pq.statusLeft}>
+          <View style={pq.pillGray}>
+            <Text style={pq.pillGrayText}>Câu {questionIndex}</Text>
+          </View>
+          <View style={pq.pillGreen}>
+            <Feather name="check" size={12} color={C.success} />
+            <Text style={pq.pillGreenText}>{correctCount}</Text>
+          </View>
         </View>
       </View>
 
-      <View style={styles.autoRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.autoLabel}>Tự động chuyển câu</Text>
-          <Text style={styles.autoSub}>
-            {autoNext
-              ? `Tự sang câu kế sau ${AUTO_NEXT_DELAY_MS / 1000}s`
-              : "Bấm 'Câu tiếp' để qua câu mới"}
+      {/* Auto-next toggle */}
+      <View style={pq.autoRow}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={pq.autoLabel}>Tự động chuyển câu</Text>
+          <Text style={pq.autoSub}>
+            {autoNext ? `Tự sang câu kế sau ${AUTO_NEXT_DELAY_MS / 1000}s` : "Bấm 'Câu tiếp' để qua câu mới"}
           </Text>
         </View>
         <Switch
           value={autoNext}
           onValueChange={onToggleAutoNext}
-          trackColor={{ true: C.primary, false: C.border }}
+          trackColor={{ true: C.primary, false: "#D1D5DB" }}
           thumbColor="#fff"
         />
       </View>
 
-      <View style={styles.card}>
+      {/* Question card */}
+      <View style={pq.card}>
         {question.content ? (
-          <Text style={styles.contentText}>{question.content}</Text>
+          <Text style={pq.contextText}>{question.content}</Text>
         ) : null}
-        {question.question ? (
-          <Text style={styles.qText}>{question.question}</Text>
-        ) : null}
-        {!question.content && !question.question && (
-          <Text style={styles.qText}>(Không có nội dung câu hỏi)</Text>
-        )}
+        <Text style={pq.qText}>
+          {question.question || "(Không có nội dung câu hỏi)"}
+        </Text>
 
+        {/* Options */}
         {multiChoice ? (
-          <View style={{ gap: 8, marginTop: 12 }}>
+          <View style={{ gap: 8, marginTop: 14 }}>
             {options.map((opt, i) => {
-              const isPicked = selected === opt;
-              const isCorrect =
-                submitted && feedback?.correct_answer === opt;
-              const isWrongPick =
-                submitted && isPicked && feedback?.correct_answer !== opt;
-              const borderColor = isCorrect
-                ? C.success
-                : isWrongPick
-                  ? C.error
-                  : isPicked
-                    ? C.primary
-                    : C.border;
-              const bg = isCorrect
-                ? C.successLight
-                : isWrongPick
-                  ? C.errorLight
-                  : isPicked
-                    ? C.primaryLight
-                    : "#FAFAFA";
-              const textColor = isCorrect
-                ? "#15803D"
-                : isWrongPick
-                  ? "#DC2626"
-                  : C.textMid;
+              const state = getOptState(opt);
+              const borderColor =
+                state === "selected" ? C.primary
+                : state === "correct" ? C.success
+                : state === "wrong" ? C.error
+                : "#E5E7EB";
+              const bg =
+                state === "selected" ? C.primaryLight
+                : state === "correct" ? C.successLight
+                : state === "wrong" ? C.errorLight
+                : "#FAFAFA";
+              const textColor =
+                state === "correct" ? "#15803D"
+                : state === "wrong" ? "#DC2626"
+                : state === "selected" ? C.primaryDark
+                : C.textMid;
+
               return (
                 <TouchableOpacity
                   key={i}
                   disabled={submitted || submitting}
                   onPress={() => handleSelectMC(opt)}
-                  style={[
-                    styles.opt,
-                    { borderColor, backgroundColor: bg },
-                  ]}
-                  activeOpacity={0.7}
+                  style={[pq.optBtn, { borderColor, backgroundColor: bg }]}
+                  activeOpacity={0.75}
                 >
-                  <View
-                    style={[styles.optLetter, { backgroundColor: borderColor }]}
-                  >
-                    <Text style={styles.optLetterText}>
-                      {String.fromCharCode(65 + i)}
-                    </Text>
+                  <View style={[pq.radio, { borderColor }]}>
+                    {(state === "selected" || state === "correct") && (
+                      <View style={[pq.radioDot, { backgroundColor: state === "correct" ? C.success : C.primary }]} />
+                    )}
                   </View>
-                  <Text style={[styles.optText, { color: textColor }]}>
-                    {opt}
-                  </Text>
-                  {isCorrect && (
-                    <Text style={{ color: C.success, marginLeft: "auto" }}>
-                      ✓
-                    </Text>
-                  )}
-                  {isWrongPick && (
-                    <Text style={{ color: C.error, marginLeft: "auto" }}>
-                      ✗
-                    </Text>
-                  )}
+                  <Text style={[pq.optText, { color: textColor }]}>{opt}</Text>
+                  {state === "correct" && <Feather name="check" size={16} color={C.success} />}
+                  {state === "wrong" && <Feather name="x" size={16} color={C.error} />}
                 </TouchableOpacity>
               );
             })}
           </View>
         ) : (
-          <View style={{ marginTop: 12, gap: 10 }}>
-            <View
-              style={[
-                styles.fillWrap,
-                submitted && {
-                  borderColor: feedback?.is_correct ? C.success : C.error,
-                  backgroundColor: feedback?.is_correct
-                    ? C.successLight
-                    : C.errorLight,
-                },
-              ]}
-            >
+          <View style={{ marginTop: 14, gap: 10 }}>
+            <View style={[pq.fillWrap, submitted && {
+              borderColor: feedback?.is_correct ? C.success : C.error,
+              backgroundColor: feedback?.is_correct ? C.successLight : C.errorLight,
+            }]}>
               <TextInput
                 value={fillValue}
                 onChangeText={setFillValue}
                 placeholder="Nhập đáp án..."
                 placeholderTextColor={C.textLight}
                 editable={!submitted}
-                style={[
-                  styles.fillInput,
-                  submitted && {
-                    color: feedback?.is_correct ? "#15803D" : "#DC2626",
-                  },
-                ]}
+                style={[pq.fillInput, submitted && { color: feedback?.is_correct ? "#15803D" : "#DC2626" }]}
                 onSubmitEditing={handleSubmitFill}
                 returnKeyType="done"
                 autoCapitalize="none"
                 autoCorrect={false}
               />
               {submitted && (
-                <Text
-                  style={{
-                    color: feedback?.is_correct ? C.success : C.error,
-                    fontSize: 18,
-                    marginRight: 12,
-                  }}
-                >
-                  {feedback?.is_correct ? "✓" : "✗"}
-                </Text>
+                <View style={{ marginRight: 12 }}>
+                  {feedback?.is_correct
+                    ? <Feather name="check-circle" size={18} color={C.success} />
+                    : <Feather name="x-circle" size={18} color={C.error} />
+                  }
+                </View>
               )}
             </View>
             {!submitted && (
               <TouchableOpacity
-                style={[
-                  styles.checkBtn,
-                  (!fillValue.trim() || submitting) && { opacity: 0.5 },
-                ]}
+                style={[pq.checkBtn, (!fillValue.trim() || submitting) && { opacity: 0.5 }]}
                 disabled={!fillValue.trim() || submitting}
                 onPress={handleSubmitFill}
+                activeOpacity={0.8}
               >
-                {submitting ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.checkBtnText}>Kiểm tra</Text>
-                )}
+                {submitting
+                  ? <ActivityIndicator color="#fff" />
+                  : <Text style={pq.checkBtnText}>Kiểm tra</Text>
+                }
               </TouchableOpacity>
             )}
           </View>
         )}
 
-        {submitted &&
-          !feedback?.is_correct &&
-          feedback?.correct_answer != null && (
-            <View style={styles.hint}>
-              <Text style={styles.hintLabel}>💡 Đáp án đúng: </Text>
-              <Text style={styles.hintVal}>{feedback.correct_answer}</Text>
-            </View>
-          )}
+        {submitted && !feedback?.is_correct && feedback?.correct_answer != null && (
+          <View style={pq.hintRow}>
+            <Ionicons name="checkmark-circle" size={14} color="#15803D" />
+            <Text style={pq.hintLabel}>Đáp án đúng: </Text>
+            <Text style={pq.hintVal}>{feedback.correct_answer}</Text>
+          </View>
+        )}
       </View>
 
+      {/* Action buttons */}
+      {!multiChoice && !submitted && (
+        <View style={pq.actionRow}>
+          <TouchableOpacity style={pq.skipBtn} onPress={handleSkip} activeOpacity={0.8}>
+            <Text style={pq.skipBtnText}>Bỏ qua</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[pq.checkBtnLarge, (!fillValue.trim() || submitting) && { opacity: 0.5 }]}
+            disabled={!fillValue.trim() || submitting}
+            onPress={handleSubmitFill}
+            activeOpacity={0.8}
+          >
+            {submitting ? <ActivityIndicator color="#fff" /> : <Text style={pq.checkBtnLargeText}>Kiểm tra</Text>}
+          </TouchableOpacity>
+        </View>
+      )}
+
       {submitted && !autoNext && (
-        <TouchableOpacity
-          style={styles.nextBtn}
-          onPress={handleNextClick}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.nextBtnText}>
-            {feedback?.practice_completed
-              ? "Xem kết quả →"
-              : "Câu tiếp →"}
+        <TouchableOpacity style={pq.nextBtn} onPress={handleNextClick} activeOpacity={0.8}>
+          <Text style={pq.nextBtnText}>
+            {feedback?.practice_completed ? "Xem kết quả →" : "Câu tiếp →"}
           </Text>
         </TouchableOpacity>
       )}
+
+      {/* Pagination dots */}
+      <View style={pq.dotsRow}>
+        {Array.from({ length: Math.min(questionIndex, 8) }).map((_, i) => (
+          <View
+            key={i}
+            style={[pq.dot, i === questionIndex - 1 && pq.dotActive]}
+          />
+        ))}
+      </View>
     </KeyboardAwareScrollView>
   );
 }
 
-const styles = StyleSheet.create({
+const pq = StyleSheet.create({
+  // Status
   statusRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
+    alignItems: "center",
+    justifyContent: "space-between",
   },
-  statusPill: {
+  statusLeft: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+  pillGray: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    backgroundColor: "#F3F4F6",
+  },
+  pillGrayText: { fontSize: 13, fontWeight: "600", color: C.textMid },
+  pillGreen: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 14,
-    backgroundColor: C.primaryLight,
+    borderRadius: 20,
+    backgroundColor: C.successLight,
   },
-  statusPillText: {
-    fontSize: 12,
-    color: C.primaryDark,
-    fontWeight: "600",
-  },
-  thetaPill: { backgroundColor: "#EEF2FF" },
-  thetaText: { fontSize: 12, color: "#4338CA", fontWeight: "600" },
-  diffPill: { backgroundColor: "#FEF3C7" },
-  diffText: { fontSize: 12, color: "#92400E", fontWeight: "600" },
+  pillGreenText: { fontSize: 13, fontWeight: "600", color: "#15803D" },
 
+  // Auto-next
   autoRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: C.white,
+    backgroundColor: "#fff",
     borderRadius: 12,
-    padding: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: "#E5E7EB",
     gap: 10,
   },
   autoLabel: { fontSize: 13, fontWeight: "600", color: C.text },
-  autoSub: { fontSize: 11, color: C.textSoft, marginTop: 2 },
+  autoSub: { fontSize: 11, color: C.textSoft },
 
+  // Card
   card: {
-    backgroundColor: C.white,
-    borderRadius: 12,
+    backgroundColor: "#fff",
+    borderRadius: 14,
     padding: 16,
-    borderWidth: 1,
-    borderColor: C.border,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 1,
   },
-  contentText: {
+  contextText: {
     fontSize: 13,
     color: C.textSoft,
     fontStyle: "italic",
-    marginBottom: 8,
+    marginBottom: 6,
     lineHeight: 18,
   },
   qText: {
     fontSize: 16,
     color: C.text,
     lineHeight: 24,
-    fontWeight: "500",
+    fontWeight: "600",
   },
 
-  opt: {
+  // Options
+  optBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderRadius: 10,
     borderWidth: 1.5,
   },
-  optLetter: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+  radio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
   },
-  optLetterText: { color: "#fff", fontSize: 12, fontWeight: "700" },
+  radioDot: { width: 10, height: 10, borderRadius: 5 },
   optText: { flex: 1, fontSize: 14, lineHeight: 20 },
 
+  // Fill
   fillWrap: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1.5,
     borderRadius: 10,
-    borderColor: C.border,
+    borderColor: "#E5E7EB",
     backgroundColor: "#FAFAFA",
   },
   fillInput: {
@@ -384,7 +376,8 @@ const styles = StyleSheet.create({
   },
   checkBtnText: { color: "#fff", fontSize: 14, fontWeight: "700" },
 
-  hint: {
+  // Hint
+  hintRow: {
     flexDirection: "row",
     alignItems: "center",
     marginTop: 12,
@@ -398,11 +391,55 @@ const styles = StyleSheet.create({
   hintLabel: { fontSize: 12, color: C.textSoft },
   hintVal: { fontSize: 13, fontWeight: "700", color: "#15803D", flexShrink: 1 },
 
-  nextBtn: {
+  // Action row (fill, before submit)
+  actionRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  skipBtn: {
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 13,
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#fff",
+  },
+  skipBtnText: { fontSize: 14, fontWeight: "600", color: C.textMid },
+  checkBtnLarge: {
+    flex: 2,
     backgroundColor: C.primary,
     borderRadius: 10,
+    paddingVertical: 13,
+    alignItems: "center",
+  },
+  checkBtnLargeText: { color: "#fff", fontSize: 14, fontWeight: "700" },
+
+  // Next
+  nextBtn: {
+    backgroundColor: C.primary,
+    borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
   },
   nextBtnText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+
+  // Dots
+  dotsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 4,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#D1D5DB",
+  },
+  dotActive: {
+    backgroundColor: C.primary,
+    width: 20,
+    borderRadius: 4,
+  },
 });

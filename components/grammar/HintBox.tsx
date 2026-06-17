@@ -1,5 +1,4 @@
 import { API_BASE_URL } from "@/config/env";
-import { S } from "@/theme/grammar_styles";
 import { getToken } from "@/utils/auth-storage";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { fetch } from "expo/fetch";
@@ -8,6 +7,7 @@ import {
   ActivityIndicator,
   Modal,
   Pressable,
+  StyleSheet,
   Text,
   TouchableWithoutFeedback,
   View,
@@ -87,8 +87,8 @@ export function HintBox({ question_hinted }: { question_hinted: Question }) {
 
   return (
     <>
-      <Pressable onPress={handleHint} style={S.hintBtn}>
-        <Ionicons name="bulb-outline" size={18} color="#B58900" />
+      <Pressable onPress={handleHint} style={hs.triggerBtn} hitSlop={6}>
+        <Ionicons name="bulb-outline" size={18} color="#D97706" />
       </Pressable>
 
       <Modal
@@ -98,27 +98,109 @@ export function HintBox({ question_hinted }: { question_hinted: Question }) {
         onRequestClose={() => setShowModal(false)}
       >
         <TouchableWithoutFeedback onPress={() => setShowModal(false)}>
-          <View style={S.overlay} />
+          <View style={hs.overlay} />
         </TouchableWithoutFeedback>
 
-        <View style={S.sheet}>
-          <View style={S.sheetHandle} />
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 }}>
-            <Ionicons name="bulb-outline" size={18} color="#B58900" />
-            <Text style={S.sheetTitle}>Gợi ý</Text>
+        <View style={hs.sheet}>
+          <View style={hs.sheetHandle} />
+
+          {/* Bulb icon */}
+          <View style={hs.bulbWrap}>
+            <View style={hs.bulbCircle}>
+              <Ionicons name="bulb" size={52} color="#F59E0B" />
+            </View>
           </View>
 
-          {hintLoading ? (
-            <ActivityIndicator size="small" color={C.primary} style={{ marginTop: 16 }} />
-          ) : (
-            <Text style={S.sheetText}>{hint}</Text>
-          )}
+          <Text style={hs.sheetTitle}>Gợi ý</Text>
 
-          <Pressable onPress={() => setShowModal(false)} style={S.closeBtn} android_ripple={{ color: C.border }}>
-            <Text style={S.closeBtnText}>Đóng</Text>
+          <View style={hs.contentWrap}>
+            {hintLoading ? (
+              <ActivityIndicator size="small" color={C.primary} style={{ marginVertical: 16 }} />
+            ) : (
+              <Text style={hs.sheetText}>{hint}</Text>
+            )}
+          </View>
+
+          <Pressable
+            onPress={() => setShowModal(false)}
+            style={hs.closeBtn}
+            android_ripple={{ color: "rgba(255,255,255,0.2)" }}
+          >
+            <Text style={hs.closeBtnText}>Đóng</Text>
           </Pressable>
         </View>
       </Modal>
     </>
   );
 }
+
+const hs = StyleSheet.create({
+  triggerBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#FEF3C7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  sheet: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    paddingTop: 12,
+    alignItems: "center",
+  },
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#E5E7EB",
+    marginBottom: 20,
+  },
+  bulbWrap: {
+    marginBottom: 16,
+  },
+  bulbCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: "#FFFBEB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheetTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: C.text,
+    marginBottom: 12,
+  },
+  contentWrap: {
+    width: "100%",
+    minHeight: 60,
+    marginBottom: 24,
+  },
+  sheetText: {
+    fontSize: 15,
+    color: C.textMid,
+    lineHeight: 24,
+    textAlign: "center",
+  },
+  closeBtn: {
+    width: "100%",
+    backgroundColor: C.primary,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  closeBtnText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#fff",
+  },
+});

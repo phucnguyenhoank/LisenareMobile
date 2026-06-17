@@ -1,7 +1,6 @@
 import Feather from "@expo/vector-icons/Feather";
-import { FlatList, Pressable, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { C } from "../../theme/grammar_constants";
-import { S } from "../../theme/grammar_styles";
 import { Exercise, Lesson } from "../../types/grammar";
 
 interface Props {
@@ -12,35 +11,139 @@ interface Props {
 
 export function ExerciseListScreen({ lesson, onSelect, onBack }: Props) {
   return (
-    <View style={S.fill}>
-      <View style={S.header}>
-        <Pressable onPress={onBack} style={S.backBtn}>
+    <View style={ls.fill}>
+      {/* Back button */}
+      <View style={ls.topBar}>
+        <Pressable onPress={onBack} style={ls.backBtn} hitSlop={8}>
           <Feather name="arrow-left" size={20} color={C.textMid} />
         </Pressable>
-        <View style={{ flex: 1, marginLeft: 10 }}>
-          <Text style={S.headerTitle} numberOfLines={2}>
-            {lesson.name}
-          </Text>
-        </View>
       </View>
+
+      {/* Header */}
+      <View style={ls.header}>
+        <View style={ls.headerIcon}>
+          <Feather name="book-open" size={28} color={C.primary} />
+        </View>
+        <Text style={ls.headerTitle}>{lesson.name}</Text>
+        <Text style={ls.headerSub}>Chọn dạng bài tập</Text>
+      </View>
+
       <FlatList
         data={lesson.exercises}
         keyExtractor={(e) => String(e.id)}
-        contentContainerStyle={{ padding: 16, gap: 10 }}
+        contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 32 }}
         renderItem={({ item }) => (
           <Pressable
-            style={S.listCard}
+            style={ls.card}
             onPress={() => onSelect(item)}
             android_ripple={{ color: C.primaryLight }}
           >
-            <View style={S.listIcon}>
-              <Feather name="edit-3" size={18} color={C.primary} />
+            <View style={ls.cardIcon}>
+              <Feather name="edit-3" size={22} color={C.primary} />
             </View>
-            <Text style={S.listCardText}>{item.name}</Text>
-            <Feather name="chevron-right" size={20} color={C.textLight} />
+            <View style={ls.cardContent}>
+              <Text style={ls.cardTitle} numberOfLines={2}>{item.name}</Text>
+              <Text style={ls.cardSub}>10 câu hỏi</Text>
+            </View>
+            <View style={ls.cardArrow}>
+              <Feather name="arrow-right" size={16} color={C.white} />
+            </View>
           </Pressable>
         )}
       />
     </View>
   );
 }
+
+const ls = StyleSheet.create({
+  fill: { flex: 1, backgroundColor: "#F7FAF4" },
+  topBar: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
+    backgroundColor: "#F7FAF4",
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: C.white,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 24,
+    gap: 6,
+  },
+  headerIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: C.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: C.text,
+    lineHeight: 30,
+  },
+  headerSub: {
+    fontSize: 14,
+    color: C.textSoft,
+    marginTop: 2,
+  },
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: C.white,
+    borderRadius: 14,
+    padding: 16,
+    gap: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 2,
+    overflow: "hidden",
+  },
+  cardIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 12,
+    backgroundColor: C.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardContent: {
+    flex: 1,
+    gap: 4,
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: C.text,
+    lineHeight: 20,
+  },
+  cardSub: {
+    fontSize: 12,
+    color: C.textSoft,
+  },
+  cardArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: C.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

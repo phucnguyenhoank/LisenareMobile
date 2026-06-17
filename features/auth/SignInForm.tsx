@@ -1,4 +1,4 @@
-import colors from "@/theme/colors";
+import { C } from "@/theme/grammar_constants";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -11,23 +11,19 @@ import {
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSignIn } from "./useSignIn";
 import GoogleSigninButton from "@/components/GoogleSignInButton";
-import Button from "@/components/Button";
-import { authStyles } from "./authStyles";
 import { handleRequestError } from "@/utils/handle-request-error";
+import Feather from "@expo/vector-icons/Feather";
 
 type Props = {
   onSwitchToSignup: () => void;
   onForgotPassword: () => void;
 };
 
-export default function SignInForm({
-  onSwitchToSignup,
-  onForgotPassword,
-}: Props) {
+export default function SignInForm({ onSwitchToSignup, onForgotPassword }: Props) {
   const { signin, isSigningIn } = useSignIn();
-
   const [username, setUsername] = useState("prhrurcr09");
   const [password, setPassword] = useState("kcmtl5cM#");
+  const [showPwd, setShowPwd] = useState(false);
 
   const handleSignin = async () => {
     try {
@@ -37,97 +33,128 @@ export default function SignInForm({
     }
   };
 
-  const handleSignUp = () => {
-    onSwitchToSignup();
-  };
-
   return (
     <KeyboardAwareScrollView
-      contentContainerStyle={styles.container}
+      contentContainerStyle={sf.container}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.title}>Hello 👋</Text>
+      <Text style={sf.title}>Đổi mật khẩu 👋</Text>
+      <Text style={sf.subtitle}>Vui lòng nhập để đăng tin để điều chỉnh học tập</Text>
 
-      <TextInput
-        placeholder="Username"
-        style={authStyles.input}
-        value={username}
-        onChangeText={setUsername}
-        autoCapitalize="none"
-      />
+      {/* Username input */}
+      <View style={sf.inputWrap}>
+        <Feather name="user" size={16} color={C.textSoft} style={sf.inputIcon} />
+        <TextInput
+          placeholder="Tên đăng nhập hoặc email"
+          placeholderTextColor={C.textLight}
+          style={sf.input}
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="none"
+        />
+      </View>
 
-      <TextInput
-        placeholder="Password"
-        style={authStyles.input}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+      {/* Password input */}
+      <View style={sf.inputWrap}>
+        <Feather name="lock" size={16} color={C.textSoft} style={sf.inputIcon} />
+        <TextInput
+          placeholder="Mật khẩu"
+          placeholderTextColor={C.textLight}
+          style={sf.input}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPwd}
+        />
+        <TouchableOpacity onPress={() => setShowPwd((v) => !v)} style={sf.eyeBtn}>
+          <Feather name={showPwd ? "eye-off" : "eye"} size={16} color={C.textSoft} />
+        </TouchableOpacity>
+      </View>
 
-      <TouchableOpacity onPress={onForgotPassword} style={styles.forgotButton}>
-        <Text style={styles.forgotText}>Quên mật khẩu?</Text>
+      <TouchableOpacity onPress={onForgotPassword} style={sf.forgotRow}>
+        <Text style={sf.forgotText}>Quên mật khẩu?</Text>
       </TouchableOpacity>
 
       {isSigningIn ? (
-        <ActivityIndicator />
+        <ActivityIndicator color={C.primary} style={{ marginVertical: 8 }} />
       ) : (
-        <Button
-          title="Đăng nhập"
-          onPress={handleSignin}
-          style={{ alignSelf: "center" }}
-        />
+        <TouchableOpacity style={sf.loginBtn} onPress={handleSignin} activeOpacity={0.85}>
+          <Text style={sf.loginBtnText}>Đăng nhập</Text>
+        </TouchableOpacity>
       )}
 
-      <View style={styles.spacing} />
-      <Text style={styles.smallText}>Hoặc</Text>
-      <View style={styles.spacing} />
-
-      <Button
-        title="Đăng ký"
-        onPress={handleSignUp}
-        style={{ alignSelf: "center" }}
-      />
-
-      <View style={styles.spacingSmall} />
+      <View style={sf.dividerRow}>
+        <View style={sf.dividerLine} />
+        <Text style={sf.dividerText}>Hoặc</Text>
+        <View style={sf.dividerLine} />
+      </View>
 
       <GoogleSigninButton />
+
+      <TouchableOpacity onPress={onSwitchToSignup} style={sf.signupRow}>
+        <Text style={sf.signupText}>Chưa có tài khoản? <Text style={sf.signupLink}>Đăng ký</Text></Text>
+      </TouchableOpacity>
     </KeyboardAwareScrollView>
   );
 }
 
-const styles = StyleSheet.create({
+const sf = StyleSheet.create({
   container: {
     flexGrow: 1,
     justifyContent: "center",
     paddingHorizontal: 24,
+    paddingVertical: 32,
+    gap: 0,
   },
-
   title: {
     fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 24,
-    textAlign: "center",
+    fontWeight: "800",
+    color: C.text,
+    marginBottom: 6,
   },
-
-  spacing: {
-    height: 16,
-  },
-  spacingSmall: {
-    height: 12,
-  },
-  smallText: {
-    textAlign: "center",
-  },
-  forgotButton: {
-    alignSelf: "flex-end",
-    marginTop: -12,
-    paddingVertical: 4,
-    marginBottom: 24,
-  },
-  forgotText: {
-    color: colors.secondary,
+  subtitle: {
     fontSize: 13,
-    fontWeight: "500",
+    color: C.textSoft,
+    marginBottom: 24,
+    lineHeight: 18,
   },
+  inputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    marginBottom: 12,
+    paddingHorizontal: 12,
+  },
+  inputIcon: { marginRight: 8 },
+  input: {
+    flex: 1,
+    paddingVertical: 13,
+    fontSize: 14,
+    color: C.text,
+  },
+  eyeBtn: { padding: 4 },
+  forgotRow: { alignSelf: "flex-end", marginBottom: 20, marginTop: -4 },
+  forgotText: { fontSize: 13, color: C.primary, fontWeight: "500" },
+  loginBtn: {
+    backgroundColor: C.primary,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  loginBtnText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    gap: 10,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#E5E7EB" },
+  dividerText: { fontSize: 13, color: C.textSoft },
+  signupRow: { alignItems: "center", marginTop: 16 },
+  signupText: { fontSize: 13, color: C.textSoft },
+  signupLink: { color: C.primary, fontWeight: "600" },
 });

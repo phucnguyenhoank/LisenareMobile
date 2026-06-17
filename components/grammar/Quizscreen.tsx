@@ -1,7 +1,7 @@
 import Feather from "@expo/vector-icons/Feather";
 import { request } from "@/services/client";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { QuizContext } from "../../context/QuizContext";
 import { C, isMultiChoice, normalize } from "../../theme/grammar_constants";
@@ -58,15 +58,14 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
   }, [fetchQuestions]);
 
   const handleAnswer = useCallback(
-    (index: number, value: string) => {
-      const startTime = questionStartTimes.current[index] ?? Date.now();
-      const timeSeconds = Math.round((Date.now() - startTime) / 1000);
+    (index: number, value: string, timeSeconds?: number) => {
+      const elapsed = timeSeconds ?? Math.round((Date.now() - (questionStartTimes.current[index] ?? Date.now())) / 1000);
       setAnswers((prev) => ({
         ...prev,
         [index]: {
           question_id: questions[index]?.question_id,
           user_answer: value,
-          time_seconds: timeSeconds,
+          time_seconds: elapsed,
         },
       }));
     },
@@ -103,23 +102,20 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
     }
   };
 
-  const allAnswered = useMemo(
-    () =>
-      questions.every(
-        (_, i) =>
-          answers[i]?.user_answer !== undefined &&
-          answers[i]?.user_answer !== "",
-      ),
-    [questions, answers],
-  );
-
-  const unanswered = useMemo(
+  const answeredCount = useMemo(
     () =>
       questions.filter(
-        (_, i) => !answers[i]?.user_answer || answers[i]?.user_answer === "",
+        (_, i) => answers[i]?.user_answer !== undefined && answers[i]?.user_answer !== "",
       ).length,
     [questions, answers],
   );
+
+  const allAnswered = answeredCount === questions.length && questions.length > 0;
+
+  const unanswered = questions.length - answeredCount;
+
+  const progressPct =
+    questions.length > 0 ? (answeredCount / questions.length) * 100 : 0;
 
   const pct =
     questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
@@ -156,15 +152,25 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
     <QuizContext.Provider value={{ exercise, questions, answers }}>
       <View style={S.fill}>
         {/* Header */}
-        <View style={S.header}>
-          <Pressable onPress={onBack} style={S.backBtn}>
+        <View style={qs.header}>
+          <Pressable onPress={onBack} style={qs.backBtn} hitSlop={8}>
             <Feather name="arrow-left" size={20} color={C.textMid} />
           </Pressable>
-          <View style={{ flex: 1, marginLeft: 10 }}>
-            <Text style={S.headerTitle} numberOfLines={1}>
-              {exercise.name}
-            </Text>
-            <Text style={S.headerSub}>{questions.length} câu hỏi</Text>
+          <View style={qs.headerIcon}>
+            <Feather name="book-open" size={18} color={C.primary} />
+          </View>
+          <Text style={qs.headerTitle} numberOfLines={2}>
+            {exercise.name}
+          </Text>
+        </View>
+
+        {/* Progress bar */}
+        <View style={qs.progressWrap}>
+          <Text style={qs.progressLabel}>
+            Câu {answeredCount}/{questions.length}
+          </Text>
+          <View style={qs.progressTrack}>
+            <View style={[qs.progressFill, { width: `${progressPct}%` }]} />
           </View>
         </View>
 
@@ -257,4 +263,68 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
       </View>
     </QuizContext.Provider>
   );
+});
+
+const qs = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: C.white,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: C.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "700",
+    color: C.text,
+    lineHeight: 20,
+  },
+  progressWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: C.white,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  progressLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: C.textMid,
+    minWidth: 60,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: C.progressBg,
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: C.primary,
+    borderRadius: 3,
+  },
 });

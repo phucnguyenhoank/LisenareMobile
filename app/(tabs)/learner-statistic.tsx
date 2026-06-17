@@ -4,7 +4,7 @@ import HistorySummaryCard from "@/features/learning-statistic/HistorySummaryCard
 import MemoryQualityCard from "@/features/learning-statistic/MemoryQualityCard";
 import TodayOverviewCard from "@/features/learning-statistic/TodayOverviewCard";
 import { useAuth } from "@/context/AuthContext";
-import colors from "@/theme/colors";
+import { C } from "@/theme/grammar_constants";
 import {
   LearningCardStats,
   LearningTimeSeries,
@@ -12,6 +12,7 @@ import {
   TimeRange,
 } from "@/types/learner-statistic";
 import { Learner } from "@/types/learnner";
+import Feather from "@expo/vector-icons/Feather";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -21,9 +22,9 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
-import Button from "@/components/Button";
 
 const RANGE_TO_DAYS: Record<TimeRange, number | null> = {
   "30d": 30,
@@ -36,139 +37,106 @@ export default function LearnerStatisticScreen() {
   const { token, isTokenLoading: authLoading } = useAuth();
   const [selectedRange, setSelectedRange] = useState<TimeRange>("30d");
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const [selectedMetric, setSelectedMetric] = useState<Metric>("total_learning");
 
-  const [selectedMetric, setSelectedMetric] =
-    useState<Metric>("total_learning");
-
-  const {
-    data: user,
-    isLoading: userLoading,
-    refetch: refetchUser,
-  } = useQuery({
+  const { data: user, isLoading: userLoading, refetch: refetchUser } = useQuery({
     queryKey: ["learnerMe"],
     queryFn: () => request<Learner>("/learners/me"),
     enabled: !!token,
   });
 
-  const {
-    data: todayStats,
-    isLoading: todayLoading,
-    refetch: refetchToday,
-  } = useQuery({
+  const { data: todayStats, isLoading: todayLoading, refetch: refetchToday } = useQuery({
     queryKey: ["learnerStats", "today", timezone],
-    queryFn: () =>
-      request<LearningCardStats>(
-        `/learning-cards/stats?days=0&timezone=${timezone}`,
-      ),
+    queryFn: () => request<LearningCardStats>(`/learning-cards/stats?days=0&timezone=${timezone}`),
     enabled: !!token,
   });
 
-  const {
-    data: allTimeStats,
-    isLoading: allTimeLoading,
-    refetch: refetchAllTime,
-  } = useQuery({
+  const { data: allTimeStats, isLoading: allTimeLoading, refetch: refetchAllTime } = useQuery({
     queryKey: ["learnerStats", "all", timezone],
-    queryFn: () =>
-      request<LearningCardStats>(`/learning-cards/stats?timezone=${timezone}`),
+    queryFn: () => request<LearningCardStats>(`/learning-cards/stats?timezone=${timezone}`),
     enabled: !!token,
   });
 
   const days = RANGE_TO_DAYS[selectedRange];
 
-  const {
-    data: chartStats,
-    isLoading: chartLoading,
-    refetch: refetchChart,
-  } = useQuery({
+  const { data: chartStats, isLoading: chartLoading, refetch: refetchChart } = useQuery({
     queryKey: ["chart", selectedMetric, selectedRange, timezone],
     queryFn: () => {
       const base = `/learning-cards/stats/timeseries?metric=${selectedMetric}`;
-
-      const query =
-        days === null
-          ? `${base}&timezone=${timezone}`
-          : `${base}&days=${days}&timezone=${timezone}`;
-
+      const query = days === null ? `${base}&timezone=${timezone}` : `${base}&days=${days}&timezone=${timezone}`;
       return request<LearningTimeSeries>(query);
     },
     enabled: !!token,
   });
 
   const onRefresh = async () => {
-    await Promise.all([
-      refetchToday(),
-      refetchAllTime(),
-      refetchChart(),
-      refetchUser(),
-    ]);
+    await Promise.all([refetchToday(), refetchAllTime(), refetchChart(), refetchUser()]);
   };
 
-  const pageLoading =
-    (todayLoading || allTimeLoading || userLoading) && !!token;
+  const pageLoading = (todayLoading || allTimeLoading || userLoading) && !!token;
 
   if (authLoading || pageLoading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.secondary} />
+      <View style={ls.center}>
+        <ActivityIndicator size="large" color={C.primary} />
       </View>
     );
   }
 
   if (!token) {
     return (
-      <View style={styles.center}>
-        <Button
-          title="Đăng nhập"
-          onPress={() => router.push("/setting")}
-          style={{ alignSelf: "center" }}
-        />
-        <Text style={styles.subtitle}>để theo dõi tiến độ học tập</Text>
+      <View style={ls.center}>
+        <View style={ls.lockIcon}>
+          <Feather name="bar-chart-2" size={36} color={C.primary} />
+        </View>
+        <Text style={ls.lockTitle}>Thống kê học tập</Text>
+        <Text style={ls.lockText}>Đăng nhập để theo dõi tiến độ của bạn</Text>
+        <TouchableOpacity style={ls.loginBtn} onPress={() => router.push("/setting")} activeOpacity={0.8}>
+          <Text style={ls.loginBtnText}>Đăng nhập</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
-  // TODAY
   const todayTotal = todayStats?.total_learning ?? 0;
   const todayDue = todayStats?.due_count ?? 0;
   const todayMastered = todayTotal - todayDue;
-
   const todayRetention = formatRetention(todayStats?.true_retention);
   const todayStability = formatDays(todayStats?.average_stability);
 
-  // ALL TIME
   const allTimeTotal = allTimeStats?.total_learning ?? 0;
   const allTimeDue = allTimeStats?.due_count ?? 0;
   const allTimeMastered = allTimeTotal - allTimeDue;
-
   const allTimeRetention = formatRetention(allTimeStats?.true_retention);
   const allTimeStability = formatDays(allTimeStats?.average_stability);
 
+  const firstName = user?.full_name?.split(" ").pop() ?? "bạn";
+
   return (
     <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={pageLoading} onRefresh={onRefresh} />
-      }
+      style={ls.screen}
+      contentContainerStyle={ls.container}
+      refreshControl={<RefreshControl refreshing={pageLoading} onRefresh={onRefresh} />}
+      showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.pageTitle}>Thống kê học tập </Text>
-      <Text style={styles.pageSubtitle}>của {user?.full_name ?? "bạn"}</Text>
+      {/* Header */}
+      <View style={ls.pageHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={ls.greeting}>Xin chào, {firstName} 👋</Text>
+          <Text style={ls.pageTitle}>Thống kê học tập</Text>
+        </View>
+        <TouchableOpacity style={ls.settingsBtn} activeOpacity={0.7}>
+          <Feather name="settings" size={20} color={C.textMid} />
+        </TouchableOpacity>
+      </View>
 
-      <Text style={styles.sectionTitle}>Số thẻ mới hôm nay</Text>
+      {/* Today */}
+      <Text style={ls.sectionTitle}>Số thẻ mới hôm nay</Text>
+      <TodayOverviewCard total={todayTotal} mastered={todayMastered} due={todayDue} />
 
-      <TodayOverviewCard
-        total={todayTotal}
-        mastered={todayMastered}
-        due={todayDue}
-      />
+      <MemoryQualityCard retention={todayRetention} stability={todayStability} scope="Hôm nay" />
 
-      <MemoryQualityCard
-        retention={todayRetention}
-        stability={todayStability}
-        scope="Hôm nay"
-      />
-
+      {/* All time */}
       <HistorySummaryCard
         total={allTimeTotal}
         mastered={allTimeMastered}
@@ -177,6 +145,7 @@ export default function LearnerStatisticScreen() {
         stability={allTimeStability}
       />
 
+      {/* Chart */}
       <ChartCard
         selectedRange={selectedRange}
         setSelectedRange={setSelectedRange}
@@ -201,47 +170,42 @@ function formatDays(value?: number) {
   return `${value.toFixed(1)} ngày`;
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  container: {
-    padding: 20,
-    paddingBottom: 120,
-  },
+const ls = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: "#F7FAF4" },
+  container: { paddingBottom: 120 },
 
   center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 20,
+    flex: 1, justifyContent: "center", alignItems: "center",
+    backgroundColor: "#F7FAF4", padding: 32, gap: 12,
   },
+  lockIcon: {
+    width: 80, height: 80, borderRadius: 24,
+    backgroundColor: C.primaryLight, alignItems: "center", justifyContent: "center",
+    marginBottom: 4,
+  },
+  lockTitle: { fontSize: 20, fontWeight: "700", color: C.text },
+  lockText: { fontSize: 14, color: C.textSoft, textAlign: "center" },
+  loginBtn: {
+    backgroundColor: C.primary, borderRadius: 12,
+    paddingHorizontal: 28, paddingVertical: 13, marginTop: 4,
+  },
+  loginBtnText: { color: "#fff", fontSize: 15, fontWeight: "700" },
 
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#111",
+  pageHeader: {
+    flexDirection: "row", alignItems: "center",
+    paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16,
   },
-  pageSubtitle: {
-    marginTop: 6,
-    marginBottom: 18,
-    fontSize: 14,
-    color: "#666",
+  greeting: { fontSize: 13, color: C.textSoft, marginBottom: 2 },
+  pageTitle: { fontSize: 24, fontWeight: "800", color: C.text, letterSpacing: -0.5 },
+  settingsBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: "#fff", alignItems: "center", justifyContent: "center",
+    shadowColor: "#000", shadowOpacity: 0.05, shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3, elevation: 1,
   },
 
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#222",
-    marginTop: 8,
-    marginBottom: 10,
-  },
-
-  subtitle: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "#444",
+    fontSize: 16, fontWeight: "700", color: C.text,
+    marginBottom: 10, paddingHorizontal: 20,
   },
 });
