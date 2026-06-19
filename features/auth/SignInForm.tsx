@@ -39,8 +39,7 @@ export default function SignInForm({ onSwitchToSignup, onForgotPassword }: Props
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      <Text style={sf.title}>Đổi mật khẩu 👋</Text>
-      <Text style={sf.subtitle}>Vui lòng nhập để đăng tin để điều chỉnh học tập</Text>
+      <Text style={sf.title}>Chào mừng bạn đã đến với Lisenare 👋</Text>
 
       {/* Username input */}
       <View style={sf.inputWrap}>

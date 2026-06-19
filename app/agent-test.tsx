@@ -115,7 +115,7 @@ export default function AgentTestScreen() {
         <View style={ag.robotCircle}>
           <Ionicons name="hardware-chip-outline" size={40} color={C.primary} />
         </View>
-        <Text style={ag.emptyTitle}>Test Agent</Text>
+        <Text style={ag.emptyTitle}>Trợ lý học tập</Text>
         <Text style={ag.emptyText}>Bạn cần đăng nhập để sử dụng tính năng này.</Text>
         <TouchableOpacity style={ag.primaryBtn} onPress={() => router.push("/setting")} activeOpacity={0.8}>
           <Text style={ag.primaryBtnText}>Đăng nhập</Text>
@@ -128,7 +128,7 @@ export default function AgentTestScreen() {
     <View style={ag.root}>
       <Stack.Screen
         options={{
-          title: "Test Agent",
+          title: "Trợ lý học tập",
           headerShown: true,
           headerStyle: { backgroundColor: "#fff" },
           headerTitleStyle: { fontSize: 17, fontWeight: "700", color: C.text },
@@ -145,7 +145,7 @@ export default function AgentTestScreen() {
       />
 
       {/* Meta bar */}
-      <View style={ag.metaBar}>
+      <View style={[ag.metaBar, { display: 'none' }]}>
         <View style={ag.metaPill}>
           <Text style={ag.metaLabel}>learner_id</Text>
           <Text style={ag.metaValue}>{learnerId ?? (bootError ? "lỗi" : "...")}</Text>
@@ -171,11 +171,11 @@ export default function AgentTestScreen() {
                 <Ionicons name="hardware-chip-outline" size={28} color={C.primary} />
               </View>
             </View>
-            <Text style={ag.welcomeTitle}>Agent Tester</Text>
+            {/* <Text style={ag.welcomeTitle}>Agent Tester</Text>
             <Text style={ag.welcomeText}>
               Gửi câu hỏi để kiểm tra vòng lặp function-calling. Mỗi response sẽ kèm các tool agent đã gọi.
             </Text>
-            <Text style={ag.welcomeSub}>Bạn có thể hỏi về:</Text>
+            <Text style={ag.welcomeSub}>Bạn có thể hỏi về:</Text> */}
             <View style={ag.chipRow}>
               {SAMPLE_PROMPTS.map((p) => (
                 <TouchableOpacity

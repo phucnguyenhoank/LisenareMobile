@@ -222,7 +222,7 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
           }
           if (data.current_question_id != null) setCurrentQuestionId(data.current_question_id);
           if (data.session_id != null) setSessionId(data.session_id);
-        } catch {}
+        } catch { }
       };
 
       while (true) {
@@ -348,7 +348,7 @@ const ChatButton = ({ exercise, questions, answers }: Props) => {
                 <TouchableOpacity onPress={() => setChatView("current")} style={cs.headerBackBtn}>
                   <Feather name="arrow-left" size={20} color={C.textMid} />
                 </TouchableOpacity>
-                <Text style={cs.headerTitle}>Lịch sử chat</Text>
+                <Text style={[cs.headerTitle, { flex: 1 }]}>Lịch sử chat</Text>
                 <TouchableOpacity onPress={() => setVisible(false)} style={cs.headerCloseBtn}>
                   <Feather name="x" size={20} color={C.textSoft} />
                 </TouchableOpacity>

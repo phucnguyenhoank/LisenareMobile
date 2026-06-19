@@ -153,9 +153,9 @@ export const QuizScreen = memo(({ exercise, onBack }: Props) => {
       <View style={S.fill}>
         {/* Header */}
         <View style={qs.header}>
-          <Pressable onPress={onBack} style={qs.backBtn} hitSlop={8}>
+          {/* <Pressable onPress={onBack} style={qs.backBtn} hitSlop={8}>
             <Feather name="arrow-left" size={20} color={C.textMid} />
-          </Pressable>
+          </Pressable> */}
           <View style={qs.headerIcon}>
             <Feather name="book-open" size={18} color={C.primary} />
           </View>

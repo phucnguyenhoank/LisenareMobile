@@ -109,11 +109,11 @@ function GrammarHomeScreen({
       {/* ── Topic list header ── */}
       <View style={ls.sectionHeader}>
         <Text style={ls.sectionTitle}>Danh sách chuyên đề</Text>
-        <TouchableOpacity style={ls.filterBtn} activeOpacity={0.7}>
+        {/* <TouchableOpacity style={ls.filterBtn} activeOpacity={0.7}>
           <Feather name="sliders" size={14} color={C.textMid} />
           <Text style={ls.filterText}>Tất cả</Text>
           <Feather name="chevron-down" size={14} color={C.textMid} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       {/* ── Topic list (inline, not scrollable) ── */}
@@ -165,20 +165,20 @@ export default function GrammarStudying() {
         ? () => setScreen({ type: "lessons", topic: screen.topic })
         : screen.type === "quiz"
           ? () => {
-              const parentTopic = topics.find((t) =>
-                t.lessons.some((l) =>
-                  l.exercises.some((e) => e.id === screen.exercise.id),
-                ),
-              );
-              const parentLesson = parentTopic?.lessons.find((l) =>
+            const parentTopic = topics.find((t) =>
+              t.lessons.some((l) =>
                 l.exercises.some((e) => e.id === screen.exercise.id),
-              );
-              if (parentTopic && parentLesson) {
-                setScreen({ type: "exercises", lesson: parentLesson, topic: parentTopic });
-              } else {
-                setScreen({ type: "topics" });
-              }
+              ),
+            );
+            const parentLesson = parentTopic?.lessons.find((l) =>
+              l.exercises.some((e) => e.id === screen.exercise.id),
+            );
+            if (parentTopic && parentLesson) {
+              setScreen({ type: "exercises", lesson: parentLesson, topic: parentTopic });
+            } else {
+              setScreen({ type: "topics" });
             }
+          }
           : screen.type === "adaptive"
             ? () => setScreen({ type: "topics" })
             : null;

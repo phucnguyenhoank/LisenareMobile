@@ -12,18 +12,9 @@ interface Props {
 export function ExerciseListScreen({ lesson, onSelect, onBack }: Props) {
   return (
     <View style={ls.fill}>
-      {/* Back button */}
-      <View style={ls.topBar}>
-        <Pressable onPress={onBack} style={ls.backBtn} hitSlop={8}>
-          <Feather name="arrow-left" size={20} color={C.textMid} />
-        </Pressable>
-      </View>
 
       {/* Header */}
       <View style={ls.header}>
-        <View style={ls.headerIcon}>
-          <Feather name="book-open" size={28} color={C.primary} />
-        </View>
         <Text style={ls.headerTitle}>{lesson.name}</Text>
         <Text style={ls.headerSub}>Chọn dạng bài tập</Text>
       </View>
@@ -43,7 +34,7 @@ export function ExerciseListScreen({ lesson, onSelect, onBack }: Props) {
             </View>
             <View style={ls.cardContent}>
               <Text style={ls.cardTitle} numberOfLines={2}>{item.name}</Text>
-              <Text style={ls.cardSub}>10 câu hỏi</Text>
+              {/* <Text style={ls.cardSub}>10 câu hỏi</Text> */}
             </View>
             <View style={ls.cardArrow}>
               <Feather name="arrow-right" size={16} color={C.white} />

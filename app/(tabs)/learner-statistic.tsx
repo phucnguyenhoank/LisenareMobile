@@ -125,9 +125,6 @@ export default function LearnerStatisticScreen() {
           <Text style={ls.greeting}>Xin chào, {firstName} 👋</Text>
           <Text style={ls.pageTitle}>Thống kê học tập</Text>
         </View>
-        <TouchableOpacity style={ls.settingsBtn} activeOpacity={0.7}>
-          <Feather name="settings" size={20} color={C.textMid} />
-        </TouchableOpacity>
       </View>
 
       {/* Today */}

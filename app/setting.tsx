@@ -47,13 +47,6 @@ export default function SettingScreen() {
     return (
       <View style={st.screen}>
         {/* Header */}
-        <View style={st.header}>
-          <Pressable onPress={() => router.back()} style={st.backBtn} hitSlop={8}>
-            <Feather name="arrow-left" size={20} color={C.textMid} />
-          </Pressable>
-          <Text style={st.headerTitle}>Cài đặt</Text>
-          <View style={{ width: 36 }} />
-        </View>
 
         {isChangingPassword ? (
           <ChangePasswordForm onCancel={() => setIsChangingPassword(false)} />
