@@ -48,8 +48,6 @@ export default function AgentTestScreen() {
 
   const [learnerId, setLearnerId] = useState<number | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [lastToolCalls, setLastToolCalls] = useState<ToolCallLog[]>([]);
-  const [showToolLog, setShowToolLog] = useState(true);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
@@ -85,10 +83,8 @@ export default function AgentTestScreen() {
         body: { learner_id: learnerId, messages: next },
       });
       setMessages([...next, { role: "assistant", content: res.answer || "(rỗng)" }]);
-      setLastToolCalls(res.tool_calls ?? []);
     } catch (e: any) {
       setMessages([...next, { role: "assistant", content: `❗ Lỗi gọi agent: ${e?.message ?? "không rõ"}` }]);
-      setLastToolCalls([]);
     } finally {
       setSending(false);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
@@ -97,7 +93,6 @@ export default function AgentTestScreen() {
 
   const resetConversation = () => {
     setMessages([]);
-    setLastToolCalls([]);
     setInput("");
   };
 
@@ -150,10 +145,6 @@ export default function AgentTestScreen() {
           <Text style={ag.metaLabel}>learner_id</Text>
           <Text style={ag.metaValue}>{learnerId ?? (bootError ? "lỗi" : "...")}</Text>
         </View>
-        <TouchableOpacity onPress={() => setShowToolLog((v) => !v)} style={ag.toggleBtn} activeOpacity={0.75}>
-          <Feather name={showToolLog ? "eye-off" : "eye"} size={13} color={C.primary} />
-          <Text style={ag.toggleText}>{showToolLog ? "Ẩn tool log" : "Hiện tool log"}</Text>
-        </TouchableOpacity>
       </View>
 
       {bootError && (
@@ -227,23 +218,6 @@ export default function AgentTestScreen() {
           </View>
         )}
 
-        {showToolLog && lastToolCalls.length > 0 && (
-          <View style={ag.toolLogBox}>
-            <View style={ag.toolLogHeader}>
-              <Feather name="tool" size={13} color="#A7F3D0" />
-              <Text style={ag.toolLogTitle}>Tool calls ({lastToolCalls.length})</Text>
-            </View>
-            {lastToolCalls.map((tc, idx) => (
-              <View key={idx} style={ag.toolItem}>
-                <Text style={ag.toolName}>{idx + 1}. {tc.name}</Text>
-                {Object.keys(tc.args ?? {}).length > 0 && (
-                  <Text style={ag.toolArgs}>args: {JSON.stringify(tc.args)}</Text>
-                )}
-                <Text style={ag.toolResult}>→ {tc.result_summary}</Text>
-              </View>
-            ))}
-          </View>
-        )}
       </KeyboardAwareScrollView>
 
       <KeyboardStickyView offset={{ closed: 0, opened: insets.bottom }}>
