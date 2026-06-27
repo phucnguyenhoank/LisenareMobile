@@ -58,7 +58,7 @@ export default function FloatingActionMenu() {
               size={28}
               color="white"
             />
-            <Text style={styles.miniFabText}>Look Up</Text>
+            <Text style={styles.miniFabText}>Explainer</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

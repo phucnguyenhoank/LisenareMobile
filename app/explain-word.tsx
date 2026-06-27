@@ -115,10 +115,17 @@ export default function WordExplanationScreen() {
 
       <Button
         onPress={handleExplain}
-        title="Explain for me"
+        title={loading ? "Searching..." : "Explain for me"}
         disabled={loading}
         style={styles.button}
       />
+
+      {loading && (
+        <View style={[styles.resultCard, styles.loadingCard]}>
+          <ActivityIndicator size="large" color={colors.secondary} />
+          <Text style={styles.loadingText}>Analyzing...</Text>
+        </View>
+      )}
 
       {error && !loading && (
         <View style={styles.emptyCard}>
@@ -188,6 +195,18 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  loadingCard: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+    borderStyle: "dashed",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#6B7280",
+    fontWeight: "500",
   },
   headerSection: { marginBottom: 24 },
   targetLabel: {

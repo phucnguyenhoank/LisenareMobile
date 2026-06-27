@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useAudioPlayer } from "expo-audio";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { Buffer } from "buffer";
 
 import { Directory, File, Paths } from "expo-file-system";
@@ -27,65 +27,70 @@ async function createCacheKey(text: string) {
 
 export function useTTSPlayer(text: string | null) {
   const [audioUri, setAudioUri] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
+  const shouldPlayWhenReady = useRef(false);
+
+  const player = useAudioPlayer();
+  const status = useAudioPlayerStatus(player);
+
+  // Play automatically as soon as Expo confirms the new source is fully loaded/buffered
   useEffect(() => {
-    let mounted = true;
+    if (shouldPlayWhenReady.current && status.isLoaded && !status.isBuffering) {
+      shouldPlayWhenReady.current = false;
+      setIsLoading(false);
+      player.seekTo(0);
+      player.play();
+    }
+  }, [status.isLoaded, status.isBuffering]);
 
-    async function prepare() {
-      if (!text?.trim()) {
-        setAudioUri(null);
+  const play = async () => {
+    if (!text?.trim() || isLoading) return;
+
+    // If already downloaded and loaded, just play it
+    if (audioUri) {
+      player.seekTo(0);
+      player.play();
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      shouldPlayWhenReady.current = true;
+      await ensureCacheDir();
+
+      const hash = await createCacheKey(text);
+      const audioFile = new File(AUDIO_CACHE_DIR, `${hash}.mp3`);
+
+      // 1. Check cache first
+      if (await audioFile.exists) {
+        setAudioUri(audioFile.uri);
+        player.replace({ uri: audioFile.uri });
         return;
       }
 
-      try {
-        await ensureCacheDir();
+      // 2. Fetch from API if not cached
+      const payload = JSON.stringify({ text });
+      const encodedData = Buffer.from(payload).toString("base64");
+      const streamUrl = `${API_BASE_URL}/text/tts-stream?data=${encodedData}`;
 
-        const hash = await createCacheKey(text);
-        const audioFile = new File(AUDIO_CACHE_DIR, `${hash}.mp3`);
+      // 3. Download to local storage
+      await File.downloadFileAsync(streamUrl, audioFile);
 
-        // 1. Use cache if exists
-        if (await audioFile.exists) {
-          if (mounted) {
-            setAudioUri(audioFile.uri);
-          }
-          return;
-        }
+      setAudioUri(audioFile.uri);
 
-        // 2. Build API URL
-        const payload = JSON.stringify({ text });
-        const encodedData = Buffer.from(payload).toString("base64");
-        const streamUrl = `${API_BASE_URL}/text/tts-stream?data=${encodedData}`;
-
-        // 3. Download directly to cache
-        await File.downloadFileAsync(streamUrl, audioFile);
-
-        if (mounted) {
-          setAudioUri(audioFile.uri);
-        }
-      } catch (err) {
-        console.error("TTS prepare error:", err);
-      }
+      player.replace({ uri: audioFile.uri });
+    } catch (err) {
+      console.error("TTS play error:", err);
+      shouldPlayWhenReady.current = false;
+      setIsLoading(false);
     }
-
-    prepare();
-
-    return () => {
-      mounted = false;
-    };
-  }, [text]);
-
-  const player = useAudioPlayer(audioUri ?? undefined);
-
-  const play = () => {
-    if (!audioUri) return;
-
-    player.seekTo(0);
-    player.play();
   };
 
   return {
     play,
     player,
+    loading: isLoading,
     ready: !!audioUri,
     audioUri,
   };

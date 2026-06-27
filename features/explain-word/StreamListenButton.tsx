@@ -12,9 +12,7 @@ interface Props {
 }
 
 export default function StreamListenButton({ text, size = 20 }: Props) {
-  const { play, ready, player } = useTTSPlayer(text);
-
-  const loading = !ready;
+  const { play, loading, player } = useTTSPlayer(text);
 
   return (
     <TouchableOpacity onPress={play} disabled={loading} style={styles.button}>
