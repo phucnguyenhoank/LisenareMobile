@@ -22,10 +22,19 @@ import { C } from "../../theme/grammar_constants";
 import { S } from "../../theme/grammar_styles";
 import { Screen, Topic } from "../../types/grammar";
 
-const OVERALL_PROGRESS = 42;
+function computeOverallProgress(topics: Topic[]): number {
+  let completed = 0;
+  let total = 0;
+  for (const t of topics) {
+    completed += t.completed_exercises ?? 0;
+    total += t.total_exercises ?? 0;
+  }
+  return total > 0 ? Math.round((completed / total) * 100) : 0;
+}
 
 function GrammarHomeScreen({
   topics,
+  overall,
   loading,
   error,
   onSelectTopic,
@@ -34,6 +43,7 @@ function GrammarHomeScreen({
   onRetry,
 }: {
   topics: Topic[];
+  overall: number;
   loading: boolean;
   error: string | null;
   onSelectTopic: (t: Topic) => void;
@@ -56,10 +66,10 @@ function GrammarHomeScreen({
           <View style={ls.progressSection}>
             <View style={ls.progressLabelRow}>
               <Text style={ls.progressLabel}>Tiến độ tổng thể</Text>
-              <Text style={ls.progressPct}>{OVERALL_PROGRESS}%</Text>
+              <Text style={ls.progressPct}>{overall}%</Text>
             </View>
             <View style={ls.progressTrack}>
-              <View style={[ls.progressFill, { width: `${OVERALL_PROGRESS}%` }]} />
+              <View style={[ls.progressFill, { width: `${overall}%` }]} />
             </View>
           </View>
         </View>
@@ -139,20 +149,27 @@ export default function GrammarStudying() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [screen, setScreen] = useState<Screen>({ type: "topics" });
+  const [learnerId, setLearnerId] = useState<number | null>(null);
 
   const fetchTopics = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await request<Topic[]>("/grammar/topics");
+      let id = learnerId;
+      if (id == null) {
+        const me = await request<{ id: number }>("/learners/me");
+        id = me.id;
+        setLearnerId(id);
+      }
+      const data = await request<Topic[]>(`/grammar/topics?learner_id=${id}`);
       setTopics(data);
     } catch (e: any) {
       setError(e?.message ?? "Không tải được dữ liệu");
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, learnerId]);
 
   useEffect(() => {
     fetchTopics();
@@ -165,6 +182,8 @@ export default function GrammarStudying() {
         ? () => setScreen({ type: "lessons", topic: screen.topic })
         : screen.type === "quiz"
           ? () => {
+            // Làm bài xong có thể thay đổi tiến độ → tải lại cây để cập nhật %
+            fetchTopics();
             const parentTopic = topics.find((t) =>
               t.lessons.some((l) =>
                 l.exercises.some((e) => e.id === screen.exercise.id),
@@ -215,6 +234,7 @@ export default function GrammarStudying() {
     return (
       <GrammarHomeScreen
         topics={topics}
+        overall={computeOverallProgress(topics)}
         loading={loading}
         error={error}
         onSelectTopic={(t) => setScreen({ type: "lessons", topic: t })}
@@ -226,19 +246,26 @@ export default function GrammarStudying() {
   }
 
   if (screen.type === "lessons") {
+    // Dùng dữ liệu topic mới nhất (có tiến độ cập nhật) nếu có
+    const freshTopic =
+      topics.find((t) => t.id === screen.topic.id) ?? screen.topic;
     return (
       <LessonListScreen
-        topic={screen.topic}
-        onSelect={(l) => setScreen({ type: "exercises", lesson: l, topic: screen.topic })}
+        topic={freshTopic}
+        onSelect={(l) => setScreen({ type: "exercises", lesson: l, topic: freshTopic })}
         onBack={onBack!}
       />
     );
   }
 
   if (screen.type === "exercises") {
+    const freshLesson =
+      topics
+        .flatMap((t) => t.lessons)
+        .find((l) => l.id === screen.lesson.id) ?? screen.lesson;
     return (
       <ExerciseListScreen
-        lesson={screen.lesson}
+        lesson={freshLesson}
         onSelect={(e) => setScreen({ type: "quiz", exercise: e })}
         onBack={onBack!}
       />

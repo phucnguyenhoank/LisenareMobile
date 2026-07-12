@@ -32,6 +32,14 @@ export function LessonListScreen({ topic, onSelect, onBack }: Props) {
             </View>
             <View style={ls.cardContent}>
               <Text style={ls.cardTitle} numberOfLines={2}>{item.name}</Text>
+              <View style={ls.progressRow}>
+                <View style={ls.progressTrack}>
+                  <View
+                    style={[ls.progressFill, { width: `${item.progress_percent ?? 0}%` }]}
+                  />
+                </View>
+                <Text style={ls.progressText}>{item.progress_percent ?? 0}%</Text>
+              </View>
               <Text style={ls.cardSub}>{item.exercises.length} bài tập</Text>
             </View>
             <View style={ls.cardArrow}>
@@ -126,6 +134,30 @@ const ls = StyleSheet.create({
   cardSub: {
     fontSize: 12,
     color: C.textSoft,
+  },
+  progressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: C.progressBg,
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: C.primary,
+    borderRadius: 3,
+  },
+  progressText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: C.textSoft,
+    minWidth: 32,
+    textAlign: "right",
   },
   cardArrow: {
     width: 36,
