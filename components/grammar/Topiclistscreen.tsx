@@ -41,13 +41,6 @@ function getTopicIcon(index: number): FeatherIconName {
   return TOPIC_ICONS[index % TOPIC_ICONS.length];
 }
 
-function getTopicProgress(_topic: Topic, index: number): number {
-  // Placeholder: trả về progress mẫu dựa theo index
-  // TODO: thay bằng dữ liệu thực từ API khi có
-  const samples = [80, 40, 30, 10, 0, 0, 0, 0, 0, 0];
-  return samples[index] ?? 0;
-}
-
 interface TopicCardProps {
   topic: Topic;
   index: number;
@@ -55,19 +48,11 @@ interface TopicCardProps {
 }
 
 function TopicCard({ topic, index, onPress }: TopicCardProps) {
-  const progress = getTopicProgress(topic, index);
+  const progress = topic.progress_percent ?? 0;
   const exerciseCount = topic.lessons.reduce((s, l) => s + l.exercises.length, 0);
-  const isBookmarked = index === 0;
 
   return (
     <Pressable style={ls.card} onPress={onPress} android_ripple={{ color: C.primaryLight }}>
-      {/* Bookmark badge */}
-      {isBookmarked && (
-        <View style={ls.bookmarkBadge}>
-          <Feather name="bookmark" size={14} color="#fff" />
-        </View>
-      )}
-
       {/* Left: index number */}
       <View style={ls.indexBadge}>
         <Text style={ls.indexText}>{index + 1}</Text>
